@@ -19,6 +19,13 @@ research buys that feeling cheaply (believability, vocabulary, legible failure
 shapes). Invented mechanics provide the fun (whack-a-mole tension, escalation, the
 fling payoff).
 
+> **The physics are fantasy; only the parts and failures are real.** Real wheels turn
+> at ~0.033 RPM (one revolution per *~30 minutes*) and could never fling anyone. Our
+> speeds, forces, and the fling itself are pure invention — that absurdity *is* the
+> comedy. Borrow real **part names and failure flavors**; never sacrifice fun to make
+> the spin "realistic." If it feels like operating heavy machinery, it's working — it
+> does not need to *be* a ferris wheel.
+
 ### The two-knob rule of plausibility
 The comedy and the seriousness come from the **same** trick: put a real term next to
 a fake one and make the player unable to tell which is which.
@@ -56,23 +63,31 @@ nothing but look serious).
 Research systems sorted by what they become. "Hook" = the fun mechanic; "Dressing" =
 real + fake names to wear.
 
-| Real system (from research) | Passes filter? | Game hook | Name dressing (real / fake) |
+**Tier legend:**
+- **✅ CORE** — one of the committed five (see §4). Build these.
+- **🔄 SWAP / DAY-2** — passes the filter and would work, but is *not* in the five.
+  Only enters by replacing a core system that playtests dull, or as a post-MVP
+  addition if time allows. Do **not** start these before the five are fun.
+- **⚠️ FLAVOR** — does not earn a mechanic; lives as a label, manual line, or art cue.
+
+| Real system (from research) | Tier | Game hook | Name dressing (real / fake) |
 |---|---|---|---|
-| **Rim-friction drive tires** | ✅ core | The throttle. Worn tires slip → you lose speed and must compensate. | drive tire, bogie ring / "traction stator" |
-| **Engine-order-telegraph-style speed setpoint** | ✅ core | The labeled-band throttle lever (see GDD §10). | speed setpoint, indexing / `LUNAR` band |
-| **Main bearing overheat → spalling → seizure** | ✅ core | The heat system. Real, dramatic, visible (smoke, grind, smell→smoke). Climbs with speed. | spherical roller bearing, spalling / "cryoblaster" coolant |
-| **Centrifugal governor (overspeed cutoff)** | ✅ core | The "safety feature that keeps trying to engage" Yam wanted — fights your high-speed runs; you override it to fling. | centrifugal governor, E-stop / "override interlock" |
-| **Structural integrity: fatigue cracks, runout, freewheel** | ✅ core | The hard-fail meter. Over-speed/over-stress → wobble (runout) → crack → wheel breaks free. | radial runout, fatigue crack, freewheel |
-| **Frayed/shorted wiring** | ✅ | Electrical fault → random input dropouts; fix with electrical tape (consumable). | control-panel connector fault / "frayed waneshaft loom" |
-| **Bolt loosening from vibration** | ✅ | Periodic "re-torque this" micro-task at high vibration; ignore it and a part ejects. | torque spec, fastener fatigue |
-| **Phase / alignment (invented, dressed real)** | ✅ | A clicky re-sync toggle at high RPM (drift you correct). Pure fun, real-sounding. | (fake) "Lunar Waneshaft phase alignment" |
-| **Lubrication of moving parts** | ✅ | Stiff controls until greased; premium lube is a costed resource. | bearing lubrication / "expensive synthetic raceway grease" |
-| **Hydraulic fluid leaks** | ⚠️ flavor+ | Visual spray for drama (per art notes); optionally a minor fix. | HPU, hydraulic caliper |
-| **Wind / Aeolian vibration / Stockbridge dampers** | ⚠️ flavor / stretch | Possible random "gust" event that spikes vibration. Great name. | Stockbridge damper, Aeolian vibration |
-| **Corrosion / wall-thickness reduction** | ⚠️ flavor | Too slow/invisible to play; perfect for the *backstory* and unhelpful manual. | wall-thickness reduction (the 30-yr-old inspection log) |
-| **NDT (MT/UT/PT/ECT/AET)** | ⚠️ flavor | Pure jargon gold for the manual & menus; not a mechanic. | "magnetic-particle certified" stamp on a broken panel |
-| **The goose** | ✅ (canon) | Random jam event; goose-ejector button. Not real, fully earned. | (fake) avian ingress |
-| **Restraint / door interlocks** | ⚠️ flavor | Boarding gate sound/state; not a core skill mechanic. | lap-bar interlock |
+| **Rim-friction drive tires** | ✅ CORE (Speed) | The throttle. Worn tires slip → you lose speed and must compensate. | drive tire, bogie ring / "traction stator" |
+| **Engine-order-telegraph-style speed setpoint** | ✅ CORE (Speed) | The labeled-band throttle lever (see GDD §10). | speed setpoint, indexing / `LUNAR` band |
+| **Main bearing overheat → spalling → seizure** | ✅ CORE (Heat) | The heat system. Real, dramatic, visible (smoke, grind, smell→smoke). Climbs with speed. | spherical roller bearing, spalling / "cryoblaster" coolant |
+| **Centrifugal governor (overspeed cutoff)** | ✅ CORE (Governor) | The "safety feature that keeps trying to engage" Yam wanted — fights your high-speed runs; you override it to fling. | centrifugal governor, E-stop / "override interlock" |
+| **Structural integrity: fatigue cracks, runout, freewheel** | ✅ CORE (Structural) | The hard-fail meter. Over-speed/over-stress → wobble (runout) → crack → wheel breaks free. | radial runout, fatigue crack, freewheel |
+| **Frayed/shorted wiring** | ✅ CORE (Electrical) | Electrical fault → random input dropouts; fix with electrical tape (consumable). | control-panel connector fault / "frayed waneshaft loom" |
+| **Bolt loosening from vibration** | 🔄 SWAP / DAY-2 | Periodic "re-torque this" micro-task at high vibration; ignore it and a part ejects. | torque spec, fastener fatigue |
+| **Phase / alignment (invented, dressed real)** | 🔄 SWAP / DAY-2 | A clicky re-sync toggle at high RPM (drift you correct). Pure fun, real-sounding. | (fake) "Lunar Waneshaft phase alignment" |
+| **Lubrication of moving parts** | 🔄 SWAP / DAY-2 | Stiff controls until greased; premium lube is a costed resource. | bearing lubrication / "expensive synthetic raceway grease" |
+| **Load imbalance → freewheel runaway** | 🔄 SWAP / DAY-2 | Heavy side accelerates on its own; you counter-spin/rebalance. Strongest swap for Electrical if it plays dull. | unbalanced moment, freewheel |
+| **Hydraulic fluid leaks** | ⚠️ FLAVOR+ | Visual spray for drama (per art notes); optionally a minor fix. | HPU, hydraulic caliper |
+| **Wind / Aeolian vibration / Stockbridge dampers** | ⚠️ FLAVOR | Possible random "gust" event that spikes vibration. Great name. | Stockbridge damper, Aeolian vibration |
+| **Corrosion / wall-thickness reduction** | ⚠️ FLAVOR | Too slow/invisible to play; perfect for the *backstory* and unhelpful manual. | wall-thickness reduction (the 30-yr-old inspection log) |
+| **NDT (MT/UT/PT/ECT/AET)** | ⚠️ FLAVOR | Pure jargon gold for the manual & menus; not a mechanic. | "magnetic-particle certified" stamp on a broken panel |
+| **The goose** | ✅ CORE (Goose) | Random jam event; goose-ejector button. Not real, fully earned. | (fake) avian ingress |
+| **Restraint / door interlocks** | ⚠️ FLAVOR | Boarding gate sound/state; not a core skill mechanic. | lap-bar interlock |
 
 ---
 
@@ -94,9 +109,33 @@ unhelpful manual, the dilapidated backstory (30-year-old inspection log, decapit
 height sign), the art's hydraulic spray and sparks. It makes the world *feel* deep
 without costing us mechanics to build.
 
-> **Scope discipline:** if a teammate proposes a new system, it must (a) pass the
-> §2 filter and (b) replace something, not add to the five. The fun is in the
-> *interaction* of a few well-tuned systems, not the *count* of them.
+> **Scope discipline:** if a teammate proposes a new MECHANICAL system, it must
+> (a) pass the §2 filter and (b) replace something, not add to the five. The fun is
+> in the *interaction* of a few well-tuned systems, not the *count* of them.
+
+---
+
+## 4b. The second pillar — the reputation/business loop
+
+The five-systems rule above governs the **MECHANICAL pillar** (the machine you fight).
+Design has since grown a deliberate **second pillar — the business/reputation loop**
+(GDD §8.4). This is *not* a violation of scope discipline; it's a distinct, parallel
+layer the team judged cheap to build (a spawn timer scaled by a `reputation` float +
+per-rider impatience timers). It exists to give **flinging consequence** and to earn
+the jam's "this is *business*, this is life or death" framing.
+
+- **The flywheel:** fling a *ridden* rider → `reputation`↑ → queue spawns faster →
+  `impatience`↑ → impatient riders board at a risky moment → flung *before paying* →
+  `satisfaction`↓ → at zero, **the ride is closed** (the second hard-fail).
+- **Why it's good design, not bloat:** it's a *self-governing* loop (success raises
+  its own stakes), it's emergent/untaught, and it adds a second death (shut-down)
+  that contrasts the first (blow-up). The two pillars share ONE currency — **speed** —
+  so they entangle instead of competing for attention.
+- **Same scope discipline applies within it:** keep it to reputation → queue →
+  impatience → satisfaction. Resist adding sub-economies (ticket pricing tiers,
+  staff, multiple rides) unless one *replaces* a part of this.
+- **Tuning, not code, is the risk.** The flywheel must feel *fair* — never a death
+  spiral the player can't read or recover from. That's a playtest job, flagged here.
 
 ---
 
@@ -117,6 +156,8 @@ without costing us mechanics to build.
 
 ## 6. One-line summary for the team
 
-> Build **five real-feeling systems and a goose**, name them with a 50/50 blend of
-> real and invented jargon, and make every failure *visible, fixable in seconds, and
-> entangled with the others*. Truth is the costume; the fun is underneath.
+> Build **five real-feeling machine systems and a goose** (the mechanical pillar) and
+> **one self-governing reputation loop** (the business pillar), bound together by the
+> single shared currency of **speed**. Name everything with a 50/50 blend of real and
+> invented jargon, and make every failure *visible, fixable in seconds, and entangled
+> with the others*. Truth is the costume; the fun is underneath.
