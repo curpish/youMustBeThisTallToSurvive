@@ -338,6 +338,15 @@ screen (real keyed video of Dan's hands — see §10).
   control systems, taller/bigger-wheel scaling, more rider archetypes, more upgrade
   pool depth, mobile-vertical layout.
 
+> **Visual flavor to test (§16 tech):** the intended aesthetic is PS1/PS2-era crunchy
+> lo-fi — low-poly models, low-res textures scaled up with nearest-neighbor filtering
+> (no bilinear smoothing). In Godot 4.7 this is implemented via a `SubViewport` running
+> at a low internal resolution (e.g. 320×180) displayed as a `TextureRect` with
+> `TEXTURE_FILTER_NEAREST`, plus global nearest-neighbor texture filtering in project
+> settings. All art assets should be imported with Filter and Mipmaps **off**. The
+> dystopian eerie feel pairs well with this — test early once the Main scene exists to
+> confirm it reads correctly before committing art pipeline to it.
+
 ## 14. Team & ownership
 
 | Name | Responsibility |

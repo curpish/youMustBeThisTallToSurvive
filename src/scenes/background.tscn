@@ -1,0 +1,26 @@
+[gd_scene format=3 uid="uid://b55mnqqr1ypqw"]
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_nfkyc"]
+size = Vector2(200, 200)
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_cep3i"]
+frequency = 1.0
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_onqve"]
+width = 2048
+height = 2048
+noise = SubResource("FastNoiseLite_cep3i")
+in_3d_space = true
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_7ih6x"]
+albedo_color = Color(0.31745997, 0.39, 0.26909998, 1)
+metallic = 1.0
+metallic_specular = 0.15
+metallic_texture = SubResource("NoiseTexture2D_onqve")
+roughness = 0.45
+
+[node name="Background" type="Node3D" unique_id=281989465]
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=1110301515]
+mesh = SubResource("PlaneMesh_nfkyc")
+surface_material_override/0 = SubResource("StandardMaterial3D_7ih6x")
