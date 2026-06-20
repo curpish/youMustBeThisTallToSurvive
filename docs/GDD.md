@@ -33,9 +33,10 @@ The jam is a deadpan bit, so we commit to the bit with a **straight face**:
 - It is **life-or-death** in-fiction — a rider flung from a basket is, we assume,
   gone — but the riders treat it as the best ride of their lives. The dissonance is
   the comedy.
-- **"This is business."** The satisfaction/closure fail-state (§9) is played as
-  grim corporate bureaucracy — you don't just blow up, you can get *shut down* for
-  poor guest satisfaction. Deadpan paperwork energy.
+- **"This is business."** The tone is grim corporate bureaucracy — the machine is
+  your problem, the guests are your problem, and it's all very serious. Deadpan
+  paperwork energy. (A business-closure fail state is stretch; the deadpan tone
+  survives without it.)
 - Visual register: silly-but-believable. Riders land like beanbags, bounce once,
   cheer, get back in the queue. No squishy gore (harder to sell as "serious," less
   broadly appealing, more work).
@@ -44,36 +45,34 @@ The jam is a deadpan bit, so we commit to the bit with a **straight face**:
 
 ## 4. Core loop (30-second version)
 
-1. Riders **board and pay**; they need **~N spins** (N≈3, tune in MVP) before they're
+1. Riders **board**; they need **~N spins** (N≈3, tune in MVP) before they're
    done and **auto-vanish**, freeing their gondola.
 2. You engage the throttle; the wheel spins up. **Speed = throughput:** faster spins =
-   riders finish sooner = you clear the queue and collect the next fares faster.
-3. Speed generates problems — heat, electrical faults, structural stress, the
-   governor fighting you, the occasional goose.
+   riders finish sooner = you clear the queue faster.
+3. Speed generates problems — heat building on the ride, lever lube degrading, fault
+   lights appearing on the panel, the governor fighting you.
 4. You firefight those problems on the **control panel** to *sustain* speed.
-5. **Fling** a rider who has ridden → big **reputation** spike + bonus payout + an
+5. **Fling** a rider who has ridden → big **excitement** spike + score bonus + an
    instantly freed gondola. (Flinging is the jackpot accelerant, not a requirement.)
-6. **The flywheel & its governor:** reputation ↑ → the queue **spawns faster** →
-   riders **wait longer** → **impatience** ↑ → impatient riders board at a risky
-   moment and get flung **before paying/riding** → **satisfaction** ↓. Your own hype
-   can overwhelm you.
-7. Between **days**, spend earnings on **draft upgrades** (pick 1 of N). Each day
-   escalates.
-8. You lose when the **wheel tears itself apart** (mechanical) **or satisfaction
-   drops too low and the ride is closed** (business).
+6. **The flywheel:** excitement ↑ → the queue **spawns faster** → riders **wait
+   longer** → **impatience** ↑ → impatient riders board at a risky moment and get
+   flung early → **damage** ↑. Your own hype can overwhelm you.
+7. Between **days**, each day escalates — more faults, faster, meaner. (Draft
+   upgrades are a nice-to-have layered on top if time allows.)
+8. You lose when **uncleared faults on Big Stops fill the damage meter**.
 
-> **The one sentence that explains the whole game:** *Speed is the universal
-> currency — it clears the queue, powers the flings, and grows the park — and it is
-> also exactly what cooks the machine. Greed accelerates you toward both more money
-> and more catastrophe.*
+> **The one sentence that explains the whole game:** *Speed is the only tool you
+> have — it clears the queue, thrills the guests, and keeps the whole miserable
+> operation moving — and it is also exactly what destroys the machine you're stuck
+> maintaining.*
 
 ## 5. Where the challenge lives
 
 > **The ride is the clock. The controls are the game.**
 
 - **Ride (background, ~30% attention):** largely automated pressure engine. Has
-  momentum, heats up, accrues load and structural stress, drifts toward failure.
-  The player almost never touches it directly — only *through* the panel.
+  momentum, heats up, drifts toward failure. The player reads it visually (glow,
+  shake, smoke) and responds through the panel — never touches the ride directly.
 - **Control panel (foreground, ~70% attention):** where 100% of player skill lives.
   Every problem the ride generates surfaces as a fiddly, degrading control to
   operate well. This is the WarioWare / Papers-Please layer.
@@ -90,18 +89,15 @@ Target run length: **3–4 minutes** at mastery. Design intent:
   resistant and fail in new, *interesting* ways. **~Day 4 is where most players wash
   out** — that's the intended skill wall. Death resets the run; **restart is instant**
   ("one more go"). No save system.
-- **Progression: draft upgrades between days.** Between days you spend the day's
-  earnings on a **draft — pick 1 of N from a rotating pool**, so no run sees
-  everything and builds diverge. Upgrades reset on death.
-  - Design bar (from the team): effects must be **legible/clearly communicated**, the
-    path should spark **curiosity**, there should be **many viable strategies** (tuned
-    via group playtesting), and **no single obvious dominant** build.
+- **Progression: day escalation.** Each day the systems get more resistant and fault
+  faster. Draft upgrades (pick 1 of N between days) are a **nice-to-have** — design
+  them only after the core loop is fun and stable.
 - **Fail fast, learn fast.** A new player likely loses inside the **first minute** —
-  catastrophic failure is always on the table. Losing teaches the mechanic; no
-  tutorial wall.
-- **Felt growth.** By the 2nd–3rd attempt the player reaches a moderately successful
-  run. The skill learned is *sustaining* speed while juggling failing controls and
-  the queue. Upgrades let you snowball hard once stable.
+  the damage meter fills quickly if faults go uncleared. Losing teaches the mechanic;
+  no tutorial wall.
+- **Felt growth.** By the 2nd–3rd attempt the player learns the rhythm: spin fast,
+  clear faults before Big Stop, don't let the queue overwhelm you. That's the skill
+  floor; the ceiling is timing flings and managing heat under pressure.
 - **Day → night lighting** (nice-to-have) tracks escalation: the scene darkens /
   reddens as days climb — a free tension ramp.
 - **Catastrophic failure stays possible** at every tier — the higher you climb, the
@@ -109,32 +105,30 @@ Target run length: **3–4 minutes** at mastery. Design intent:
 
 ## 7. The player limiter
 
-**Speed is free to *want* but expensive to *hold*.** Cranking the throttle
-simultaneously raises heat, structural stress, power draw, and degrades every
-control faster — spawning multiple problems to firefight at once. You can't just
-pin it to max:
+**Speed is free to *want* but expensive to *hold*.** Cranking the throttle raises
+heat on the ride and degrades the lever lube faster — spawning fault lights you need
+to clear before your next Big Stop. You can't just pin it to max:
 
 - Some riders only fling **below** a speed and won't fling above it → you must
   modulate into specific speed bands, not just floor it.
 - Tougher riders have higher tolerance; their tolerance also **wears down over
   time**, so patience is a valid (slower) strategy.
 
-The core tension is now **three-way**: **go fast** (throughput, flings, money) vs.
-**slow down** (keep the machine alive) vs. **manage the hype** (don't let reputation
-flood the queue and tank satisfaction). Speed serves the first, threatens the second
-and third.
+The core tension is **three-way**: **go fast** (throughput, flings, score) vs.
+**slow down** (keep heat manageable, lever responsive) vs. **manage the excitement**
+(don't let queue growth outpace your ability to clear faults cleanly). Speed serves
+the first, threatens the second and third.
 
 ## 8. Systems & tracked state
 
 Centralized in a `RideState` autoload/resource that emits signals on threshold
 crossings (audio + animation hook off signals, never off logic internals).
 
-> **Scope source of truth:** `design-mental-model.md` §4 commits the game to **five
-> systems + the goose**: **Speed, Heat, Structural, Electrical, Governor** (+ Goose).
-> Speed/Heat/Structural are tracked in §8.1; Electrical/Governor/Goose are the
-> interactive fixes in §8.2. Lubrication, rust, and phase-alignment are **swap/day-2**
-> candidates (build only after the five are fun, or to replace one that plays dull) —
-> see mental-model §3.
+> **Scope source of truth (updated):** the committed core is **three systems**:
+> **Speed lever (lube), Heat (diegetic on ride), Fault buttons (indicator lights +
+> mode select)**. Governor override and Big Stop are also committed. Everything else
+> — electrical/wires, goose, structural integrity, lubrication as a separate system —
+> is swap/nice-to-have. See §8.2 and §13.
 
 ### 8.1 Ride state — pressure engine (background, mostly auto)
 
