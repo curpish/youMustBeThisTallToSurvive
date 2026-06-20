@@ -171,6 +171,12 @@ crossings (audio + animation hook off signals, never off logic internals).
 | Governor override (safety cutoff) | always fighting you at high RPM | auto-throttles you down below fling speed | hold/override the interlock to reach `FLING`/`LUNAR` — the core trade-off |
 | The goose | random event | honking, jammed mechanism | goose-ejector button |
 
+> **Override flavor (Yam's idea — addition):** the governor override is physically a
+> **screwdriver jammed into the safety interlock** to stop it disengaging. Dilapidated,
+> dangerous, perfectly on-tone — the player wedges/holds it to keep flinging. Great
+> visual for "this machine should not be running." Strong candidate for *the* override
+> interaction; capture it here so we don't lose it.
+
 **Swap / Day-2 (do not start before the five are fun — mental-model §3):**
 
 | Subsystem | Degrades from | Symptom when bad | Player fix |
