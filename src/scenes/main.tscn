@@ -1,10 +1,9 @@
 [gd_scene format=3 uid="uid://ctrbgy6typc5q"]
 
-[ext_resource type="Texture2D" uid="uid://dheo4kbuxbc82" path="res://reference/IMG_0342.png" id="1_32aa5"]
-[ext_resource type="Script" uid="uid://ch823161yjjdr" path="res://src/scenes/Wheel.gd" id="1_rr2wm"]
-[ext_resource type="Script" uid="uid://4e0vcl8lq7r0" path="res://src/scenes/DebugOverlay.gd" id="3_32aa5"]
-[ext_resource type="Theme" uid="uid://2mg680wmdyr" path="res://src/resources/debug_default_theme.tres" id="3_o81g6"]
-[ext_resource type="Script" uid="uid://c7ovcdxigavpt" path="res://src/scenes/HandleDebug.gd" id="5_o81g6"]
+[ext_resource type="Script" path="res://src/scenes/Wheel.gd" id="1_rr2wm"]
+[ext_resource type="Script" path="res://src/scenes/DebugOverlay.gd" id="3_32aa5"]
+[ext_resource type="Theme" path="res://src/resources/debug_default_theme.tres" id="3_o81g6"]
+[ext_resource type="Script" path="res://src/scenes/HandleDebug.gd" id="5_o81g6"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_rr2wm"]
 sky_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
@@ -60,12 +59,6 @@ script = ExtResource("1_rr2wm")
 
 [node name="Camera3D" type="Camera3D" parent="." unique_id=922059654]
 transform = Transform3D(0.99939084, 0.0048570717, -0.034559857, 0, 0.99026805, 0.13917312, 0.034899496, -0.13908833, 0.98966485, 0, 0.8, 40)
-
-[node name="ReferenceSprite" type="Sprite3D" parent="." unique_id=741638291]
-transform = Transform3D(1.105, 0, 0, 0, 0.92590064, 0.13221444, 0, -0.13012685, 0.94075465, 0.335, 0.175, 36.745)
-modulate = Color(1, 1, 1, 0.1254902)
-no_depth_test = true
-texture = ExtResource("1_32aa5")
 
 [node name="UI, Debug" type="CanvasLayer" parent="." unique_id=1527372480]
 follow_viewport_enabled = true
