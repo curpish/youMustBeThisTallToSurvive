@@ -1,8 +1,9 @@
 [gd_scene format=3 uid="uid://ctrbgy6typc5q"]
 
-[ext_resource type="Texture2D" uid="uid://dheo4kbuxbc82" path="res://reference/IMG_0342.png" id="1_32aa5"]
-[ext_resource type="PackedScene" uid="uid://b55mnqqr1ypqw" path="res://src/scenes/background.tscn" id="1_rr2wm"]
-[ext_resource type="PackedScene" uid="uid://evyonif58i3m" path="res://src/scenes/foreground.tscn" id="2_32aa5"]
+[ext_resource type="Script" path="res://src/scenes/Wheel.gd" id="1_rr2wm"]
+[ext_resource type="Script" path="res://src/scenes/DebugOverlay.gd" id="3_32aa5"]
+[ext_resource type="Theme" path="res://src/resources/debug_default_theme.tres" id="3_o81g6"]
+[ext_resource type="Script" path="res://src/scenes/HandleDebug.gd" id="5_o81g6"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_rr2wm"]
 sky_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
@@ -19,6 +20,25 @@ sky = SubResource("Sky_32aa5")
 sky_rotation = Vector3(0, 3.4906585, 0)
 ambient_light_sky_contribution = 0.2
 
+[sub_resource type="PlaneMesh" id="PlaneMesh_nfkyc"]
+size = Vector2(200, 200)
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_cep3i"]
+frequency = 1.0
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_onqve"]
+width = 2048
+height = 2048
+noise = SubResource("FastNoiseLite_cep3i")
+in_3d_space = true
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_7ih6x"]
+albedo_color = Color(0.31745997, 0.39, 0.26909998, 1)
+metallic = 1.0
+metallic_specular = 0.15
+metallic_texture = SubResource("NoiseTexture2D_onqve")
+roughness = 0.45
+
 [node name="Main" type="Node3D" unique_id=1732555563]
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1878298779]
@@ -26,23 +46,24 @@ environment = SubResource("Environment_5dlwx")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=403846532]
 
-[node name="Background" parent="." unique_id=281989465 instance=ExtResource("1_rr2wm")]
+[node name="Background" type="Node3D" parent="." unique_id=281989465]
 
-[node name="Foreground" parent="." unique_id=1265507372 instance=ExtResource("2_32aa5")]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Background" unique_id=1110301515]
+mesh = SubResource("PlaneMesh_nfkyc")
+surface_material_override/0 = SubResource("StandardMaterial3D_7ih6x")
+
+[node name="wheel placeholder" type="Node3D" parent="Background" unique_id=1682457338]
+script = ExtResource("1_rr2wm")
+
+[node name="Foreground" type="Node3D" parent="." unique_id=1265507372]
 
 [node name="Camera3D" type="Camera3D" parent="." unique_id=922059654]
 transform = Transform3D(0.99939084, 0.0048570717, -0.034559857, 0, 0.99026805, 0.13917312, 0.034899496, -0.13908833, 0.98966485, 0, 0.8, 40)
 
-[node name="ReferenceSprite" type="Sprite3D" parent="." unique_id=741638291]
-transform = Transform3D(1.105, 0, 0, 0, 0.92590064, 0.13221444, 0, -0.13012685, 0.94075465, 0.335, 0.175, 36.745)
-modulate = Color(1, 1, 1, 0.1254902)
-no_depth_test = true
-texture = ExtResource("1_32aa5")
-
 [node name="UI, Debug" type="CanvasLayer" parent="." unique_id=1527372480]
 follow_viewport_enabled = true
 
-[node name="Control" type="Control" parent="UI, Debug" unique_id=1563895423]
+[node name="fullscreen" type="Control" parent="UI, Debug" unique_id=1563895423]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -51,3 +72,28 @@ grow_horizontal = 2
 grow_vertical = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
+mouse_filter = 2
+
+[node name="leftStack" type="VBoxContainer" parent="UI, Debug/fullscreen" unique_id=758217038]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.042000003
+anchor_right = 0.25
+anchor_bottom = 1.0
+offset_left = -0.640007
+grow_vertical = 2
+
+[node name="debug" type="VBoxContainer" parent="UI, Debug/fullscreen/leftStack" unique_id=173034221]
+custom_minimum_size = Vector2(400, 600)
+custom_maximum_size = Vector2(400, 600)
+layout_mode = 2
+theme = ExtResource("3_o81g6")
+script = ExtResource("3_32aa5")
+update_interval = 0.05
+
+[node name="handle testing" type="VBoxContainer" parent="UI, Debug/fullscreen/leftStack" unique_id=1005919027]
+custom_minimum_size = Vector2(400, 400)
+custom_maximum_size = Vector2(400, 400)
+layout_mode = 2
+theme = ExtResource("3_o81g6")
+script = ExtResource("5_o81g6")
