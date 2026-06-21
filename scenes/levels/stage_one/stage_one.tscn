@@ -1,0 +1,67 @@
+[gd_scene load_steps=8 format=3 uid="uid://cq7m3bi8s6dni"]
+
+[ext_resource type="PackedScene" uid="uid://dnvhw5fh45cn1" path="res://assets/blender_imports/stage_one/ferris_scene.glb" id="1_ferris_scene"]
+[ext_resource type="Script" uid="uid://bvmtwi0psbm61" path="res://scripts/levels/stage_one/stage_one.gd" id="1_stage_one_script"]
+[ext_resource type="Script" path="res://scripts/levels/stage_one/stage_one_controller.gd" id="2_stage_one_controller"]
+[ext_resource type="Script" path="res://scripts/levels/stage_one/stage_one_music.gd" id="3_stage_one_music"]
+[ext_resource type="AudioStream" uid="uid://c1vrm71iftiy2" path="res://assets/audio/music/song_1_loop_by_trine.wav" id="4_song_1_loop"]
+[ext_resource type="Script" path="res://scripts/levels/stage_one/intro_orbit_camera.gd" id="6_intro_orbit_camera"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_stage_one"]
+sky_top_color = Color(0.13, 0.19, 0.26, 1)
+sky_horizon_color = Color(0.68, 0.42, 0.2, 1)
+ground_bottom_color = Color(0.065, 0.052, 0.038, 1)
+ground_horizon_color = Color(0.34, 0.22, 0.12, 1)
+sun_angle_max = 5.0
+sun_curve = 0.04
+
+[sub_resource type="Sky" id="Sky_stage_one"]
+sky_material = SubResource("ProceduralSkyMaterial_stage_one")
+
+[sub_resource type="Environment" id="Environment_stage_one"]
+background_mode = 2
+sky = SubResource("Sky_stage_one")
+ambient_light_source = 2
+ambient_light_color = Color(0.42, 0.36, 0.28, 1)
+ambient_light_energy = 0.58
+reflected_light_source = 2
+tonemap_mode = 2
+tonemap_exposure = 1.03
+glow_enabled = true
+glow_intensity = 0.045
+glow_strength = 0.22
+
+[node name="StageOne" type="Node3D" unique_id=111061666]
+script = ExtResource("1_stage_one_script")
+
+[node name="StageOneController" type="Node" parent="."]
+script = ExtResource("2_stage_one_controller")
+
+[node name="BackgroundMusic" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("4_song_1_loop")
+volume_db = -8.0
+script = ExtResource("3_stage_one_music")
+
+[node name="FerrisScene" parent="." unique_id=2007477521 instance=ExtResource("1_ferris_scene")]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=441656920]
+environment = SubResource("Environment_stage_one")
+
+[node name="Sun" type="DirectionalLight3D" parent="." unique_id=1306829128]
+transform = Transform3D(0.707107, -0.353553, 0.612372, 0, 0.866025, 0.5, -0.707107, -0.353553, 0.612372, 0, 18, 0)
+light_color = Color(1, 0.64, 0.38, 1)
+light_energy = 1.45
+shadow_enabled = true
+
+[node name="SoftFill" type="OmniLight3D" parent="." unique_id=2075629610]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 7, 10)
+light_color = Color(0.18, 0.28, 0.46, 1)
+light_energy = 0.38
+omni_range = 20.0
+
+[node name="Camera3D" type="Camera3D" parent="." unique_id=1002648311]
+transform = Transform3D(-0.14395009, 0.16793153, 0.975232, 0.09341355, 0.98340136, -0.15554985, -0.98516613, 0.06870846, -0.1572478, 26.97052, 4.0016613, 1.3335543)
+current = true
+fov = 55.0
+script = ExtResource("6_intro_orbit_camera")
+look_at_target = Vector3(0, 4, 0)
