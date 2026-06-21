@@ -15,6 +15,10 @@ run/main_scene="uid://ctrbgy6typc5q"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 config/icon="res://icon.svg"
 
+[audio]
+
+buses/default_bus_layout="uid://chxg0426rk7x4"
+
 [autoload]
 
 GameOrchestrator="*uid://but6n3lrvosrb"
@@ -31,6 +35,7 @@ window/stretch/mode="canvas_items"
 [file_customization]
 
 folder_colors={
+"res://assets/": "blue",
 "res://docs/": "yellow",
 "res://private/": "gray",
 "res://reference/": "orange",
