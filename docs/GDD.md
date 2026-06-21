@@ -33,9 +33,10 @@ The jam is a deadpan bit, so we commit to the bit with a **straight face**:
 - It is **life-or-death** in-fiction — a rider flung from a basket is, we assume,
   gone — but the riders treat it as the best ride of their lives. The dissonance is
   the comedy.
-- **"This is business."** The satisfaction/closure fail-state (§9) is played as
-  grim corporate bureaucracy — you don't just blow up, you can get *shut down* for
-  poor guest satisfaction. Deadpan paperwork energy.
+- **"This is business."** The tone is grim corporate bureaucracy — the machine is
+  your problem, the guests are your problem, and it's all very serious. Deadpan
+  paperwork energy. (A business-closure fail state is stretch; the deadpan tone
+  survives without it.)
 - Visual register: silly-but-believable. Riders land like beanbags, bounce once,
   cheer, get back in the queue. No squishy gore (harder to sell as "serious," less
   broadly appealing, more work).
@@ -44,36 +45,34 @@ The jam is a deadpan bit, so we commit to the bit with a **straight face**:
 
 ## 4. Core loop (30-second version)
 
-1. Riders **board and pay**; they need **~N spins** (N≈3, tune in MVP) before they're
+1. Riders **board**; they need **~N spins** (N≈3, tune in MVP) before they're
    done and **auto-vanish**, freeing their gondola.
 2. You engage the throttle; the wheel spins up. **Speed = throughput:** faster spins =
-   riders finish sooner = you clear the queue and collect the next fares faster.
-3. Speed generates problems — heat, electrical faults, structural stress, the
-   governor fighting you, the occasional goose.
+   riders finish sooner = you clear the queue faster.
+3. Speed generates problems — heat building on the ride, lever lube degrading, fault
+   lights appearing on the panel, the governor fighting you.
 4. You firefight those problems on the **control panel** to *sustain* speed.
-5. **Fling** a rider who has ridden → big **reputation** spike + bonus payout + an
+5. **Fling** a rider who has ridden → big **excitement** spike + score bonus + an
    instantly freed gondola. (Flinging is the jackpot accelerant, not a requirement.)
-6. **The flywheel & its governor:** reputation ↑ → the queue **spawns faster** →
-   riders **wait longer** → **impatience** ↑ → impatient riders board at a risky
-   moment and get flung **before paying/riding** → **satisfaction** ↓. Your own hype
-   can overwhelm you.
-7. Between **days**, spend earnings on **draft upgrades** (pick 1 of N). Each day
-   escalates.
-8. You lose when the **wheel tears itself apart** (mechanical) **or satisfaction
-   drops too low and the ride is closed** (business).
+6. **The flywheel:** excitement ↑ → the queue **spawns faster** → riders **wait
+   longer** → **impatience** ↑ → impatient riders board at a risky moment and get
+   flung early → **damage** ↑. Your own hype can overwhelm you.
+7. Between **days**, each day escalates — more faults, faster, meaner. (Draft
+   upgrades are a nice-to-have layered on top if time allows.)
+8. You lose when **uncleared faults on Big Stops fill the damage meter**.
 
-> **The one sentence that explains the whole game:** *Speed is the universal
-> currency — it clears the queue, powers the flings, and grows the park — and it is
-> also exactly what cooks the machine. Greed accelerates you toward both more money
-> and more catastrophe.*
+> **The one sentence that explains the whole game:** *Speed is the only tool you
+> have — it clears the queue, thrills the guests, and keeps the whole miserable
+> operation moving — and it is also exactly what destroys the machine you're stuck
+> maintaining.*
 
 ## 5. Where the challenge lives
 
 > **The ride is the clock. The controls are the game.**
 
 - **Ride (background, ~30% attention):** largely automated pressure engine. Has
-  momentum, heats up, accrues load and structural stress, drifts toward failure.
-  The player almost never touches it directly — only *through* the panel.
+  momentum, heats up, drifts toward failure. The player reads it visually (glow,
+  shake, smoke) and responds through the panel — never touches the ride directly.
 - **Control panel (foreground, ~70% attention):** where 100% of player skill lives.
   Every problem the ride generates surfaces as a fiddly, degrading control to
   operate well. This is the WarioWare / Papers-Please layer.
@@ -90,18 +89,15 @@ Target run length: **3–4 minutes** at mastery. Design intent:
   resistant and fail in new, *interesting* ways. **~Day 4 is where most players wash
   out** — that's the intended skill wall. Death resets the run; **restart is instant**
   ("one more go"). No save system.
-- **Progression: draft upgrades between days.** Between days you spend the day's
-  earnings on a **draft — pick 1 of N from a rotating pool**, so no run sees
-  everything and builds diverge. Upgrades reset on death.
-  - Design bar (from the team): effects must be **legible/clearly communicated**, the
-    path should spark **curiosity**, there should be **many viable strategies** (tuned
-    via group playtesting), and **no single obvious dominant** build.
+- **Progression: day escalation.** Each day the systems get more resistant and fault
+  faster. Draft upgrades (pick 1 of N between days) are a **nice-to-have** — design
+  them only after the core loop is fun and stable.
 - **Fail fast, learn fast.** A new player likely loses inside the **first minute** —
-  catastrophic failure is always on the table. Losing teaches the mechanic; no
-  tutorial wall.
-- **Felt growth.** By the 2nd–3rd attempt the player reaches a moderately successful
-  run. The skill learned is *sustaining* speed while juggling failing controls and
-  the queue. Upgrades let you snowball hard once stable.
+  the damage meter fills quickly if faults go uncleared. Losing teaches the mechanic;
+  no tutorial wall.
+- **Felt growth.** By the 2nd–3rd attempt the player learns the rhythm: spin fast,
+  clear faults before Big Stop, don't let the queue overwhelm you. That's the skill
+  floor; the ceiling is timing flings and managing heat under pressure.
 - **Day → night lighting** (nice-to-have) tracks escalation: the scene darkens /
   reddens as days climb — a free tension ramp.
 - **Catastrophic failure stays possible** at every tier — the higher you climb, the
@@ -109,136 +105,152 @@ Target run length: **3–4 minutes** at mastery. Design intent:
 
 ## 7. The player limiter
 
-**Speed is free to *want* but expensive to *hold*.** Cranking the throttle
-simultaneously raises heat, structural stress, power draw, and degrades every
-control faster — spawning multiple problems to firefight at once. You can't just
-pin it to max:
+**Speed is free to *want* but expensive to *hold*.** Cranking the throttle raises
+heat on the ride and degrades the lever lube faster — spawning fault lights you need
+to clear before your next Big Stop. You can't just pin it to max:
 
 - Some riders only fling **below** a speed and won't fling above it → you must
   modulate into specific speed bands, not just floor it.
 - Tougher riders have higher tolerance; their tolerance also **wears down over
   time**, so patience is a valid (slower) strategy.
 
-The core tension is now **three-way**: **go fast** (throughput, flings, money) vs.
-**slow down** (keep the machine alive) vs. **manage the hype** (don't let reputation
-flood the queue and tank satisfaction). Speed serves the first, threatens the second
-and third.
+The core tension is **three-way**: **go fast** (throughput, flings, score) vs.
+**slow down** (keep heat manageable, lever responsive) vs. **manage the excitement**
+(don't let queue growth outpace your ability to clear faults cleanly). Speed serves
+the first, threatens the second and third.
 
 ## 8. Systems & tracked state
 
 Centralized in a `RideState` autoload/resource that emits signals on threshold
 crossings (audio + animation hook off signals, never off logic internals).
 
-> **Scope source of truth:** `design-mental-model.md` §4 commits the game to **five
-> systems + the goose**: **Speed, Heat, Structural, Electrical, Governor** (+ Goose).
-> Speed/Heat/Structural are tracked in §8.1; Electrical/Governor/Goose are the
-> interactive fixes in §8.2. Lubrication, rust, and phase-alignment are **swap/day-2**
-> candidates (build only after the five are fun, or to replace one that plays dull) —
-> see mental-model §3.
+> **Scope source of truth (updated):** the committed core is **three systems**:
+> **Speed lever (lube), Heat (diegetic on ride), Fault buttons (indicator lights +
+> mode select)**. Governor override and Big Stop are also committed. Everything else
+> — electrical/wires, goose, structural integrity, lubrication as a separate system —
+> is swap/nice-to-have. See §8.2 and §13.
 
 ### 8.1 Ride state — pressure engine (background, mostly auto)
 
 | Variable | Range | Drives | Player reads via | Fail edge |
 |---|---|---|---|---|
-| `angular_velocity` (RPM) | 0 → max | core feel; everything | tachometer + motion blur | — |
+| `angular_velocity` (RPM) | 0 → max | core feel; everything | RPM readout on panel + motion blur | — |
 | `target_rpm` | float | throttle lerps toward this | throttle lever position | — |
-| `heat` | 0–100 | friction from speed/time; damages integrity | temp gauge, glow, smoke | fire event |
-| `structural_integrity` | 100→0 | global health; stressed by RPM × load × heat | shake, creaks, popping bolts | wheel detaches → hard fail |
-| `load` / `weight` | Σ riders | raises stress & power draw; shifts balance | wheel sag, strain audio | — |
-| `power_draw` vs `supply` | watts | overdraw trips breakers | flickering backlight | brownout (controls die briefly) |
+| `heat` | 0–100 | friction from speed/time; damages integrity | **diegetic only** — glow, shaking, smoke on the ride itself | fire / structural event |
+| `structural_integrity` | 100→0 | global health; stressed by RPM × heat | shake, creaks, popping bolts | wheel detaches → hard fail |
 
+> **Heat is read on the ride, not a gauge.** The player has reason to watch the
+> wheel (not just the panel) because that's where heat lives. A basic UI gauge is an
+> acceptable fallback during prototyping to tune thresholds, but the target is
+> diegetic-only. Load/weight and power-draw tracking are cut — too many data points
+> dilute the readable ones.
+>
 > Movement model: **no true physics.** A float `angular_velocity` lerps toward
 > `target_rpm`; a fixed tick rate (e.g. 60 ticks/s, FPS-independent) feeds a
 > per-tick update so momentum *feels* real. Visual rotation = accumulate angle from
 > velocity. (Confirm tick approach with PCPuppet.)
 >
-> **The throttle is an engine order telegraph** (see `reference/image.png`). The
-> player swings a brass handle to a discrete, labeled speed band; that sets
-> `target_rpm`. The instrument has two needles: the **commanded** pointer (where you
-> set the handle) and a **lagging "actual" needle** that chases it = live
-> `angular_velocity`. The momentum lerp is therefore *the* readout — the player
-> watches the gap close. Discrete bands (not a raw slider) make "modulate into the
-> right band to fling this rider" legible, and every notch lands with a CA-CHUNK.
+> **Dual-value RPM model (decided):** the panel shows two values — `target_rpm`
+> (desired, set by lever position) and `angular_velocity` (actual, lagging toward
+> target). The gap between them *is* the readout. The throttle is an engine order
+> telegraph (see `reference/image.png`): player swings the brass handle to a discrete
+> labeled band; that sets `target_rpm`. The instrument has two needles: **commanded**
+> pointer and a **lagging "actual" needle**. Every notch lands with a CA-CHUNK.
 
 ### 8.2 Control / condition state — your tools degrade too (foreground)
 
-**Committed (the build list):**
+**Three-core committed build (MVP):**
 
 | Subsystem | Degrades from | Symptom when bad | Player fix |
 |---|---|---|---|
-| Cooling (cryoblasters / stator calipers) | heat (the §8.1 `heat` fix) | nothing — until fire | engage coolant (cost + cooldown) |
-| Electrical (frayed wires) | overdraw, vibration | random input dropouts, sparks | slap on electrical tape (consumable) |
-| Governor override (safety cutoff) | always fighting you at high RPM | auto-throttles you down below fling speed | hold/override the interlock to reach `FLING`/`LUNAR` — the core trade-off |
+| **Speed lever (lube)** | time + use | lever sticky / slow to respond; hesitation or full stick | apply lube to the main lever |
+| **Heat (on the ride)** | high RPM + time | ride glows, shakes, smokes — visible on the wheel | modulate speed down; watch the ride |
+| **Fault buttons + mode select** | events triggered by speed/heat/time | indicator lights (🟢/🟡/🔴) appear on panel buttons | press the button in the matching mode to clear |
+
+**Fault / Damage system (Yam's model — committed):**
+Faults themselves are not permanently detrimental — they are *problems to clear*. However, the number of **uncleared faults at the moment you press Big Stop** determines how much **damage** is dealt. Damage is a session-total meter on the panel; it cannot be repaired mid-session. When `damage` hits max → day is over (mechanical-business hybrid fail).
+
+**Big Stop (committed):**
+Stops the wheel. Any riders currently under the fling-speed threshold are flung; satisfied guests earn score. Faults present at the moment of stop deal damage. Tactically: a clean stop (few faults, riders ridden) is the safe cash-out; a dirty stop (many faults, impatient boarders) burns damage for a quick seat clear.
+
+**Governor override (committed):**
+A **screwdriver jammed into the safety interlock** — boolean gate, implemented. Jiggling/holding it prevents the governor from auto-throttling the wheel back below fling speed. Satisfying to slam off; violent deceleration on release. Big risk, big reward, awful sounds.
+
+**Mode Select (committed):**
+A selector on the panel that corresponds to fault light colors. Green indicator lights can only be cleared in Mode 1, yellow in Mode 2, red in Mode 3, etc. Adds a cognitive layer to the QTE without new mechanics.
+
+**Swap / Nice-to-Have (build only after the three core are fun):**
+
+| Subsystem | Degrades from | Symptom when bad | Player fix |
+|---|---|---|---|
+| Frayed wires | vibration, heat | erratic speed/wobble | open service compartment; rewrap with electrical tape |
 | The goose | random event | honking, jammed mechanism | goose-ejector button |
-
-> **Override flavor (Yam's idea — addition):** the governor override is physically a
-> **screwdriver jammed into the safety interlock** to stop it disengaging. Dilapidated,
-> dangerous, perfectly on-tone — the player wedges/holds it to keep flinging. Great
-> visual for "this machine should not be running." Strong candidate for *the* override
-> interaction; capture it here so we don't lose it.
-
-**Swap / Day-2 (do not start before the five are fun — mental-model §3):**
-
-| Subsystem | Degrades from | Symptom when bad | Player fix |
-|---|---|---|---|
-| Lubrication | time, use | levers stiff / slow to respond | pump grease / apply premium lube (resource) |
 | Rust / polish | time, heat | switches stick, intermittent input | scrape / polish action |
 | Phase alignment (Lunar Waneshafts) | high RPM | drift you must re-sync | clicky toggle to re-phase |
-| Bolt re-torque | vibration | a part rattles, then ejects | re-torque micro-task |
-| Load imbalance → freewheel | uneven rider load | heavy side runs away on its own | rebalance / counter (strongest swap for Electrical) |
+| Tapes | time/neglect | guests get bored of same lights/theme | swap tape in slot from pile on top |
+| Load imbalance → freewheel | uneven rider load | heavy side runs away on its own | rebalance / counter |
+
+> **Wire repair detail (Coopy):** wires sprawl out of a service compartment when opened.
+> One tape is easy; multiple tapes make a chaotic, escalating visual. Random roll for
+> which wire needs taping; unique positions per event. Good escalation candidate for
+> later days.
 
 Design rule for controls: **the result must be unmistakable regardless of what the
 label claims.** The button may say "disengage stator calipers" — what the player
 learns is "the wheel cools down, that's what I care about."
 
-### 8.3 Meta / economy / scoring
+### 8.3 Meta / scoring
+
+Money and economy are **cut** — too much overhead, dilutes the readable feedback. Scoring is direct and reflects player performance.
 
 | Variable | Purpose |
 |---|---|
-| `money` | spent on draft upgrades; earned per rider **boarding/paying** + bonus per **fling** |
-| `score` / `fling_height` | brag stat; pin a high-marker on the UI |
-| `day` | escalation unit; difficulty + lighting ramp |
-| `upgrades` (this run) | drafted between days; reset on death |
+| `score` | primary counter — incremented by flings and by clearing faults cleanly; the brag stat |
+| `fling_count` | sub-counter; milestone tracker and spectacle read |
+| `damage` | session health meter (see §8.2); un-repairable, drives the fail state |
+| `day` | escalation unit; difficulty ramp |
 | rider `tolerance` (per guest) | speed needed to fling; wears down over time |
 | `spins_required` (per rider) | spins before a rider is "done" and auto-vanishes (N≈3) |
 
-### 8.4 Business pillar — the reputation flywheel (the 2nd pillar)
+**Upgrade system demoted to nice-to-have.** If scope allows after the three-core systems are fun, a lightweight draft (pick 1 of N between days) can layer on top. It should not block the submission build. No upgrade pool designed until the core loop is stable.
 
-The economic engine that ties flinging to consequence. All trivially implementable
-(a spawn timer scaled by a float, plus per-rider impatience timers); the *tuning* is
-the work, not the code.
+### 8.4 Guest pressure — the excitement flywheel (2nd pillar)
+
+Simplified from the money-economy model. The flywheel still exists but drives **score pressure and risk**, not cash.
 
 | Variable | Range | Drives | Player reads via | Fail edge |
 |---|---|---|---|---|
-| `reputation` / `excitement` | float | **queue spawn rate** — rises fast on flings | crowd size/energy, a hype meter | — (it's a double-edged buff) |
-| `queue_length` | int | how many are waiting; long queue → impatience | the visible line of RCT2-people | — |
+| `excitement` | float | **queue spawn rate** — rises fast on flings | crowd size/energy visible in queue | — (double-edged buff) |
+| `queue_length` | int | how many waiting; long queue → impatience | visible line of RCT2-people | — |
 | rider `impatience` | per rider, ↑ with wait | impatient riders try to board at a **risky moment** | fidgeting / agitation anim | — |
-| `satisfaction` | 100→0 | the business health bar | a park-satisfaction gauge | **too low → RIDE CLOSED (business fail)** |
 
-**The loop:** `fling (ridden rider)` → `reputation`↑ → `queue` spawns faster →
-`impatience`↑ → impatient rider boards mid-speed → flung **before paying/riding** →
-`satisfaction`↓. Push hype too hard and your own success closes you down.
+**Satisfaction and business-fail are cut** from the core MVP. The single fail path is the **damage meter** (§8.2). If scope allows, satisfaction can return as a second fail axis in a later pass.
 
-**The emergent, untaught distinction:** flinging a rider who **rode** = good
-(reputation + cash + freed gondola); losing a rider who **never boarded** = bad
-(satisfaction hit + lost fare). Same visual event, opposite meaning by timing.
+**The loop (simplified):** `fling (ridden rider)` → `excitement`↑ → `queue` spawns faster → more riders waiting → more impatient boarders → risky flings → damage accumulates faster. Your own success accelerates the chaos.
+
+**Start small:** a few riders to start; queue grows as you fling more. Hilarious and self-evident escalation without any tutorial text.
 
 > **Boarding model (decided):** *no hard speed gate* — riders can board at any speed.
-> The pressure is soft: impatience makes them board at dangerous moments, and that's
-> where pre-pay flings (and satisfaction loss) come from.
+> Impatience drives the risky timing, not a gate. Same visual event (fling), opposite
+> meaning by timing — ridden rider flung = score; impatient boarder flung early = damage.
 
 ## 9. Failure model
 
-- **Soft fails (frequent, early):** breakdowns cost time and money while you fix
-  them. These are the moment-to-moment WarioWare beats.
-- **Two hard fails (run over):**
-  1. **Mechanical** — `structural_integrity` hits zero → wheel tears free of the
-     mechanism. Spectacular, earned, the reason to respect speed.
-  2. **Business** — `satisfaction` hits zero → **the ride is closed / you're shut
-     down**. This is what earns the "this is *business*, this is life or death"
-     framing. Quieter, bureaucratic, deadpan-serious.
+- **Soft fails (frequent, early):** fault lights appear; uncleared faults on Big Stop
+  deal damage. These are the moment-to-moment WarioWare beats.
+- **Core hard fail (MVP):**
+  - **Damage** — `damage` meter fills from dirty Big Stops (many uncleared faults at
+    stop time). When it maxes out, the day ends / the machine gives up. Slower and
+    more strategic than a sudden blowup — you feel it coming.
+- **Stretch hard fail:**
+  - **Mechanical** — `structural_integrity` hits zero → wheel tears free. Spectacular,
+    earned, sudden. Add once damage meter is balanced and fun.
+  - **Business / satisfaction** — ride closed by poor guest handling. Add last if at
+    all; cut for scope.
 
-Two different deaths from the two pillars: you can blow up, or you can get shut down.
+> **MVP simplification:** one fail axis (damage) is enough to teach the loop and
+> create tension. Two or three fail axes return as escalation levers once the core
+> is solid.
 
 ## 10. Visual direction
 
@@ -296,9 +308,13 @@ screen (real keyed video of Dan's hands — see §10).
   telegraph handle between bands. The right-hand video tracks the mouse: grab → sweep
   3→9 o'clock. Deliberate, tactile, the one reliable instrument in a failing machine.
 - **Left hand = the panel buttons/switches (hotkeys).** Each committed fix is a key
-  (e.g. coolant, tape wires, governor override, goose-ejector). The left-hand video
-  animates on keypress (anticipate → press → recoil). Fast, mashable — this is where
-  the WarioWare panic lives.
+  mapped to a panel button (fault clear, mode select, governor override, Big Stop).
+  The left-hand video animates on keypress (anticipate → press → recoil). Fast,
+  mashable — this is where the WarioWare panic lives.
+- **Keyboard layout (to prototype — two candidates):**
+  - Option A: `Q W E R` — ergonomic row, intuitive, easy to learn
+  - Option B: `E D C V` — diagonal column, stranger, more "dystopian machine operator"
+  - Test both; the stranger layout may better sell the tone.
 - **Reuse:** takes can be **flipped horizontally** to cover both sides / extra poses.
 - **Touch/mobile later:** the hotkey half is the porting cost; KBM 16:9 first.
 
@@ -326,17 +342,21 @@ screen (real keyed video of Dan's hands — see §10).
 > that the business-pillar code (reputation-scaled spawn + impatience) is *trivial*,
 > so both pillars may land early; the tiers below are a guide, not a contract.
 
-- **MVP (ugly but complete):** one wheel you spin via the telegraph; tachometer +
-  heat + electrical; manual fixes; riders board/pay + auto-vanish after N spins;
-  flinging; you can lose mechanically. *The sensation that the wheel spins and you
-  can mismanage it.*
-- **Target (submission):** the full two-pillar loop — flinging → reputation flywheel
-  → queue/impatience → satisfaction + the business fail-state; the committed five
-  systems + goose; draft upgrades between days; day escalation; full audio/art pass
-  (real keyed hands, RCT2 people); deadpan manual + jargon; web build deployed.
-- **Stretch:** day→night lighting, cel/outline shader pass on the hands, swap/day-2
-  control systems, taller/bigger-wheel scaling, more rider archetypes, more upgrade
-  pool depth, mobile-vertical layout.
+- **MVP (ugly but complete):** wheel spins via telegraph; lever lube degrades (sticky
+  handle); heat visible on ride (glow/shake/smoke); fault buttons with indicator
+  lights + mode select; Big Stop; damage meter; a small queue that grows as you fling.
+  *The sensation that the wheel spins, faults appear, and a dirty stop costs you.*
+- **Target (submission):** the full excitement flywheel (queue grows with flings →
+  impatience → risky boarders → damage pressure); governor override (screwdriver);
+  day escalation; full audio/art pass (real keyed hands, RCT2 people); deadpan
+  manual + jargon; web build deployed. Structural integrity fail state added if time
+  allows.
+- **Nice-to-have (if target is solid):** draft upgrades between days; wires/tape
+  service compartment; goose; satisfaction / business fail-state; keyboard layout
+  polish.
+- **Stretch:** day→night lighting, cel/outline shader pass on the hands, swap control
+  systems (phase alignment, tapes, bolt re-torque), more rider archetypes, mobile
+  layout.
 
 > **Visual flavor to test (§16 tech):** the intended aesthetic is PS1/PS2-era crunchy
 > lo-fi — low-poly models, low-res textures scaled up with nearest-neighbor filtering
@@ -370,21 +390,31 @@ manual.
 **Resolved (this round):**
 - [x] **Controls** — hybrid two-hands (mouse lever + hotkey buttons). §11.
 - [x] **Run structure** — single run of escalating days; instant restart; no save. §6.
-- [x] **Progression** — draft upgrades (1 of N) between days, reset on death. §6.
-- [x] **Fling role** — risk-accelerant on the reputation flywheel, not a quota. §8.4.
-- [x] **Two fail states** — mechanical collapse + business closure. §9.
+- [x] **Fling role** — risk-accelerant on the excitement flywheel, not a quota. §8.4.
 - [x] **Boarding model** — no hard speed gate; impatience drives risky boarding. §8.4.
 - [x] **Art cohesion** — raw keyed video first (diorama), shaders later. §10.
-- [x] **Throttle metaphor** — engine order telegraph. §8.1 / §10.
+- [x] **Throttle metaphor** — engine order telegraph, dual-value RPM model. §8.1 / §10.
+- [x] **Economy** — money cut; simple score/fling count is the player feedback metric. §8.3.
+- [x] **Core systems (MVP)** — three only: lever (lube), heat (diegetic), fault buttons
+      (indicator lights + mode select). All others swap/nice-to-have. §8.2.
+- [x] **Fail state (MVP)** — damage meter from dirty Big Stops. Mechanical/business
+      fails are stretch. §9.
+- [x] **Heat readout** — diegetic on the ride (glow/shake/smoke); no dedicated gauge
+      required. §8.1.
+- [x] **Throttle wrestle** — struggle lives on the lever (lube = sticky handle) and the
+      fault buttons; the telegraph itself is clean and tactile. §8.2.
+- [x] **Governor override** — screwdriver-in-interlock implemented (boolean gate);
+      violent deceleration on release. §8.2.
+- [x] **Progression** — draft upgrades demoted to nice-to-have, not core. §8.3.
 
 **Still open:**
-- [ ] **Throttle wrestle** — does the moment-to-moment struggle live on the telegraph
-      (sticky/drifting handle) or the fix-it controls? *Lean: clean lever, wrestle in
-      the fixes.* Pmayer to prototype.
+- [ ] **Keyboard layout** — `Q W E R` vs `E D C V`; prototype both for tone. §11.
+- [ ] **Throughput math** — `spins_required` per rider vs. damage thresholds; tune in MVP.
+- [ ] **Fault event triggers** — what conditions spawn green/yellow/red lights? Rate?
+      Design once the three-core loop is wired.
+- [ ] **Big Stop timing rules** — exactly which riders count as "satisfied" at stop
+      time vs. which deal damage. Needs tuning pass.
 - [ ] **One-day MVP cut-line** — *deferred, team's call.*
-- [ ] **Upgrade pool** — what the actual draft options are (the design bar is set in
-      §6; the list isn't drafted yet).
-- [ ] **Throughput math** — `spins_required` per rider vs. fail thresholds; tune in MVP.
 - [ ] Perspective for the wheel (iso vs ground vs aerial).
 - [ ] Park name, color scheme — team crowdsourcing / Yam.
 - [ ] Operator personality — Dan's interpretation, discovered in performance.

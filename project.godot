@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="You Must Be This Tall to Survive"
-run/main_scene="uid://ctrbgy6typc5q"
+run/main_scene="res://scenes/levels/stage_one/stage_one.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 config/icon="res://icon.svg"
 
@@ -21,16 +21,20 @@ buses/default_bus_layout="uid://chxg0426rk7x4"
 
 [autoload]
 
-GameOrchestrator="*uid://but6n3lrvosrb"
-RideState="*uid://c6tm1wuyvktlu"
-Events="*uid://dm4cy4q1okl31"
-Transitions="*uid://cchpf5c18fwi"
+GameOrchestrator="*res://src/autoloads/GameOrchestrator.gd"
+RideState="*res://src/autoloads/RideState.gd"
+Events="*res://src/autoloads/Events.gd"
+Transitions="*res://src/autoloads/Transitions.gd"
 
 [display]
 
 window/size/viewport_width=1920
 window/size/viewport_height=1080
 window/stretch/mode="canvas_items"
+
+[dotnet]
+
+project/assembly_name="You Must Be This Tall to Survive"
 
 [file_customization]
 

@@ -4,7 +4,7 @@ extends Node
 
 enum Phase { BOARDING, RUNNING, CLOSED }
 
-const MAIN_SCENE := "uid://ctrbgy6typc5q"
+const MAIN_SCENE := "res://scenes/levels/stage_one/stage_one.tscn"
 
 var phase: Phase = Phase.BOARDING
 
