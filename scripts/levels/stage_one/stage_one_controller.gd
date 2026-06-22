@@ -1,65 +1,42 @@
 extends Node
+# Debug readout overlay for the shared spin model: a live RideState dump so we
+# can watch the numbers while driving the wheel. Interactive controls live on
+# the node-based panel now (SpeedBands slider + vboxGovernor); this is read-only.
+# Throwaway: delete when the real panel readout lands.
 
-@export var wheel_path: NodePath = NodePath("..")
-@export var speed_gain_degrees_per_second: float = 7.5
-@export var max_wheel_speed_degrees_per_second: float = 800.0
-@export var debug_message_duration: float = 0.8
-
-var _wheel_controller: Node
-var _debug_label: Label
-var _debug_message_time_left := 0.0
+var _readout: Label
 
 func _ready() -> void:
-	_wheel_controller = get_node_or_null(wheel_path)
-	if _wheel_controller == null:
-		push_warning("StageOneController could not find the wheel controller.")
+	if not OS.is_debug_build():
+		return
+	_build_ui()
 
-	_create_debug_label()
-
-func _process(delta: float) -> void:
-	_update_debug_label(delta)
-
-	if _wheel_controller == null:
+func _process(_delta: float) -> void:
+	if _readout == null:
 		return
 
-	if Input.is_key_pressed(KEY_F):
-		_add_wheel_speed(delta)
+	var effective_max: float = (
+		RideState.rpm_governed if RideState.is_governed else RideState.rpm_max
+	)
+	_readout.text = "target_rpm:  %.1f\nangular_velocity:  %.2f\nwheel_angle:  %.2f rad\ngovernor:  %s (cap %.0f)\noverride:  %.1fs   cooldown:  %.1fs" % [
+		RideState.target_rpm,
+		RideState.angular_velocity,
+		RideState.wheel_angle,
+		"ON" if RideState.is_governed else "OFF",
+		effective_max,
+		RideState.governor_override_time_left,
+		RideState.governor_cooldown_left,
+	]
 
-func _add_wheel_speed(delta: float) -> void:
-	var current_speed: float = _wheel_controller.wheel_speed_degrees_per_second
-	var speed_direction := signf(current_speed)
+func _build_ui() -> void:
+	var layer := CanvasLayer.new()
+	layer.name = "DebugReadoutOverlay"
+	add_child(layer)
 
-	if speed_direction == 0.0:
-		speed_direction = -1.0
+	var box := VBoxContainer.new()
+	box.position = Vector2(16.0, 8.0)
+	layer.add_child(box)
 
-	var new_speed := current_speed + speed_direction * speed_gain_degrees_per_second * delta
-	var max_speed := max_wheel_speed_degrees_per_second
-	_wheel_controller.wheel_speed_degrees_per_second = clampf(new_speed, -max_speed, max_speed)
-
-	var speed_added := absf(_wheel_controller.wheel_speed_degrees_per_second - current_speed)
-	_show_speed_debug(speed_added)
-
-func _create_debug_label() -> void:
-	_debug_label = Label.new()
-	_debug_label.name = "TemporarySpeedDebugLabel"
-	_debug_label.position = Vector2(24.0, 24.0)
-	_debug_label.add_theme_font_size_override("font_size", 24)
-	_debug_label.text = ""
-	_debug_label.visible = false
-	get_tree().root.add_child.call_deferred(_debug_label)
-
-func _show_speed_debug(speed_added: float) -> void:
-	if _debug_label == null:
-		return
-
-	_debug_label.text = "increased speed by %.2f deg/sec" % speed_added
-	_debug_label.visible = true
-	_debug_message_time_left = debug_message_duration
-
-func _update_debug_label(delta: float) -> void:
-	if _debug_label == null or not _debug_label.visible:
-		return
-
-	_debug_message_time_left -= delta
-	if _debug_message_time_left <= 0.0:
-		_debug_label.visible = false
+	_readout = Label.new()
+	_readout.add_theme_font_size_override("font_size", 18)
+	box.add_child(_readout)

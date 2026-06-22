@@ -275,15 +275,21 @@ Simplified from the money-economy model. The flywheel still exists but drives **
   double as the tutorial (no text tutorial needed). Each band = word + icon +
   backlight color, climbing in danger:
 
-  | Band (low→high) | Label | Icon | Teaches |
-  |---|---|---|---|
-  | 0 | `LOADING` | person stepping in | riders board, you get paid |
-  | low | `SCENIC` | smiley rider | safe, low earnings |
-  | mid | `BRISK` / `QUEASY` | green-faced rider | fun zone; some riders begin to fling |
-  | high | `FLING` / `ESCAPE VELOCITY` | rider launching | payoff band — flings + bonus |
-  | max | `LUNAR` ("TO THE MOON") | rider + moon / skull | danger: structural stress spikes |
+  Band labels read as deadpan motor-control / engineering jargon (lifted from the
+  operator manual's register) that quietly escalates from inert to forbidden.
+  `target_rpm` values match `RideState` / the debug slider.
 
-  Backlight tracks the band green→amber→red, strobing red in `LUNAR`.
+  | Band (low→high) | Label | target_rpm | Icon | Teaches |
+  |---|---|---|---|---|
+  | 0 | `STATIC` | 0 | person stepping in | riders board, you get paid |
+  | low | `JOG` | 6 | smiley rider | safe, low earnings ("jog" = inching the motor) |
+  | mid | `NOMINAL` | 18 | green-faced rider | fun zone; some riders begin to fling |
+  | high | `EXCEEDANCE` | 38 | rider launching | payoff band — flings + bonus; past rated limit |
+  | max | `OVERSPEED` | 72 | rider + moon / skull | forbidden with guests aboard; structural stress spikes |
+
+  Backlight tracks the band green→amber→red, strobing red in `OVERSPEED`.
+  (`rpm_max` 80 gives headroom above the top band; governor caps at 22 — just
+  past `NOMINAL` — so pushing into `EXCEEDANCE`/`OVERSPEED` means fighting it.)
 - **Side view of the wheel** communicates how badly it's going: straining arm on the
   lever, sweat, sparks, hydraulic fluid spraying from connections, a CA-CHUNK on
   first engagement, subtle **motion blur** at high speed to signal "this is special."
