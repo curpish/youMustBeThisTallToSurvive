@@ -1,11 +1,14 @@
-[gd_scene load_steps=8 format=3 uid="uid://cq7m3bi8s6dni"]
+[gd_scene format=3 uid="uid://cq7m3bi8s6dni"]
 
 [ext_resource type="PackedScene" uid="uid://dnvhw5fh45cn1" path="res://assets/blender_imports/stage_one/ferris_scene.glb" id="1_ferris_scene"]
 [ext_resource type="Script" uid="uid://bvmtwi0psbm61" path="res://scripts/levels/stage_one/stage_one.gd" id="1_stage_one_script"]
-[ext_resource type="Script" path="res://scripts/levels/stage_one/stage_one_controller.gd" id="2_stage_one_controller"]
-[ext_resource type="Script" path="res://scripts/levels/stage_one/stage_one_music.gd" id="3_stage_one_music"]
-[ext_resource type="AudioStream" uid="uid://c1vrm71iftiy2" path="res://assets/audio/music/song_1_loop_by_trine.wav" id="4_song_1_loop"]
-[ext_resource type="Script" path="res://scripts/levels/stage_one/intro_orbit_camera.gd" id="6_intro_orbit_camera"]
+[ext_resource type="Script" uid="uid://b2by1dt726j7b" path="res://scripts/levels/stage_one/stage_one_controller.gd" id="2_stage_one_controller"]
+[ext_resource type="AudioStream" uid="uid://d0ih4yqk2dqrp" path="res://assets/audio/music/0068a Weird Birb Menu Option A.ogg" id="3_cllmc"]
+[ext_resource type="Script" uid="uid://bc5waqevws0jv" path="res://scripts/levels/stage_one/stage_one_music.gd" id="3_stage_one_music"]
+[ext_resource type="Script" uid="uid://ipia8e6khgi4" path="res://scripts/levels/stage_one/intro_orbit_camera.gd" id="6_intro_orbit_camera"]
+[ext_resource type="AudioStream" uid="uid://xquek0iapx5f" path="res://assets/audio/world/ambience/ambience.ogg" id="7_83ouw"]
+[ext_resource type="Script" uid="uid://diiicxsdkyfdr" path="res://scripts/levels/stage_one/audio_dan_the_operator.gd" id="8_xdgbt"]
+[ext_resource type="Script" uid="uid://cxfhuralc01rm" path="res://scripts/levels/stage_one/debug_dan_buttons.gd" id="9_dandbg"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_stage_one"]
 sky_top_color = Color(0.13, 0.19, 0.26, 1)
@@ -34,13 +37,8 @@ glow_strength = 0.22
 [node name="StageOne" type="Node3D" unique_id=111061666]
 script = ExtResource("1_stage_one_script")
 
-[node name="StageOneController" type="Node" parent="."]
+[node name="StageOneController" type="Node" parent="." unique_id=1642399366]
 script = ExtResource("2_stage_one_controller")
-
-[node name="BackgroundMusic" type="AudioStreamPlayer" parent="."]
-stream = ExtResource("4_song_1_loop")
-volume_db = -8.0
-script = ExtResource("3_stage_one_music")
 
 [node name="FerrisScene" parent="." unique_id=2007477521 instance=ExtResource("1_ferris_scene")]
 
@@ -64,4 +62,29 @@ transform = Transform3D(-0.14395009, 0.16793153, 0.975232, 0.09341355, 0.9834013
 current = true
 fov = 55.0
 script = ExtResource("6_intro_orbit_camera")
-look_at_target = Vector3(0, 4, 0)
+
+[node name="Audio" type="Node" parent="." unique_id=1097038480]
+
+[node name="BackgroundMusic" type="AudioStreamPlayer" parent="Audio" unique_id=305062660]
+stream = ExtResource("3_cllmc")
+volume_db = -8.0
+pitch_scale = 0.95
+autoplay = true
+bus = &"Music"
+parameters/looping = true
+script = ExtResource("3_stage_one_music")
+
+[node name="AudioAmbience" type="AudioStreamPlayer" parent="Audio" unique_id=2110924645]
+stream = ExtResource("7_83ouw")
+autoplay = true
+bus = &"Ambience"
+parameters/looping = true
+
+[node name="AudioDanTheOperator" type="AudioStreamPlayer" parent="Audio" unique_id=290325199]
+bus = &"Dan"
+script = ExtResource("8_xdgbt")
+
+[node name="TODO_scene_sfx(share_drive)" type="AudioStreamPlayer2D" parent="Audio" unique_id=720024152]
+
+[node name="DebugDanButtons" type="CanvasLayer" parent="." unique_id=290325200]
+script = ExtResource("9_dandbg")

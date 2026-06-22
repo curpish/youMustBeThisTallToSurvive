@@ -15,6 +15,10 @@ run/main_scene="res://scenes/levels/stage_one/stage_one.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 config/icon="res://icon.svg"
 
+[audio]
+
+buses/default_bus_layout="uid://chxg0426rk7x4"
+
 [autoload]
 
 GameOrchestrator="*res://src/autoloads/GameOrchestrator.gd"
@@ -35,6 +39,7 @@ project/assembly_name="You Must Be This Tall to Survive"
 [file_customization]
 
 folder_colors={
+"res://assets/": "blue",
 "res://docs/": "yellow",
 "res://private/": "gray",
 "res://reference/": "orange",

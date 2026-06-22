@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://6djdvx2g0560"
-path="res://.godot/imported/ferris_scene_frayed_rope.png-10f1e6d74c429692245caa46f9b35262.ctex"
+path.s3tc="res://.godot/imported/ferris_scene_frayed_rope.png-10f1e6d74c429692245caa46f9b35262.s3tc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "5d140c44be7269e11e1f8a5cbb49cb75"
@@ -14,11 +15,11 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/blender_imports/stage_one/ferris_scene_frayed_rope.png"
-dest_files=["res://.godot/imported/ferris_scene_frayed_rope.png-10f1e6d74c429692245caa46f9b35262.ctex"]
+dest_files=["res://.godot/imported/ferris_scene_frayed_rope.png-10f1e6d74c429692245caa46f9b35262.s3tc.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
@@ -40,4 +41,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0
