@@ -9,6 +9,9 @@
 [ext_resource type="AudioStream" uid="uid://xquek0iapx5f" path="res://assets/audio/world/ambience/ambience.ogg" id="7_83ouw"]
 [ext_resource type="Script" uid="uid://diiicxsdkyfdr" path="res://scripts/levels/stage_one/audio_dan_the_operator.gd" id="8_xdgbt"]
 [ext_resource type="Script" uid="uid://cxfhuralc01rm" path="res://scripts/levels/stage_one/debug_dan_buttons.gd" id="9_dandbg"]
+[ext_resource type="PackedScene" uid="uid://j6wqndowmtfi" path="res://blender/yam_controlPanel_temp_001.fbx" id="10_yam_panel"]
+[ext_resource type="Texture2D" uid="uid://b3e627ewqk3yc" path="res://assets/ui/hand_idle/hand_idle_sheet.png" id="11_hand_sheet"]
+[ext_resource type="Script" uid="uid://be867h7s6ytgu" path="res://scripts/levels/stage_one/player_hands_overlay.gd" id="12_hands_overlay"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_stage_one"]
 sky_top_color = Color(0.13, 0.19, 0.26, 1)
@@ -41,6 +44,7 @@ script = ExtResource("1_stage_one_script")
 script = ExtResource("2_stage_one_controller")
 
 [node name="FerrisScene" parent="." unique_id=2007477521 instance=ExtResource("1_ferris_scene")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3661175, 0)
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=441656920]
 environment = SubResource("Environment_stage_one")
@@ -58,10 +62,13 @@ light_energy = 0.38
 omni_range = 20.0
 
 [node name="Camera3D" type="Camera3D" parent="." unique_id=1002648311]
-transform = Transform3D(-0.14395009, 0.16793153, 0.975232, 0.09341355, 0.98340136, -0.15554985, -0.98516613, 0.06870846, -0.1572478, 26.97052, 4.0016613, 1.3335543)
+transform = Transform3D(-0.14395009, 0.16793153, 0.975232, 0.09341355, 0.98340136, -0.15554985, -0.98516613, 0.06870846, -0.1572478, 43.057457, 4.0016613, 1.3335543)
 current = true
 fov = 55.0
 script = ExtResource("6_intro_orbit_camera")
+
+[node name="OperatorControlPanel" parent="." unique_id=932911297 instance=ExtResource("10_yam_panel")]
+transform = Transform3D(0.0043374808, -0.11581332, 1.0054953, 0.10260032, 1.0990835, 0.10425701, -0.95272046, 0.11783521, 0.015805375, 39.743595, 1.7100306, 1.6832534)
 
 [node name="Audio" type="Node" parent="." unique_id=1097038480]
 
@@ -85,6 +92,14 @@ bus = &"Dan"
 script = ExtResource("8_xdgbt")
 
 [node name="TODO_scene_sfx(share_drive)" type="AudioStreamPlayer2D" parent="Audio" unique_id=720024152]
+
+[node name="PlayerHandsOverlay" type="CanvasLayer" parent="." unique_id=1527399760]
+layer = 8
+script = ExtResource("12_hands_overlay")
+hand_sheet = ExtResource("11_hand_sheet")
+
+[node name="Hands" type="Sprite2D" parent="PlayerHandsOverlay" unique_id=466571]
+visible = false
 
 [node name="DebugDanButtons" type="CanvasLayer" parent="." unique_id=290325200]
 script = ExtResource("9_dandbg")

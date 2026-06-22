@@ -1,5 +1,8 @@
 extends Camera3D
 
+# Other stuff waits on this so the player can't mess with controls during the intro.
+signal intro_finished
+
 @export var play_intro := true
 @export var intro_duration := 8.0
 @export var orbit_turns := 0.65
@@ -24,6 +27,7 @@ func _ready() -> void:
 
 	if not play_intro:
 		_done = true
+		intro_finished.emit()
 		return
 
 	_update_intro_camera(0.0)
@@ -39,6 +43,7 @@ func _process(delta: float) -> void:
 	if progress >= 1.0:
 		global_transform = _final_transform
 		_done = true
+		intro_finished.emit()
 
 func _update_intro_camera(progress: float) -> void:
 	var settle_at := clampf(settle_start, 0.05, 0.95)
