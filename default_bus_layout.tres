@@ -24,6 +24,10 @@ resource_name = "StereoEnhance"
 pan_pullout = 1.74
 surround = 0.76
 
+[sub_resource type="AudioEffectHighPassFilter" id="AudioEffectHighPassFilter_j3pel"]
+resource_name = "HighPassFilter"
+cutoff_hz = 97.0
+
 [resource]
 bus/0/effect/0/effect = SubResource("AudioEffectLimiter_j3pel")
 bus/0/effect/0/enabled = true
@@ -57,3 +61,5 @@ bus/4/mute = false
 bus/4/bypass_fx = false
 bus/4/volume_db = -1.519247
 bus/4/send = &"Master"
+bus/4/effect/0/effect = SubResource("AudioEffectHighPassFilter_j3pel")
+bus/4/effect/0/enabled = true

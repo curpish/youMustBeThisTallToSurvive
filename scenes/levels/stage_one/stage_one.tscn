@@ -7,7 +7,8 @@
 [ext_resource type="Script" uid="uid://bc5waqevws0jv" path="res://scripts/levels/stage_one/stage_one_music.gd" id="3_stage_one_music"]
 [ext_resource type="Script" uid="uid://ipia8e6khgi4" path="res://scripts/levels/stage_one/intro_orbit_camera.gd" id="6_intro_orbit_camera"]
 [ext_resource type="AudioStream" uid="uid://xquek0iapx5f" path="res://assets/audio/world/ambience/ambience.ogg" id="7_83ouw"]
-[ext_resource type="Script" uid="uid://diiicxsdkyfdr" path="res://scenes/levels/stage_one/audio_dan_the_operator.gd" id="8_xdgbt"]
+[ext_resource type="Script" uid="uid://diiicxsdkyfdr" path="res://scripts/levels/stage_one/audio_dan_the_operator.gd" id="8_xdgbt"]
+[ext_resource type="Script" uid="uid://cxfhuralc01rm" path="res://scripts/levels/stage_one/debug_dan_buttons.gd" id="9_dandbg"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_stage_one"]
 sky_top_color = Color(0.13, 0.19, 0.26, 1)
@@ -82,3 +83,8 @@ parameters/looping = true
 [node name="AudioDanTheOperator" type="AudioStreamPlayer" parent="Audio" unique_id=290325199]
 bus = &"Dan"
 script = ExtResource("8_xdgbt")
+
+[node name="TODO_scene_sfx(share_drive)" type="AudioStreamPlayer2D" parent="Audio" unique_id=720024152]
+
+[node name="DebugDanButtons" type="CanvasLayer" parent="." unique_id=290325200]
+script = ExtResource("9_dandbg")
