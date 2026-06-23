@@ -1,5 +1,8 @@
 extends Camera3D
 
+# Other stuff waits on this so the player can't mess with controls during the intro.
+signal intro_finished
+
 @export var play_intro := true
 @export var intro_duration := 8.0
 @export var orbit_turns := 0.65
@@ -15,6 +18,15 @@ var _final_angle := 0.0
 var _settle_transform := Transform3D.IDENTITY
 var _settle_ready := false
 var _done := false
+var _spectacle_active := false
+var _spectacle_time := 0.0
+var _spectacle_start := Transform3D.IDENTITY
+var _spectacle_target_a: Node3D
+var _spectacle_target_b: Node3D
+
+const SPECTACLE_FOLLOW_TIME := 2.0
+const SPECTACLE_HOLD_TIME := 0.8
+const SPECTACLE_RETURN_TIME := 1.35
 
 func _ready() -> void:
 	_final_transform = global_transform
@@ -24,11 +36,16 @@ func _ready() -> void:
 
 	if not play_intro:
 		_done = true
+		intro_finished.emit()
 		return
 
 	_update_intro_camera(0.0)
 
 func _process(delta: float) -> void:
+	if _spectacle_active:
+		_update_spectacle_camera(delta)
+		return
+
 	if _done:
 		return
 
@@ -39,6 +56,7 @@ func _process(delta: float) -> void:
 	if progress >= 1.0:
 		global_transform = _final_transform
 		_done = true
+		intro_finished.emit()
 
 func _update_intro_camera(progress: float) -> void:
 	var settle_at := clampf(settle_start, 0.05, 0.95)
@@ -73,3 +91,49 @@ func _blend_transforms(from_transform: Transform3D, to_transform: Transform3D, w
 
 func _smoother_step(value: float) -> float:
 	return value * value * value * (value * (value * 6.0 - 15.0) + 10.0)
+
+func watch_fling(target_a: Node3D, target_b: Node3D = null) -> void:
+	if not _done:
+		return
+
+	_spectacle_active = true
+	_spectacle_time = 0.0
+	_spectacle_start = global_transform
+	_spectacle_target_a = target_a
+	_spectacle_target_b = target_b
+
+func _update_spectacle_camera(delta: float) -> void:
+	_spectacle_time += delta
+	var total_time := SPECTACLE_FOLLOW_TIME + SPECTACLE_HOLD_TIME + SPECTACLE_RETURN_TIME
+	if _spectacle_time >= total_time:
+		global_transform = _final_transform
+		_spectacle_active = false
+		RideState.set_controls_locked(false)
+		return
+
+	if _spectacle_time <= SPECTACLE_FOLLOW_TIME + SPECTACLE_HOLD_TIME:
+		var follow_weight := _smoother_step(clampf(_spectacle_time / SPECTACLE_FOLLOW_TIME, 0.0, 1.0))
+		global_transform = _blend_transforms(_spectacle_start, _get_spectacle_transform(), follow_weight)
+		return
+
+	var return_progress := (_spectacle_time - SPECTACLE_FOLLOW_TIME - SPECTACLE_HOLD_TIME) / SPECTACLE_RETURN_TIME
+	global_transform = _blend_transforms(_get_spectacle_transform(), _final_transform, _smoother_step(return_progress))
+
+func _get_spectacle_transform() -> Transform3D:
+	var target := _get_spectacle_target()
+	var final_offset := _final_transform.origin - look_at_target
+	var camera_position := target + final_offset * 0.72 + Vector3(0.0, 2.2, 0.0)
+	return Transform3D(Basis.IDENTITY, camera_position).looking_at(target + Vector3.UP * 0.8, Vector3.UP)
+
+func _get_spectacle_target() -> Vector3:
+	var target := Vector3.ZERO
+	var count := 0
+	if is_instance_valid(_spectacle_target_a):
+		target += _spectacle_target_a.global_position
+		count += 1
+	if is_instance_valid(_spectacle_target_b):
+		target += _spectacle_target_b.global_position
+		count += 1
+	if count <= 0:
+		return look_at_target
+	return target / float(count)
