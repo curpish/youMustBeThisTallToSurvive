@@ -28,6 +28,11 @@ surround = 0.76
 resource_name = "HighPassFilter"
 cutoff_hz = 97.0
 
+[sub_resource type="AudioEffectLimiter" id="AudioEffectLimiter_g28q7"]
+resource_name = "Limiter"
+ceiling_db = -4.0
+threshold_db = -6.0
+
 [resource]
 bus/0/effect/0/effect = SubResource("AudioEffectLimiter_j3pel")
 bus/0/effect/0/enabled = true
@@ -63,3 +68,17 @@ bus/4/volume_db = -1.519247
 bus/4/send = &"Master"
 bus/4/effect/0/effect = SubResource("AudioEffectHighPassFilter_j3pel")
 bus/4/effect/0/enabled = true
+bus/5/name = &"Ride"
+bus/5/solo = false
+bus/5/mute = false
+bus/5/bypass_fx = false
+bus/5/volume_db = 0.0
+bus/5/send = &"Master"
+bus/5/effect/0/effect = SubResource("AudioEffectLimiter_g28q7")
+bus/5/effect/0/enabled = true
+bus/6/name = &"Screams"
+bus/6/solo = false
+bus/6/mute = false
+bus/6/bypass_fx = false
+bus/6/volume_db = 0.0
+bus/6/send = &"Master"

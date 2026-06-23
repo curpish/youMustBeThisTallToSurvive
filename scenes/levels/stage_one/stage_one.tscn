@@ -5,12 +5,22 @@
 [ext_resource type="Script" uid="uid://cmk74tyophr7c" path="res://scripts/levels/stage_one/stage_one_controller.gd" id="2_stage_one_controller"]
 [ext_resource type="AudioStream" uid="uid://d0ih4yqk2dqrp" path="res://assets/audio/music/0068a Weird Birb Menu Option A.ogg" id="3_cllmc"]
 [ext_resource type="Script" uid="uid://bc5waqevws0jv" path="res://scripts/levels/stage_one/stage_one_music.gd" id="3_stage_one_music"]
+[ext_resource type="AudioStream" uid="uid://li8o5pmw1dlm" path="res://assets/audio/world/ferris/wheel_running.ogg" id="4_vmt56"]
+[ext_resource type="AudioStream" uid="uid://chqjkv3g5fey4" path="res://assets/audio/world/ferris/wheel_squeak2.ogg" id="5_7jc7t"]
+[ext_resource type="AudioStream" uid="uid://deoevnfo37e6t" path="res://assets/audio/world/ferris/wheel_squeak3.ogg" id="6_6jl4m"]
 [ext_resource type="Script" uid="uid://ipia8e6khgi4" path="res://scripts/levels/stage_one/intro_orbit_camera.gd" id="6_intro_orbit_camera"]
 [ext_resource type="AudioStream" uid="uid://xquek0iapx5f" path="res://assets/audio/world/ambience/ambience.ogg" id="7_83ouw"]
+[ext_resource type="AudioStream" uid="uid://cso6g7tf08f5o" path="res://assets/audio/world/ferris/wheel_squeak.ogg" id="7_i05uf"]
+[ext_resource type="AudioStream" uid="uid://cbew4ns3p3neu" path="res://assets/audio/world/ferris/fling1.ogg" id="8_5e18x"]
 [ext_resource type="Script" uid="uid://diiicxsdkyfdr" path="res://scripts/levels/stage_one/audio_dan_the_operator.gd" id="8_xdgbt"]
 [ext_resource type="Script" uid="uid://cxfhuralc01rm" path="res://scripts/levels/stage_one/debug_dan_buttons.gd" id="9_dandbg"]
+[ext_resource type="AudioStream" uid="uid://cu7ejup5lhivq" path="res://assets/audio/world/ferris/fling2.ogg" id="9_jkjsa"]
 [ext_resource type="Script" uid="uid://d3v86e1d82phq" path="res://scripts/levels/stage_one/debug_ride_controls.gd" id="10_dbgride"]
 [ext_resource type="Theme" uid="uid://2mg680wmdyr" path="res://src/resources/debug_default_theme.tres" id="11_if3gm"]
+[ext_resource type="AudioStream" uid="uid://bdxknp5x1a5c7" path="res://assets/audio/world/guests/scream1.ogg" id="15_5e18x"]
+[ext_resource type="AudioStream" uid="uid://d2dac4v1tsy1k" path="res://assets/audio/world/guests/scream2.ogg" id="16_jkjsa"]
+[ext_resource type="AudioStream" uid="uid://m1tmhono28wo" path="res://assets/audio/world/guests/scream3.ogg" id="17_2yn73"]
+[ext_resource type="AudioStream" uid="uid://cb5b482yc3od5" path="res://assets/audio/world/guests/crowd_cheer.ogg" id="18_8g4sv"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_stage_one"]
 sky_top_color = Color(0.13, 0.19, 0.26, 1)
@@ -35,6 +45,36 @@ tonemap_exposure = 1.03
 glow_enabled = true
 glow_intensity = 0.045
 glow_strength = 0.22
+
+[sub_resource type="AudioStreamRandomizer" id="AudioStreamRandomizer_nfkyc"]
+random_pitch = 1.1892071
+random_volume_offset_db = 2.0
+streams_count = 3
+stream_0/stream = ExtResource("5_7jc7t")
+stream_1/stream = ExtResource("6_6jl4m")
+stream_2/stream = ExtResource("7_i05uf")
+
+[sub_resource type="AudioStreamRandomizer" id="AudioStreamRandomizer_qcsmn"]
+random_pitch = 1.122462
+random_volume_offset_db = 1.0
+streams_count = 2
+stream_0/stream = ExtResource("8_5e18x")
+stream_1/stream = ExtResource("9_jkjsa")
+
+[sub_resource type="AudioStreamRandomizer" id="AudioStreamRandomizer_rjf6a"]
+playback_mode = 1
+random_pitch = 1.1892071
+random_volume_offset_db = 2.0
+streams_count = 3
+stream_0/stream = ExtResource("15_5e18x")
+stream_1/stream = ExtResource("16_jkjsa")
+stream_2/stream = ExtResource("17_2yn73")
+
+[sub_resource type="AudioStreamRandomizer" id="AudioStreamRandomizer_7ih6x"]
+random_pitch = 1.1892071
+random_volume_offset_db = 2.0
+streams_count = 1
+stream_0/stream = ExtResource("18_8g4sv")
 
 [node name="StageOne" type="Node3D" unique_id=111061666]
 script = ExtResource("1_stage_one_script")
@@ -86,7 +126,66 @@ parameters/looping = true
 bus = &"Dan"
 script = ExtResource("8_xdgbt")
 
-[node name="TODO_scene_sfx(share_drive)" type="AudioStreamPlayer2D" parent="Audio" unique_id=720024152]
+[node name="ferrisRide" type="Node" parent="Audio" unique_id=1303203542]
+
+[node name="wheel_running" type="AudioStreamPlayer" parent="Audio/ferrisRide" unique_id=673736007]
+stream = ExtResource("4_vmt56")
+
+[node name="squeaks" type="AudioStreamPlayer" parent="Audio/ferrisRide" unique_id=1849649579]
+stream = SubResource("AudioStreamRandomizer_nfkyc")
+volume_db = -6.0
+pitch_scale = 1.1
+max_polyphony = 4
+bus = &"Ride"
+
+[node name="fling_gondola" type="AudioStreamPlayer" parent="Audio/ferrisRide" unique_id=302492363]
+stream = SubResource("AudioStreamRandomizer_qcsmn")
+volume_db = -6.0
+pitch_scale = 1.24
+bus = &"Ride"
+
+[node name="controlPanel" type="Node" parent="Audio" unique_id=1986688622]
+
+[node name="button" type="AudioStreamPlayer" parent="Audio/controlPanel" unique_id=721701771]
+stream = SubResource("AudioStreamRandomizer_rjf6a")
+volume_db = -12.0
+pitch_scale = 1.2
+max_polyphony = 2
+
+[node name="big_stop" type="AudioStreamPlayer" parent="Audio/controlPanel" unique_id=390231769]
+stream = SubResource("AudioStreamRandomizer_rjf6a")
+volume_db = -8.0
+pitch_scale = 1.1
+
+[node name="lever" type="AudioStreamPlayer" parent="Audio/controlPanel" unique_id=532810755]
+stream = SubResource("AudioStreamRandomizer_rjf6a")
+volume_db = -8.0
+pitch_scale = 1.2
+max_polyphony = 2
+
+[node name="governor_in" type="AudioStreamPlayer" parent="Audio/controlPanel" unique_id=375415327]
+stream = SubResource("AudioStreamRandomizer_rjf6a")
+volume_db = -8.0
+pitch_scale = 1.1
+
+[node name="governor_out" type="AudioStreamPlayer" parent="Audio/controlPanel" unique_id=1711289189]
+stream = SubResource("AudioStreamRandomizer_rjf6a")
+volume_db = -8.0
+pitch_scale = 1.1
+
+[node name="guests" type="Node" parent="Audio" unique_id=1859688818]
+
+[node name="scream_fling" type="AudioStreamPlayer" parent="Audio/guests" unique_id=1656822354]
+stream = SubResource("AudioStreamRandomizer_rjf6a")
+volume_db = -14.0
+pitch_scale = 1.1
+bus = &"Screams"
+
+[node name="crowd_cheer" type="AudioStreamPlayer" parent="Audio/guests" unique_id=1421224961]
+stream = SubResource("AudioStreamRandomizer_7ih6x")
+volume_db = -8.0
+pitch_scale = 1.3
+bus = &"Ambience"
 
 [node name="Debug" type="CanvasLayer" parent="." unique_id=290325200 node_paths=PackedStringArray("dan")]
 script = ExtResource("9_dandbg")
