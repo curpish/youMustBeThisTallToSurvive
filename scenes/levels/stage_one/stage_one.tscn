@@ -17,6 +17,8 @@
 [ext_resource type="AudioStream" uid="uid://cu7ejup5lhivq" path="res://assets/audio/world/ferris/fling2.ogg" id="9_jkjsa"]
 [ext_resource type="Script" uid="uid://d3v86e1d82phq" path="res://scripts/levels/stage_one/debug_ride_controls.gd" id="10_dbgride"]
 [ext_resource type="Theme" uid="uid://2mg680wmdyr" path="res://src/resources/debug_default_theme.tres" id="11_if3gm"]
+[ext_resource type="Script" uid="uid://dxysj2432ongm" path="res://scripts/levels/stage_one/ferris_ride_audio.gd" id="12_fraud"]
+[ext_resource type="Script" uid="uid://bvp6okschg5r4" path="res://scripts/levels/stage_one/guests_audio.gd" id="13_guests"]
 [ext_resource type="AudioStream" uid="uid://bdxknp5x1a5c7" path="res://assets/audio/world/guests/scream1.ogg" id="15_5e18x"]
 [ext_resource type="AudioStream" uid="uid://d2dac4v1tsy1k" path="res://assets/audio/world/guests/scream2.ogg" id="16_jkjsa"]
 [ext_resource type="AudioStream" uid="uid://m1tmhono28wo" path="res://assets/audio/world/guests/scream3.ogg" id="17_2yn73"]
@@ -126,14 +128,18 @@ parameters/looping = true
 bus = &"Dan"
 script = ExtResource("8_xdgbt")
 
-[node name="ferrisRide" type="Node" parent="Audio" unique_id=1303203542]
+[node name="ferrisRide" type="Node" parent="Audio" unique_id=1303203542 node_paths=PackedStringArray("wheel_running", "squeaks", "fling_gondola")]
+script = ExtResource("12_fraud")
+wheel_running = NodePath("wheel_running")
+squeaks = NodePath("squeaks")
+fling_gondola = NodePath("fling_gondola")
 
 [node name="wheel_running" type="AudioStreamPlayer" parent="Audio/ferrisRide" unique_id=673736007]
 stream = ExtResource("4_vmt56")
 
 [node name="squeaks" type="AudioStreamPlayer" parent="Audio/ferrisRide" unique_id=1849649579]
 stream = SubResource("AudioStreamRandomizer_nfkyc")
-volume_db = -6.0
+volume_db = -8.0
 pitch_scale = 1.1
 max_polyphony = 4
 bus = &"Ride"
@@ -173,7 +179,10 @@ stream = SubResource("AudioStreamRandomizer_rjf6a")
 volume_db = -8.0
 pitch_scale = 1.1
 
-[node name="guests" type="Node" parent="Audio" unique_id=1859688818]
+[node name="guests" type="Node" parent="Audio" unique_id=1859688818 node_paths=PackedStringArray("scream_fling", "crowd_cheer")]
+script = ExtResource("13_guests")
+scream_fling = NodePath("scream_fling")
+crowd_cheer = NodePath("crowd_cheer")
 
 [node name="scream_fling" type="AudioStreamPlayer" parent="Audio/guests" unique_id=1656822354]
 stream = SubResource("AudioStreamRandomizer_rjf6a")
@@ -183,7 +192,7 @@ bus = &"Screams"
 
 [node name="crowd_cheer" type="AudioStreamPlayer" parent="Audio/guests" unique_id=1421224961]
 stream = SubResource("AudioStreamRandomizer_7ih6x")
-volume_db = -8.0
+volume_db = -10.0
 pitch_scale = 1.3
 bus = &"Ambience"
 
