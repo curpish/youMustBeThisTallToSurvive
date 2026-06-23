@@ -1,7 +1,9 @@
 extends Node3D
 
-# Negative spins it backwards
-@export var wheel_speed_degrees_per_second: float = -6.0
+# The wheel no longer owns its speed; it reads the shared spin model
+# (RideState.wheel_angle). This is only the spin direction along the hub axis.
+# Negative keeps the original "spins backwards" look.
+@export var spin_direction: float = -1.0
 
 @export var gondola_orbit_radius: float = 7.2
 @export var gondola_hang_offset: float = 2.6
@@ -30,16 +32,20 @@ var _basket_basis := Basis.IDENTITY
 var _rider_basis := Basis.IDENTITY
 var _rider_offset_from_basket := Vector3.ZERO
 var _hanger_bars: Array[MeshInstance3D] = []
+var _wheel_rest_basis := Basis.IDENTITY
 
 func _ready() -> void:
 	_setup_ferris_wheel()
 
-func _process(delta: float) -> void:
+func _process(_delta: float) -> void:
 	if _wheel == null or _basket == null:
 		return
 
-	var spin_delta := deg_to_rad(wheel_speed_degrees_per_second) * delta
-	_wheel.rotate_x(spin_delta)
+	# Display the shared spin model. RideState.wheel_angle is the accumulated
+	# rotation in radians; we apply it around the hub's X axis from the rest
+	# pose. Pre-multiplying matches the old rotate_x accumulation exactly.
+	var angle := spin_direction * RideState.wheel_angle
+	_wheel.basis = Basis(Vector3.RIGHT, angle) * _wheel_rest_basis
 
 	_update_gondola()
 
@@ -51,6 +57,8 @@ func _setup_ferris_wheel() -> void:
 	if _wheel == null or _basket == null:
 		push_warning("StageOne could not find the ferris wheel mesh; animation is disabled.")
 		return
+
+	_wheel_rest_basis = _wheel.basis
 
 	var socket_world_position := _wheel.global_position + Vector3(0.0, 0.0, gondola_orbit_radius)
 	_socket_local_position = _wheel.to_local(socket_world_position)

@@ -2,13 +2,15 @@
 
 [ext_resource type="PackedScene" uid="uid://dnvhw5fh45cn1" path="res://assets/blender_imports/stage_one/ferris_scene.glb" id="1_ferris_scene"]
 [ext_resource type="Script" uid="uid://bvmtwi0psbm61" path="res://scripts/levels/stage_one/stage_one.gd" id="1_stage_one_script"]
-[ext_resource type="Script" uid="uid://b2by1dt726j7b" path="res://scripts/levels/stage_one/stage_one_controller.gd" id="2_stage_one_controller"]
+[ext_resource type="Script" uid="uid://cmk74tyophr7c" path="res://scripts/levels/stage_one/stage_one_controller.gd" id="2_stage_one_controller"]
 [ext_resource type="AudioStream" uid="uid://d0ih4yqk2dqrp" path="res://assets/audio/music/0068a Weird Birb Menu Option A.ogg" id="3_cllmc"]
 [ext_resource type="Script" uid="uid://bc5waqevws0jv" path="res://scripts/levels/stage_one/stage_one_music.gd" id="3_stage_one_music"]
 [ext_resource type="Script" uid="uid://ipia8e6khgi4" path="res://scripts/levels/stage_one/intro_orbit_camera.gd" id="6_intro_orbit_camera"]
 [ext_resource type="AudioStream" uid="uid://xquek0iapx5f" path="res://assets/audio/world/ambience/ambience.ogg" id="7_83ouw"]
 [ext_resource type="Script" uid="uid://diiicxsdkyfdr" path="res://scripts/levels/stage_one/audio_dan_the_operator.gd" id="8_xdgbt"]
 [ext_resource type="Script" uid="uid://cxfhuralc01rm" path="res://scripts/levels/stage_one/debug_dan_buttons.gd" id="9_dandbg"]
+[ext_resource type="Script" uid="uid://d3v86e1d82phq" path="res://scripts/levels/stage_one/debug_ride_controls.gd" id="10_dbgride"]
+[ext_resource type="Theme" uid="uid://2mg680wmdyr" path="res://src/resources/debug_default_theme.tres" id="11_if3gm"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_stage_one"]
 sky_top_color = Color(0.13, 0.19, 0.26, 1)
@@ -86,5 +88,273 @@ script = ExtResource("8_xdgbt")
 
 [node name="TODO_scene_sfx(share_drive)" type="AudioStreamPlayer2D" parent="Audio" unique_id=720024152]
 
-[node name="DebugDanButtons" type="CanvasLayer" parent="." unique_id=290325200]
+[node name="Debug" type="CanvasLayer" parent="." unique_id=290325200 node_paths=PackedStringArray("dan")]
 script = ExtResource("9_dandbg")
+dan = NodePath("../Audio/AudioDanTheOperator")
+
+[node name="DebugRideControls" type="Control" parent="Debug" unique_id=1234588752 node_paths=PackedStringArray("speed_bands", "band_strip", "governor_button", "big_stop_button", "shudder_label", "estop_label", "severity_label", "fault_cluster")]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("10_dbgride")
+speed_bands = NodePath("vboxSpeedBands/SpeedBands")
+band_strip = NodePath("vboxSpeedBands/BandStrip")
+governor_button = NodePath("vboxGovernor/Button")
+big_stop_button = NodePath("vboxBigStop/Button")
+shudder_label = NodePath("../extraReadOuts/Shudder")
+estop_label = NodePath("../extraReadOuts/EStop")
+severity_label = NodePath("../extraReadOuts/Severity")
+fault_cluster = NodePath("hboxFaultCodeCluster")
+
+[node name="vboxGovernor" type="VBoxContainer" parent="Debug/DebugRideControls" unique_id=534184205]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.051000003
+anchor_top = 0.78000003
+anchor_right = 0.29900002
+anchor_bottom = 0.92200005
+offset_left = -0.9200058
+offset_top = -0.4000244
+offset_right = 0.9199219
+offset_bottom = 0.2399292
+theme_override_constants/separation = 26
+alignment = 1
+
+[node name="Label" type="Label" parent="Debug/DebugRideControls/vboxGovernor" unique_id=1973984398]
+layout_mode = 2
+theme = ExtResource("11_if3gm")
+text = "GOVERNOR"
+horizontal_alignment = 1
+
+[node name="Button" type="Button" parent="Debug/DebugRideControls/vboxGovernor" unique_id=875855516]
+layout_mode = 2
+theme = ExtResource("11_if3gm")
+text = "( SPACE )"
+
+[node name="hboxFaultCodeCluster" type="HBoxContainer" parent="Debug/DebugRideControls" unique_id=1532588061]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.057000004
+anchor_top = 0.48900002
+anchor_right = 0.3
+anchor_bottom = 0.71400005
+offset_left = -0.44001007
+offset_top = -0.11999512
+offset_bottom = -0.12005615
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="vboxButton_Q" type="VBoxContainer" parent="Debug/DebugRideControls/hboxFaultCodeCluster" unique_id=167177253]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="Debug/DebugRideControls/hboxFaultCodeCluster/vboxButton_Q" unique_id=1522987594]
+layout_mode = 2
+theme = ExtResource("11_if3gm")
+theme_override_font_sizes/font_size = 48
+text = "Q"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Button" type="Button" parent="Debug/DebugRideControls/hboxFaultCodeCluster/vboxButton_Q" unique_id=1391539058]
+custom_minimum_size = Vector2(80, 80)
+layout_mode = 2
+
+[node name="vboxButton_W" type="VBoxContainer" parent="Debug/DebugRideControls/hboxFaultCodeCluster" unique_id=852621179]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="Debug/DebugRideControls/hboxFaultCodeCluster/vboxButton_W" unique_id=123555572]
+layout_mode = 2
+theme = ExtResource("11_if3gm")
+theme_override_font_sizes/font_size = 48
+text = "W"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Button" type="Button" parent="Debug/DebugRideControls/hboxFaultCodeCluster/vboxButton_W" unique_id=1470196410]
+custom_minimum_size = Vector2(80, 80)
+layout_mode = 2
+
+[node name="vboxButton_E" type="VBoxContainer" parent="Debug/DebugRideControls/hboxFaultCodeCluster" unique_id=1532442815]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="Debug/DebugRideControls/hboxFaultCodeCluster/vboxButton_E" unique_id=242490226]
+layout_mode = 2
+theme = ExtResource("11_if3gm")
+theme_override_font_sizes/font_size = 48
+text = "E"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Button" type="Button" parent="Debug/DebugRideControls/hboxFaultCodeCluster/vboxButton_E" unique_id=2021445482]
+custom_minimum_size = Vector2(80, 80)
+layout_mode = 2
+
+[node name="vboxButton_R" type="VBoxContainer" parent="Debug/DebugRideControls/hboxFaultCodeCluster" unique_id=1414778651]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="Debug/DebugRideControls/hboxFaultCodeCluster/vboxButton_R" unique_id=2067636404]
+layout_mode = 2
+theme = ExtResource("11_if3gm")
+theme_override_font_sizes/font_size = 48
+text = "R"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Button" type="Button" parent="Debug/DebugRideControls/hboxFaultCodeCluster/vboxButton_R" unique_id=1587316498]
+custom_minimum_size = Vector2(80, 80)
+layout_mode = 2
+
+[node name="vboxSpeedBands" type="VBoxContainer" parent="Debug/DebugRideControls" unique_id=732106285]
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 0.021000002
+anchor_bottom = 0.037
+offset_left = 1001.0
+offset_top = 619.0
+offset_right = 1737.68
+offset_bottom = 873.04
+
+[node name="SpeedBands" type="HSlider" parent="Debug/DebugRideControls/vboxSpeedBands" unique_id=505224047]
+layout_mode = 2
+max_value = 4.0
+tick_count = 5
+ticks_on_borders = true
+ticks_position = 2
+
+[node name="BandStrip" type="Control" parent="Debug/DebugRideControls/vboxSpeedBands" unique_id=505224048]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+
+[node name="Band0" type="Label" parent="Debug/DebugRideControls/vboxSpeedBands/BandStrip" unique_id=505224050]
+layout_mode = 1
+anchors_preset = -1
+anchor_bottom = 1.0
+offset_left = -90.0
+offset_right = 90.0
+grow_horizontal = 2
+theme = ExtResource("11_if3gm")
+theme_override_font_sizes/font_size = 20
+text = "STATIC"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Band1" type="Label" parent="Debug/DebugRideControls/vboxSpeedBands/BandStrip" unique_id=505224051]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.25
+anchor_right = 0.25
+anchor_bottom = 1.0
+offset_left = -90.0
+offset_right = 90.0
+grow_horizontal = 2
+theme = ExtResource("11_if3gm")
+theme_override_font_sizes/font_size = 20
+text = "JOG"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Band2" type="Label" parent="Debug/DebugRideControls/vboxSpeedBands/BandStrip" unique_id=505224052]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.5
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -90.0
+offset_right = 90.0
+grow_horizontal = 2
+theme = ExtResource("11_if3gm")
+theme_override_font_sizes/font_size = 20
+text = "NOMINAL"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Band3" type="Label" parent="Debug/DebugRideControls/vboxSpeedBands/BandStrip" unique_id=505224053]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.75
+anchor_right = 0.75
+anchor_bottom = 1.0
+offset_left = -90.0
+offset_right = 90.0
+grow_horizontal = 2
+theme = ExtResource("11_if3gm")
+theme_override_font_sizes/font_size = 20
+text = "EXCEEDANCE"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Band4" type="Label" parent="Debug/DebugRideControls/vboxSpeedBands/BandStrip" unique_id=505224054]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -90.0
+offset_right = 90.0
+grow_horizontal = 2
+theme = ExtResource("11_if3gm")
+theme_override_font_sizes/font_size = 20
+text = "OVERSPEED"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="vboxBigStop" type="VBoxContainer" parent="Debug/DebugRideControls" unique_id=1949027089]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.5
+anchor_top = 0.702
+anchor_right = 0.679
+anchor_bottom = 0.95600003
+offset_left = -5.0
+offset_top = -0.16003418
+offset_right = -0.8400879
+offset_bottom = 0.52001953
+
+[node name="Label" type="Label" parent="Debug/DebugRideControls/vboxBigStop" unique_id=1884122161]
+layout_mode = 2
+theme = ExtResource("11_if3gm")
+text = "BIG STOP"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Button" type="Button" parent="Debug/DebugRideControls/vboxBigStop" unique_id=550141057]
+custom_minimum_size = Vector2(120, 120)
+custom_maximum_size = Vector2(120, 120)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+text = "( CLICK )"
+
+[node name="extraReadOuts" type="HBoxContainer" parent="Debug" unique_id=1547686380]
+anchors_preset = -1
+anchor_left = 0.31
+anchor_top = 0.86100006
+anchor_right = 0.998
+anchor_bottom = 0.98800004
+offset_left = 0.7999878
+offset_top = 0.11993408
+offset_right = 0.8399658
+offset_bottom = -0.040039063
+theme_override_constants/separation = 40
+alignment = 1
+
+[node name="Shudder" type="Label" parent="Debug/extraReadOuts" unique_id=1547686381]
+layout_mode = 2
+theme = ExtResource("11_if3gm")
+text = "SHUDDER  0.00"
+vertical_alignment = 1
+
+[node name="EStop" type="Label" parent="Debug/extraReadOuts" unique_id=1547686382]
+layout_mode = 2
+theme = ExtResource("11_if3gm")
+text = "E-STOP  OFF"
+vertical_alignment = 1
+
+[node name="Severity" type="Label" parent="Debug/extraReadOuts" unique_id=1547686383]
+layout_mode = 2
+theme = ExtResource("11_if3gm")
+text = "SEVERITY  0.00"
+vertical_alignment = 1

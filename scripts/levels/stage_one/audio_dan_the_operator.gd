@@ -60,6 +60,7 @@ func _ready() -> void:
 	Events.overheated.connect(func(): bark(Bucket.DISMAY, 3))
 	Events.fling.connect(func(): bark(Bucket.RELIEF, 2))
 	Events.governor_overridden.connect(func(): bark(Bucket.EFFORT_HEAVY, 2))
+	Events.big_stop.connect(func(): bark(Bucket.EFFORT_HEAVY, 1))
 	_idle_timer = randf_range(IDLE_MIN, IDLE_MAX)
 
 
