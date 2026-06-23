@@ -6,5 +6,6 @@ signal fling
 signal rider_lost
 signal overheated
 signal governor_overridden
+signal big_stop
 signal day_ended
 signal ride_closed
