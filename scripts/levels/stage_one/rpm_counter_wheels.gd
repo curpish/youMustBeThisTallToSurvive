@@ -23,6 +23,14 @@ const BAND_TARGETS: Array[float] = [0.0, 65.0, 150.0, 280.0, 390.0]
 @export var handle_touch_hit_padding := 48.0
 @export var handle_glow_color := Color(0.95, 0.82, 0.28, 0.55)
 @export var handle_glow_energy := 1.8
+@export var big_stop_button_name := &"bigStop_button_geo"
+@export var big_stop_hit_padding := 28.0
+@export var big_stop_touch_hit_padding := 46.0
+@export var big_stop_press_offset := Vector3(0.0, -0.055, 0.0)
+@export var big_stop_press_in_time := 0.055
+@export var big_stop_pop_back_time := 0.16
+@export var big_stop_glow_color := Color(1.0, 0.22, 0.1, 0.58)
+@export var big_stop_glow_energy := 1.9
 
 var _digits: Array[Node3D] = []
 var _rest_bases: Array[Basis] = []
@@ -34,11 +42,18 @@ var _speed_handle_glow: StandardMaterial3D
 var _speed_handle_hovered := false
 var _dragging_speed_handle := false
 var _active_touch_index := -1
+var _big_stop_button: Node3D
+var _big_stop_button_rest_position := Vector3.ZERO
+var _big_stop_meshes: Array[MeshInstance3D] = []
+var _big_stop_glow: StandardMaterial3D
+var _big_stop_hovered := false
+var _big_stop_tween: Tween
 
 
 func _ready() -> void:
 	_collect_digits()
 	_setup_speed_handle()
+	_setup_big_stop_button()
 	_update_counter()
 	_update_speed_handle()
 
@@ -47,18 +62,24 @@ func _process(_delta: float) -> void:
 	_update_counter()
 	_update_speed_handle()
 	_update_speed_handle_hover()
+	_update_big_stop_hover()
+	_update_cursor_shape()
 
 
 func _input(event: InputEvent) -> void:
-	if _speed_handle == null or RideState.controls_locked:
+	if RideState.controls_locked:
 		return
 
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 		if event.pressed:
-			_dragging_speed_handle = _is_pointer_on_speed_handle(event.position, handle_hit_padding)
-			if _dragging_speed_handle:
-				_set_speed_from_screen_position(event.position)
+			if _is_pointer_on_big_stop(event.position, big_stop_hit_padding):
+				_press_big_stop()
 				get_viewport().set_input_as_handled()
+			elif _speed_handle != null:
+				_dragging_speed_handle = _is_pointer_on_speed_handle(event.position, handle_hit_padding)
+				if _dragging_speed_handle:
+					_set_speed_from_screen_position(event.position)
+					get_viewport().set_input_as_handled()
 		else:
 			_dragging_speed_handle = false
 	elif event is InputEventMouseMotion and _dragging_speed_handle:
@@ -66,7 +87,11 @@ func _input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 	elif event is InputEventScreenTouch:
 		if event.pressed and _active_touch_index == -1:
-			if _is_pointer_on_speed_handle(event.position, handle_touch_hit_padding):
+			if _is_pointer_on_big_stop(event.position, big_stop_touch_hit_padding):
+				_active_touch_index = event.index
+				_press_big_stop()
+				get_viewport().set_input_as_handled()
+			elif _speed_handle != null and _is_pointer_on_speed_handle(event.position, handle_touch_hit_padding):
 				_active_touch_index = event.index
 				_dragging_speed_handle = true
 				_set_speed_from_screen_position(event.position)
@@ -76,7 +101,8 @@ func _input(event: InputEvent) -> void:
 			_dragging_speed_handle = false
 			get_viewport().set_input_as_handled()
 	elif event is InputEventScreenDrag and event.index == _active_touch_index:
-		_set_speed_from_screen_position(event.position)
+		if _dragging_speed_handle:
+			_set_speed_from_screen_position(event.position)
 		get_viewport().set_input_as_handled()
 
 
@@ -104,6 +130,17 @@ func _setup_speed_handle() -> void:
 	_speed_handle_rest_basis = _speed_handle.basis
 	_collect_meshes(_speed_handle, _speed_handle_meshes)
 	_setup_speed_handle_glow()
+
+
+func _setup_big_stop_button() -> void:
+	_big_stop_button = find_child(String(big_stop_button_name), true, false) as Node3D
+	if _big_stop_button == null:
+		push_warning("Big Stop button '%s' was not found." % big_stop_button_name)
+		return
+
+	_big_stop_button_rest_position = _big_stop_button.position
+	_collect_meshes(_big_stop_button, _big_stop_meshes)
+	_setup_big_stop_glow()
 
 
 func _update_counter() -> void:
@@ -147,7 +184,6 @@ func _update_speed_handle_hover() -> void:
 		if _speed_handle_hovered:
 			_speed_handle_hovered = false
 			_set_speed_handle_glow(false)
-			Input.set_default_cursor_shape(Input.CURSOR_ARROW)
 		return
 
 	var hovered := _dragging_speed_handle
@@ -159,7 +195,35 @@ func _update_speed_handle_hover() -> void:
 
 	_speed_handle_hovered = hovered
 	_set_speed_handle_glow(hovered)
-	Input.set_default_cursor_shape(Input.CURSOR_POINTING_HAND if hovered else Input.CURSOR_ARROW)
+
+
+func _update_big_stop_hover() -> void:
+	if _big_stop_button == null:
+		return
+	if RideState.controls_locked:
+		if _big_stop_hovered:
+			_big_stop_hovered = false
+			_set_big_stop_glow(false)
+		return
+
+	var hovered := _active_touch_index == -1 and _is_pointer_on_big_stop(
+		get_viewport().get_mouse_position(),
+		big_stop_hit_padding
+	)
+	if hovered == _big_stop_hovered:
+		return
+
+	_big_stop_hovered = hovered
+	_set_big_stop_glow(hovered)
+
+
+func _update_cursor_shape() -> void:
+	if RideState.controls_locked:
+		Input.set_default_cursor_shape(Input.CURSOR_ARROW)
+		return
+
+	var hovering_interactable := _speed_handle_hovered or _big_stop_hovered or _dragging_speed_handle
+	Input.set_default_cursor_shape(Input.CURSOR_POINTING_HAND if hovering_interactable else Input.CURSOR_ARROW)
 
 
 func _is_pointer_on_speed_handle(screen_position: Vector2, padding: float) -> bool:
@@ -167,9 +231,47 @@ func _is_pointer_on_speed_handle(screen_position: Vector2, padding: float) -> bo
 	if camera == null or camera.is_position_behind(_speed_handle.global_position):
 		return false
 
-	var bounds := _speed_handle_screen_rect(camera)
+	var bounds := _node_screen_rect(_speed_handle, camera)
 	bounds = bounds.grow(padding)
 	return bounds.has_point(screen_position)
+
+
+func _is_pointer_on_big_stop(screen_position: Vector2, padding: float) -> bool:
+	if _big_stop_button == null:
+		return false
+
+	var camera := get_viewport().get_camera_3d()
+	if camera == null or camera.is_position_behind(_big_stop_button.global_position):
+		return false
+
+	var bounds := _node_screen_rect(_big_stop_button, camera)
+	bounds = bounds.grow(padding)
+	return bounds.has_point(screen_position)
+
+
+func _press_big_stop() -> void:
+	if _big_stop_button == null:
+		return
+
+	RideState.big_stop()
+	if _big_stop_tween != null:
+		_big_stop_tween.kill()
+
+	_big_stop_tween = create_tween()
+	_big_stop_tween.set_trans(Tween.TRANS_QUAD)
+	_big_stop_tween.set_ease(Tween.EASE_OUT)
+	_big_stop_tween.tween_property(
+		_big_stop_button,
+		"position",
+		_big_stop_button_rest_position + big_stop_press_offset,
+		big_stop_press_in_time
+	)
+	_big_stop_tween.tween_property(
+		_big_stop_button,
+		"position",
+		_big_stop_button_rest_position,
+		big_stop_pop_back_time
+	).set_trans(Tween.TRANS_BACK)
 
 
 func _set_speed_from_screen_position(screen_position: Vector2) -> void:
@@ -190,10 +292,10 @@ func _speed_dial_screen_position(camera: Camera3D) -> Vector2:
 	return camera.unproject_position(dial_node.global_position)
 
 
-func _speed_handle_screen_rect(camera: Camera3D) -> Rect2:
-	var mesh_instance := _speed_handle as MeshInstance3D
+func _node_screen_rect(node: Node3D, camera: Camera3D) -> Rect2:
+	var mesh_instance := node as MeshInstance3D
 	if mesh_instance == null:
-		var screen_position := camera.unproject_position(_speed_handle.global_position)
+		var screen_position := camera.unproject_position(node.global_position)
 		return Rect2(screen_position - Vector2(24.0, 24.0), Vector2(48.0, 48.0))
 
 	var aabb := mesh_instance.get_aabb()
@@ -210,7 +312,7 @@ func _speed_handle_screen_rect(camera: Camera3D) -> Rect2:
 				max_point = max_point.max(screen_point)
 
 	if min_point.x == INF or max_point.x == -INF:
-		var fallback_position := camera.unproject_position(_speed_handle.global_position)
+		var fallback_position := camera.unproject_position(node.global_position)
 		return Rect2(fallback_position - Vector2(24.0, 24.0), Vector2(48.0, 48.0))
 
 	var rect := Rect2(min_point, max_point - min_point)
@@ -241,9 +343,24 @@ func _setup_speed_handle_glow() -> void:
 	_speed_handle_glow.emission_energy_multiplier = handle_glow_energy
 
 
+func _setup_big_stop_glow() -> void:
+	_big_stop_glow = StandardMaterial3D.new()
+	_big_stop_glow.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	_big_stop_glow.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	_big_stop_glow.albedo_color = big_stop_glow_color
+	_big_stop_glow.emission_enabled = true
+	_big_stop_glow.emission = Color(big_stop_glow_color.r, big_stop_glow_color.g, big_stop_glow_color.b)
+	_big_stop_glow.emission_energy_multiplier = big_stop_glow_energy
+
+
 func _set_speed_handle_glow(enabled: bool) -> void:
 	for mesh in _speed_handle_meshes:
 		mesh.material_overlay = _speed_handle_glow if enabled else null
+
+
+func _set_big_stop_glow(enabled: bool) -> void:
+	for mesh in _big_stop_meshes:
+		mesh.material_overlay = _big_stop_glow if enabled else null
 
 
 func _target_rpm_to_unit(target_rpm: float) -> float:

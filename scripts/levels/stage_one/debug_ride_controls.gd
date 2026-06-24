@@ -41,6 +41,7 @@ const FAULT_MODE_COLORS: Dictionary = {
 @export var hands_overlay_path: NodePath = NodePath("../../PlayerHandsOverlay")
 @export var show_debug_visuals := true
 @export var enable_debug_speed_slider := false
+@export var show_debug_big_stop_button := false
 
 var _band_labels: Array[Label] = []
 var _fault_buttons: Dictionary = {}  # action name -> Button
@@ -111,7 +112,7 @@ func _set_controls_enabled(enabled: bool) -> void:
 		speed_bands.editable = enabled
 	if governor_button != null:
 		governor_button.disabled = not enabled
-	if big_stop_button != null:
+	if big_stop_button != null and show_debug_big_stop_button:
 		big_stop_button.disabled = not enabled
 	for button in _mode_buttons:
 		button.disabled = not enabled
@@ -152,6 +153,13 @@ func _setup_big_stop() -> void:
 		return
 
 	big_stop_button.focus_mode = Control.FOCUS_NONE  # so SPACE can't trip it
+	if not show_debug_big_stop_button:
+		var big_stop_box := big_stop_button.get_parent()
+		if big_stop_box is Control:
+			big_stop_box.visible = false
+		big_stop_button.disabled = true
+		return
+
 	big_stop_button.pressed.connect(func() -> void:
 		RideState.big_stop()
 	)
