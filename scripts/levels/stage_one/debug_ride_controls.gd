@@ -270,7 +270,10 @@ func _refresh_governor_button() -> void:
 		governor_button.text = "WAIT"
 		governor_button.disabled = true
 		return
-	if RideState.governor_override_time_left > 0.0:
+	if RideState.governor_prime_time_left > 0.0:
+		governor_button.text = "ARMING  %.1f" % RideState.governor_prime_time_left
+		governor_button.disabled = true
+	elif RideState.governor_override_time_left > 0.0:
 		governor_button.text = "OVERRIDE  %.1f" % RideState.governor_override_time_left
 		governor_button.disabled = true
 	elif RideState.governor_cooldown_left > 0.0:
