@@ -265,6 +265,7 @@ bus = &"Ambience"
 layer = 8
 script = ExtResource("14_hands_overlay")
 hand_sheet = ExtResource("13_hand_sheet")
+reach_min_anchor = Vector2(0, 0.52)
 
 [node name="Hands" type="Sprite2D" parent="PlayerHandsOverlay" unique_id=466571]
 visible = false
