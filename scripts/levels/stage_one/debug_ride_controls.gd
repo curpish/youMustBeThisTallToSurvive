@@ -40,6 +40,7 @@ const FAULT_MODE_COLORS: Dictionary = {
 @export var fault_cluster: HBoxContainer  # holds the Q/W/E/R fault buttons
 @export var hands_overlay_path: NodePath = NodePath("../../PlayerHandsOverlay")
 @export var show_debug_visuals := true
+@export var enable_debug_speed_slider := false
 
 var _band_labels: Array[Label] = []
 var _fault_buttons: Dictionary = {}  # action name -> Button
@@ -50,7 +51,10 @@ var _mode: int = 1
 var _controls_ready := false
 
 func _ready() -> void:
-	_setup_speed_bands()
+	if enable_debug_speed_slider:
+		_setup_speed_bands()
+	else:
+		_hide_speed_bands()
 	_setup_governor()
 	_setup_big_stop()
 	_setup_faults()
@@ -72,7 +76,8 @@ func _process(_delta: float) -> void:
 	# SPACE jams the governor override (button click does the same).
 	if Input.is_action_just_pressed("space"):
 		RideState.request_governor_override()
-	_sync_lever_to_target()
+	if enable_debug_speed_slider:
+		_sync_lever_to_target()
 	_update_fault_buttons()
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -102,7 +107,7 @@ func _enable_controls() -> void:
 
 func _set_controls_enabled(enabled: bool) -> void:
 	enabled = enabled and not RideState.controls_locked
-	if speed_bands != null:
+	if speed_bands != null and enable_debug_speed_slider:
 		speed_bands.editable = enabled
 	if governor_button != null:
 		governor_button.disabled = not enabled
@@ -369,6 +374,17 @@ func _on_controls_locked_changed(_locked: bool) -> void:
 func _apply_debug_visibility() -> void:
 	# Keep this visible until the final in-world controls are ready.
 	modulate.a = 1.0 if show_debug_visuals else 0.0
+	_hide_speed_bands()
 	var readouts := get_node_or_null("../extraReadOuts")
 	if readouts != null:
 		readouts.visible = show_debug_visuals
+
+
+func _hide_speed_bands() -> void:
+	if enable_debug_speed_slider:
+		return
+	var speed_box := get_node_or_null("vboxSpeedBands")
+	if speed_box != null:
+		speed_box.visible = false
+	if speed_bands != null:
+		speed_bands.editable = false

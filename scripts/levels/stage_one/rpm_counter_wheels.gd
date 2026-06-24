@@ -1,0 +1,265 @@
+extends Node3D
+
+const DIGIT_STEP := TAU / 10.0
+const MAX_DISPLAY_VALUE := 99999.0
+const BAND_TARGETS: Array[float] = [0.0, 65.0, 150.0, 280.0, 390.0]
+
+@export var counter_digit_names: Array[StringName] = [
+	&"rpmCounter_ten_thousands_digit",
+	&"rpmCounter_thousands_digit",
+	&"rpmCounter_hundreds_digit",
+	&"rpmCounter_tens_digit",
+	&"rpmCounter_single_digit",
+]
+@export var spin_axis := Vector3.RIGHT
+@export var spin_direction := 1.0
+@export var speed_handle_name := &"speedControl_handle_geo"
+@export var speed_dial_name := &"speedControl_face"
+@export var speed_handle_axis := Vector3.FORWARD
+@export_range(-180.0, 180.0, 1.0, "radians_as_degrees") var speed_stop_angle := 0.0
+@export_range(-180.0, 180.0, 1.0, "radians_as_degrees") var speed_fast_angle := deg_to_rad(180.0)
+@export var drag_screen_radius := 140.0
+@export var handle_hit_padding := 30.0
+@export var handle_touch_hit_padding := 48.0
+@export var handle_glow_color := Color(0.95, 0.82, 0.28, 0.55)
+@export var handle_glow_energy := 1.8
+
+var _digits: Array[Node3D] = []
+var _rest_bases: Array[Basis] = []
+var _speed_handle: Node3D
+var _speed_dial: Node3D
+var _speed_handle_rest_basis := Basis.IDENTITY
+var _speed_handle_meshes: Array[MeshInstance3D] = []
+var _speed_handle_glow: StandardMaterial3D
+var _speed_handle_hovered := false
+var _dragging_speed_handle := false
+var _active_touch_index := -1
+
+
+func _ready() -> void:
+	_collect_digits()
+	_setup_speed_handle()
+	_update_counter()
+	_update_speed_handle()
+
+
+func _process(_delta: float) -> void:
+	_update_counter()
+	_update_speed_handle()
+	_update_speed_handle_hover()
+
+
+func _input(event: InputEvent) -> void:
+	if _speed_handle == null or RideState.controls_locked:
+		return
+
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+		if event.pressed:
+			_dragging_speed_handle = _is_pointer_on_speed_handle(event.position, handle_hit_padding)
+			if _dragging_speed_handle:
+				_set_speed_from_screen_position(event.position)
+				get_viewport().set_input_as_handled()
+		else:
+			_dragging_speed_handle = false
+	elif event is InputEventMouseMotion and _dragging_speed_handle:
+		_set_speed_from_screen_position(event.position)
+		get_viewport().set_input_as_handled()
+	elif event is InputEventScreenTouch:
+		if event.pressed and _active_touch_index == -1:
+			if _is_pointer_on_speed_handle(event.position, handle_touch_hit_padding):
+				_active_touch_index = event.index
+				_dragging_speed_handle = true
+				_set_speed_from_screen_position(event.position)
+				get_viewport().set_input_as_handled()
+		elif not event.pressed and event.index == _active_touch_index:
+			_active_touch_index = -1
+			_dragging_speed_handle = false
+			get_viewport().set_input_as_handled()
+	elif event is InputEventScreenDrag and event.index == _active_touch_index:
+		_set_speed_from_screen_position(event.position)
+		get_viewport().set_input_as_handled()
+
+
+func _collect_digits() -> void:
+	_digits.clear()
+	_rest_bases.clear()
+
+	for digit_name in counter_digit_names:
+		var digit := find_child(String(digit_name), true, false) as Node3D
+		if digit == null:
+			push_warning("RPM counter digit wheel '%s' was not found." % digit_name)
+			continue
+
+		_digits.append(digit)
+		_rest_bases.append(digit.basis)
+
+
+func _setup_speed_handle() -> void:
+	_speed_handle = find_child(String(speed_handle_name), true, false) as Node3D
+	if _speed_handle == null:
+		push_warning("Speed control handle '%s' was not found." % speed_handle_name)
+		return
+
+	_speed_dial = find_child(String(speed_dial_name), true, false) as Node3D
+	_speed_handle_rest_basis = _speed_handle.basis
+	_collect_meshes(_speed_handle, _speed_handle_meshes)
+	_setup_speed_handle_glow()
+
+
+func _update_counter() -> void:
+	if _digits.is_empty():
+		return
+
+	var value := clampf(absf(RideState.angular_velocity), 0.0, MAX_DISPLAY_VALUE)
+	var axis := spin_axis.normalized()
+	if axis.length_squared() <= 0.0:
+		axis = Vector3.RIGHT
+
+	for i in _digits.size():
+		var place_index := _digits.size() - i - 1
+		var divisor := pow(10.0, place_index)
+		var digit_value: float
+		if place_index == 0:
+			digit_value = fmod(value, 10.0)
+		else:
+			digit_value = float(int(floor(value / divisor)) % 10)
+		var angle := spin_direction * digit_value * DIGIT_STEP
+		_digits[i].basis = Basis(axis, angle) * _rest_bases[i]
+
+
+func _update_speed_handle() -> void:
+	if _speed_handle == null:
+		return
+
+	var t := _target_rpm_to_unit(RideState.target_rpm)
+	var angle := lerpf(speed_stop_angle, speed_fast_angle, t)
+	var axis := speed_handle_axis.normalized()
+	if axis.length_squared() <= 0.0:
+		axis = Vector3.FORWARD
+
+	_speed_handle.basis = Basis(axis, angle) * _speed_handle_rest_basis
+
+
+func _update_speed_handle_hover() -> void:
+	if _speed_handle == null:
+		return
+	if RideState.controls_locked:
+		if _speed_handle_hovered:
+			_speed_handle_hovered = false
+			_set_speed_handle_glow(false)
+			Input.set_default_cursor_shape(Input.CURSOR_ARROW)
+		return
+
+	var hovered := _dragging_speed_handle
+	if _active_touch_index == -1:
+		hovered = hovered or _is_pointer_on_speed_handle(get_viewport().get_mouse_position(), handle_hit_padding)
+
+	if hovered == _speed_handle_hovered:
+		return
+
+	_speed_handle_hovered = hovered
+	_set_speed_handle_glow(hovered)
+	Input.set_default_cursor_shape(Input.CURSOR_POINTING_HAND if hovered else Input.CURSOR_ARROW)
+
+
+func _is_pointer_on_speed_handle(screen_position: Vector2, padding: float) -> bool:
+	var camera := get_viewport().get_camera_3d()
+	if camera == null or camera.is_position_behind(_speed_handle.global_position):
+		return false
+
+	var bounds := _speed_handle_screen_rect(camera)
+	bounds = bounds.grow(padding)
+	return bounds.has_point(screen_position)
+
+
+func _set_speed_from_screen_position(screen_position: Vector2) -> void:
+	var camera := get_viewport().get_camera_3d()
+	if camera == null:
+		return
+
+	var dial_position := _speed_dial_screen_position(camera)
+	var radius := maxf(drag_screen_radius, 1.0)
+	var t := clampf((screen_position.x - (dial_position.x - radius)) / (radius * 2.0), 0.0, 1.0)
+	RideState.target_rpm = BAND_TARGETS[_unit_to_band_index(t)]
+
+
+func _speed_dial_screen_position(camera: Camera3D) -> Vector2:
+	var dial_node := _speed_dial if _speed_dial != null else _speed_handle
+	if camera.is_position_behind(dial_node.global_position):
+		return get_viewport().get_mouse_position()
+	return camera.unproject_position(dial_node.global_position)
+
+
+func _speed_handle_screen_rect(camera: Camera3D) -> Rect2:
+	var mesh_instance := _speed_handle as MeshInstance3D
+	if mesh_instance == null:
+		var screen_position := camera.unproject_position(_speed_handle.global_position)
+		return Rect2(screen_position - Vector2(24.0, 24.0), Vector2(48.0, 48.0))
+
+	var aabb := mesh_instance.get_aabb()
+	var min_point := Vector2(INF, INF)
+	var max_point := Vector2(-INF, -INF)
+	for x in [aabb.position.x, aabb.end.x]:
+		for y in [aabb.position.y, aabb.end.y]:
+			for z in [aabb.position.z, aabb.end.z]:
+				var world_point := mesh_instance.global_transform * Vector3(x, y, z)
+				if camera.is_position_behind(world_point):
+					continue
+				var screen_point := camera.unproject_position(world_point)
+				min_point = min_point.min(screen_point)
+				max_point = max_point.max(screen_point)
+
+	if min_point.x == INF or max_point.x == -INF:
+		var fallback_position := camera.unproject_position(_speed_handle.global_position)
+		return Rect2(fallback_position - Vector2(24.0, 24.0), Vector2(48.0, 48.0))
+
+	var rect := Rect2(min_point, max_point - min_point)
+	var minimum_size := Vector2(56.0, 56.0)
+	if rect.size.x < minimum_size.x:
+		rect.position.x -= (minimum_size.x - rect.size.x) * 0.5
+		rect.size.x = minimum_size.x
+	if rect.size.y < minimum_size.y:
+		rect.position.y -= (minimum_size.y - rect.size.y) * 0.5
+		rect.size.y = minimum_size.y
+	return rect
+
+
+func _collect_meshes(node: Node, meshes: Array[MeshInstance3D]) -> void:
+	if node is MeshInstance3D:
+		meshes.append(node)
+	for child in node.get_children():
+		_collect_meshes(child, meshes)
+
+
+func _setup_speed_handle_glow() -> void:
+	_speed_handle_glow = StandardMaterial3D.new()
+	_speed_handle_glow.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	_speed_handle_glow.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	_speed_handle_glow.albedo_color = handle_glow_color
+	_speed_handle_glow.emission_enabled = true
+	_speed_handle_glow.emission = Color(handle_glow_color.r, handle_glow_color.g, handle_glow_color.b)
+	_speed_handle_glow.emission_energy_multiplier = handle_glow_energy
+
+
+func _set_speed_handle_glow(enabled: bool) -> void:
+	for mesh in _speed_handle_meshes:
+		mesh.material_overlay = _speed_handle_glow if enabled else null
+
+
+func _target_rpm_to_unit(target_rpm: float) -> float:
+	return float(_nearest_band_index(target_rpm)) / float(BAND_TARGETS.size() - 1)
+
+
+func _unit_to_band_index(value: float) -> int:
+	return clampi(roundi(value * float(BAND_TARGETS.size() - 1)), 0, BAND_TARGETS.size() - 1)
+
+
+func _nearest_band_index(target_rpm: float) -> int:
+	var best_index := 0
+	var best_distance := INF
+	for i in BAND_TARGETS.size():
+		var distance := absf(BAND_TARGETS[i] - target_rpm)
+		if distance < best_distance:
+			best_distance = distance
+			best_index = i
+	return best_index

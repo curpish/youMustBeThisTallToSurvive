@@ -24,6 +24,7 @@
 [ext_resource type="Texture2D" uid="uid://b3e627ewqk3yc" path="res://assets/ui/hand_idle/hand_idle_sheet.png" id="13_hand_sheet"]
 [ext_resource type="Script" uid="uid://be867h7s6ytgu" path="res://scripts/levels/stage_one/player_hands_overlay.gd" id="14_hands_overlay"]
 [ext_resource type="Script" uid="uid://s51djswnymry" path="res://scripts/levels/stage_one/control_panel_audio.gd" id="14_panel"]
+[ext_resource type="Script" uid="uid://cpgqqxvsj2xax" path="res://scripts/levels/stage_one/rpm_counter_wheels.gd" id="15_rpmwheels"]
 [ext_resource type="AudioStream" uid="uid://bdxknp5x1a5c7" path="res://assets/audio/world/guests/scream1.ogg" id="15_5e18x"]
 [ext_resource type="AudioStream" uid="uid://c0108m4aubvs3" path="res://assets/audio/world/controls/lever1.ogg" id="15_6jl4m"]
 [ext_resource type="AudioStream" uid="uid://defahdahndd4x" path="res://assets/audio/world/controls/lever2.ogg" id="16_i05uf"]
@@ -162,6 +163,7 @@ script = ExtResource("6_intro_orbit_camera")
 
 [node name="OperatorControlPanel" parent="." unique_id=932911297 instance=ExtResource("12_control_panel")]
 transform = Transform3D(0.0043374808, -0.11581332, 1.0054953, 0.10260032, 1.0990835, 0.10425701, -0.95272046, 0.11783521, 0.015805375, 39.743595, 1.7100306, 1.6832534)
+script = ExtResource("15_rpmwheels")
 
 [node name="Audio" type="Node" parent="." unique_id=1097038480]
 
