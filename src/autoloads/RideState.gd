@@ -20,6 +20,11 @@ const DAMAGE_STOP_BONUS := 28.0
 # window, then re-engages and recharges before it can be jammed again.
 const GOVERNOR_OVERRIDE_DURATION := 10.0  # seconds the governor stays disabled
 const GOVERNOR_COOLDOWN := 20.0  # seconds after release before it can re-trigger
+# Arming delay: the screwdriver takes a beat to pull and reseat in the bypass, so
+# the governor only drops this long after the trigger. The override window opens
+# when it seats, not when triggered.
+const GOVERNOR_PRIME_MIN := 1.0
+const GOVERNOR_PRIME_MAX := 2.0
 
 # Big Stop: slam the oversized button for an emergency stop. The wheel grinds
 # down hard (brake friction/slip), not instant, and shudders by how fast it was
@@ -34,6 +39,7 @@ var is_governed: bool = true
 var target_rpm: float = 0.0
 var angular_velocity: float = 0.0
 var wheel_angle: float = 0.0
+var governor_prime_time_left: float = 0.0  # > 0 while the screwdriver is seating
 var governor_override_time_left: float = 0.0  # > 0 while the override is active
 var governor_cooldown_left: float = 0.0  # > 0 while recharging, can't re-trigger
 var is_emergency_stopping: bool = false  # true while a Big Stop is grinding down
@@ -86,19 +92,23 @@ func _physics_process(delta: float) -> void:
 
 
 func request_governor_override() -> bool:
-	# Called by the SPACE control / future lever. Drops the governor if ready.
+	# Called by the SPACE control / future lever. Arms the bypass; the governor
+	# only actually drops once the screwdriver seats (_update_governor).
 	if controls_locked:
 		return false
 	if not can_override_governor():
 		return false
-	governor_override_time_left = GOVERNOR_OVERRIDE_DURATION
-	is_governed = false
-	Events.governor_overridden.emit()
+	governor_prime_time_left = randf_range(GOVERNOR_PRIME_MIN, GOVERNOR_PRIME_MAX)
+	Events.governor_priming.emit()
 	return true
 
 
 func can_override_governor() -> bool:
-	return governor_override_time_left <= 0.0 and governor_cooldown_left <= 0.0
+	return (
+		governor_prime_time_left <= 0.0
+		and governor_override_time_left <= 0.0
+		and governor_cooldown_left <= 0.0
+	)
 
 
 func big_stop() -> void:
@@ -156,7 +166,15 @@ func _update_shudder(delta: float) -> void:
 
 
 func _update_governor(delta: float) -> void:
-	if governor_override_time_left > 0.0:
+	if governor_prime_time_left > 0.0:
+		governor_prime_time_left -= delta
+		if governor_prime_time_left <= 0.0:
+			# Screwdriver seats in the bypass: governor drops and the window opens.
+			governor_prime_time_left = 0.0
+			is_governed = false
+			governor_override_time_left = GOVERNOR_OVERRIDE_DURATION
+			Events.governor_overridden.emit()
+	elif governor_override_time_left > 0.0:
 		governor_override_time_left -= delta
 		if governor_override_time_left <= 0.0:
 			# Screwdriver pops out: governor re-engages (violent decel follows
@@ -229,6 +247,7 @@ func reset() -> void:
 	angular_velocity = 0.0
 	wheel_angle = 0.0
 	is_governed = true
+	governor_prime_time_left = 0.0
 	governor_override_time_left = 0.0
 	governor_cooldown_left = 0.0
 	is_emergency_stopping = false
