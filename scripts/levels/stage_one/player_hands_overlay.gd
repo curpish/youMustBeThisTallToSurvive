@@ -13,9 +13,17 @@ signal hands_ready
 @export var settle_delay := 0.15
 @export var target_anchor := Vector2(0.82, 0.75)
 @export var start_offset := 240.0
-@export var hand_scale := 2.0
+@export var hand_scale := 2.7
 @export var bottom_padding := 8.0
 @export var rise_overhang := 220.0
+@export var follow_enabled := true
+@export var follow_speed := 36.0
+@export var reach_min_anchor := Vector2(0.0, 0.34)
+@export var reach_max_anchor := Vector2(1.0, 0.98)
+@export var hand_hotspot := Vector2(275.0, 82.0)
+@export var cursor_follow_offset := Vector2(0.0, 0.0)
+@export var right_crop_guard := 16.0
+@export var remove_sheet_white := true
 
 @onready var _hands: Sprite2D = $Hands
 
@@ -23,6 +31,10 @@ var _active := false
 var _ready_to_play := false
 var _rise_time := 0.0
 var _anim_time := 0.0
+var _follow_position := Vector2.ZERO
+var _follow_target := Vector2.ZERO
+var _has_follow_target := false
+var _active_touch_index := -1
 
 func _ready() -> void:
 	_hands.texture = hand_sheet
@@ -30,6 +42,8 @@ func _ready() -> void:
 	_hands.region_enabled = true
 	_hands.visible = false
 	_hands.scale = Vector2.ONE * hand_scale
+	if remove_sheet_white:
+		_hands.material = _build_white_discard_material()
 	_set_frame(0)
 	_place_hands(0.0)
 
@@ -62,19 +76,86 @@ func _show_hands() -> void:
 	_anim_time = 0.0
 	_hands.visible = true
 	_place_hands(0.0)
+	_follow_position = _hands.position
+	_follow_target = _hands.position
+	_has_follow_target = false
 	_set_frame(0)
 
 func _place_hands(progress: float) -> void:
 	var viewport_size := get_viewport().get_visible_rect().size
-	var scaled_height := frame_size.y * hand_scale
 
-	# Keep the bottom covered so the arm doesn't float above the camera edge.
-	var bottom_locked_y := viewport_size.y - bottom_padding - scaled_height * 0.5
-	var lowest_start_y := viewport_size.y + rise_overhang - scaled_height * 0.5
+	var bottom_locked_y := _bottom_locked_y(viewport_size)
+	var lowest_start_y := viewport_size.y + rise_overhang - frame_size.y * hand_scale * 0.5
 	var anchor_y := viewport_size.y * target_anchor.y
 	var target := Vector2(viewport_size.x * target_anchor.x, maxf(anchor_y, bottom_locked_y))
 	var start := Vector2(target.x, minf(target.y + start_offset, lowest_start_y))
-	_hands.position = start.lerp(target, progress)
+	var intro_position := start.lerp(target, progress)
+
+	if not follow_enabled or not _ready_to_play:
+		_hands.position = intro_position
+		_follow_position = intro_position
+		_follow_target = intro_position
+		return
+
+	_update_follow_target(viewport_size)
+	var desired := _follow_target if _has_follow_target else intro_position
+	_follow_position = _follow_position.lerp(desired, 1.0 - exp(-follow_speed * get_process_delta_time()))
+	_hands.position = _constrain_hand_position(_follow_position, viewport_size)
+
+func _input(event: InputEvent) -> void:
+	if event is InputEventScreenTouch:
+		if event.pressed:
+			_active_touch_index = event.index
+		elif event.index == _active_touch_index:
+			_active_touch_index = -1
+	elif event is InputEventScreenDrag and event.index == _active_touch_index:
+		_set_follow_target_from_pointer(event.position, get_viewport().get_visible_rect().size)
+
+func _update_follow_target(viewport_size: Vector2) -> void:
+	if _active_touch_index == -1:
+		_set_follow_target_from_pointer(get_viewport().get_mouse_position(), viewport_size)
+
+func _set_follow_target_from_pointer(pointer_position: Vector2, viewport_size: Vector2) -> void:
+	var reach_rect := _reach_rect(viewport_size)
+	if not reach_rect.has_point(pointer_position):
+		_has_follow_target = false
+		return
+
+	var clamped_pointer := Vector2(
+		clampf(pointer_position.x, reach_rect.position.x, reach_rect.end.x),
+		clampf(pointer_position.y, reach_rect.position.y, reach_rect.end.y)
+	)
+	var frame_center := Vector2(frame_size) * 0.5
+	var hotspot_offset := (hand_hotspot - frame_center) * hand_scale
+	_follow_target = clamped_pointer + cursor_follow_offset - hotspot_offset
+	_has_follow_target = true
+
+func _reach_rect(viewport_size: Vector2) -> Rect2:
+	var min_point := viewport_size * reach_min_anchor
+	var max_point := viewport_size * reach_max_anchor
+	return Rect2(min_point, max_point - min_point)
+
+func _constrain_hand_position(position: Vector2, viewport_size: Vector2) -> Vector2:
+	var half_size := Vector2(frame_size) * hand_scale * 0.5
+	var constrained := position
+
+	constrained.y = maxf(constrained.y, _minimum_reach_y(viewport_size))
+	constrained.x = clampf(
+		constrained.x,
+		-half_size.x + right_crop_guard,
+		viewport_size.x + half_size.x - right_crop_guard
+	)
+	return constrained
+
+func _bottom_locked_y(viewport_size: Vector2) -> float:
+	var scaled_height := frame_size.y * hand_scale
+	return viewport_size.y - bottom_padding - scaled_height * 0.5
+
+func _minimum_reach_y(viewport_size: Vector2) -> float:
+	var frame_center := Vector2(frame_size) * 0.5
+	var hotspot_offset := (hand_hotspot - frame_center) * hand_scale
+	var top_reach_y := viewport_size.y * reach_min_anchor.y - hotspot_offset.y
+	return minf(_bottom_locked_y(viewport_size), top_reach_y)
 
 func _set_frame(frame: int) -> void:
 	# The gif is baked into one sheet because Godot doesn't really want animated gifs here.
@@ -89,3 +170,22 @@ func _set_frame(frame: int) -> void:
 
 func _smooth_step(value: float) -> float:
 	return value * value * (3.0 - 2.0 * value)
+
+func _build_white_discard_material() -> ShaderMaterial:
+	var shader := Shader.new()
+	shader.code = """
+shader_type canvas_item;
+
+uniform float white_cutoff = 0.96;
+
+void fragment() {
+	vec4 color = texture(TEXTURE, UV);
+	if (color.r > white_cutoff && color.g > white_cutoff && color.b > white_cutoff) {
+		discard;
+	}
+	COLOR = color;
+}
+"""
+	var material := ShaderMaterial.new()
+	material.shader = shader
+	return material

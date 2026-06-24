@@ -13,10 +13,14 @@ extends Node3D
 @export var hanger_bar_radius: float = 0.035
 
 # These are RPM now because the wheel follows RideState.
-@export var hot_glow_start_speed: float = 378.0
-@export var hot_glow_full_speed: float = 420.0
-@export var hot_glow_color := Color(0.55, 1.0, 0.08, 1.0)
-@export var hot_glow_light_energy: float = 2.8
+@export var axle_warning_lead_speed: float = 55.0
+@export var axle_sweetspot_width: float = 18.0
+@export var axle_glow_radius: float = 1.18
+@export var axle_glow_camera_offset: float = 0.85
+@export var axle_warning_color := Color(1.0, 0.78, 0.12, 1.0)
+@export var axle_sweetspot_color := Color(0.2, 1.0, 0.18, 1.0)
+@export var axle_danger_color := Color(1.0, 0.14, 0.08, 1.0)
+@export var hot_glow_light_energy: float = 3.6
 @export var spark_start_speed: float = 84.0
 @export var spark_full_speed: float = 420.0
 @export var spark_color := Color(1.0, 0.58, 0.1, 1.0)
@@ -58,9 +62,10 @@ var _flight_ages: Array[float] = []
 var _basket_rest_scales: Array[Vector3] = []
 var _rider_rest_scales: Array[Vector3] = []
 var _wheel_rest_basis := Basis.IDENTITY
-var _wheel_meshes: Array[MeshInstance3D] = []
+var _axle_glow_mesh: MeshInstance3D
 var _hot_glow_material: StandardMaterial3D
 var _hot_glow_light: OmniLight3D
+var _last_axle_glow_state := -1
 var _axle_sparks: GPUParticles3D
 var _spark_process_material: ParticleProcessMaterial
 
@@ -214,25 +219,37 @@ func _create_hanger_bar(bar_name: String, material: Material) -> MeshInstance3D:
 	return bar
 
 func _setup_hot_glow() -> void:
-	_wheel_meshes.clear()
-	_find_wheel_meshes(_wheel)
+	var glow_mesh := SphereMesh.new()
+	glow_mesh.radial_segments = 16
+	glow_mesh.rings = 8
+	glow_mesh.radius = axle_glow_radius
+	glow_mesh.height = axle_glow_radius * 2.0
 
-	# A silly danger glow. It only gets applied once the wheel is near the redline.
 	_hot_glow_material = StandardMaterial3D.new()
 	_hot_glow_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	_hot_glow_material.albedo_color = Color(hot_glow_color.r, hot_glow_color.g, hot_glow_color.b, 0.0)
+	_hot_glow_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	_hot_glow_material.albedo_color = Color(axle_warning_color.r, axle_warning_color.g, axle_warning_color.b, 0.0)
 	_hot_glow_material.emission_enabled = true
-	_hot_glow_material.emission = hot_glow_color
+	_hot_glow_material.emission = axle_warning_color
 	_hot_glow_material.emission_energy_multiplier = 0.0
 	_hot_glow_material.roughness = 0.95
 
+	_axle_glow_mesh = MeshInstance3D.new()
+	_axle_glow_mesh.name = "AxleSpeedGlow"
+	_axle_glow_mesh.mesh = glow_mesh
+	_axle_glow_mesh.material_override = _hot_glow_material
+	_axle_glow_mesh.visible = false
+	add_child(_axle_glow_mesh)
+	_axle_glow_mesh.global_position = _axle_glow_position()
+
 	_hot_glow_light = OmniLight3D.new()
 	_hot_glow_light.name = "WheelHotGlow"
-	_hot_glow_light.light_color = hot_glow_color
+	_hot_glow_light.light_color = axle_warning_color
 	_hot_glow_light.light_energy = 0.0
-	_hot_glow_light.omni_range = gondola_orbit_radius * 2.5
+	_hot_glow_light.shadow_enabled = false
+	_hot_glow_light.omni_range = gondola_orbit_radius * 0.8
 	add_child(_hot_glow_light)
-	_hot_glow_light.global_position = _wheel.global_position
+	_hot_glow_light.global_position = _axle_glow_position()
 
 func _setup_sparks() -> void:
 	# Little angry axle sparks once the player starts pushing the ride too hard.
@@ -272,31 +289,68 @@ func _setup_sparks() -> void:
 	add_child(_axle_sparks)
 	_axle_sparks.global_position = _wheel.global_position
 
-func _find_wheel_meshes(node: Node) -> void:
-	if node is MeshInstance3D:
-		_wheel_meshes.append(node)
-
-	for child in node.get_children():
-		_find_wheel_meshes(child)
-
 func _update_hot_glow() -> void:
-	if _hot_glow_light == null or _hot_glow_material == null:
+	if _axle_glow_mesh == null or _hot_glow_light == null or _hot_glow_material == null:
 		return
 
-	# Below the start speed nothing glows, then it ramps into full bad-idea mode.
-	var heat := inverse_lerp(hot_glow_start_speed, hot_glow_full_speed, absf(RideState.angular_velocity))
-	heat = clampf(heat, 0.0, 1.0)
+	var speed := absf(RideState.angular_velocity)
+	var warning_start := maxf(0.0, basket_fling_speed - axle_warning_lead_speed)
+	var sweetspot_min := basket_fling_speed
+	var sweetspot_max := basket_fling_speed + axle_sweetspot_width
+
+	var state := 0
+	var heat := 0.0
+	if speed >= warning_start and speed < sweetspot_min:
+		state = 1
+		heat = clampf(inverse_lerp(warning_start, sweetspot_min, speed), 0.0, 1.0)
+	elif speed >= sweetspot_min and speed <= sweetspot_max:
+		state = 2
+		heat = 1.0
+	elif speed > sweetspot_max:
+		state = 3
+		heat = clampf(inverse_lerp(sweetspot_max, RideState.rpm_max, speed), 0.65, 1.0)
 
 	var pulse := 0.78 + sin(Time.get_ticks_msec() * 0.018) * 0.22
-	var glow_alpha := heat * 0.42
-	_hot_glow_material.albedo_color = Color(hot_glow_color.r, hot_glow_color.g, hot_glow_color.b, glow_alpha)
-	_hot_glow_material.emission_energy_multiplier = heat * (1.8 + pulse * 1.2)
+	var glow_position := _axle_glow_position()
+	_axle_glow_mesh.global_position = glow_position
+	_hot_glow_light.global_position = glow_position
+	_axle_glow_mesh.visible = state != 0
 
-	for mesh in _wheel_meshes:
-		mesh.material_overlay = _hot_glow_material if heat > 0.0 else null
+	if state != _last_axle_glow_state:
+		_last_axle_glow_state = state
+		var state_color := _axle_glow_color_for_state(state)
+		_hot_glow_material.emission = state_color
+		_hot_glow_light.light_color = state_color
 
-	_hot_glow_light.global_position = _wheel.global_position
+	var color := _axle_glow_color_for_state(state)
+	_hot_glow_material.albedo_color = Color(color.r, color.g, color.b, heat * 0.85)
+	_hot_glow_material.emission_energy_multiplier = heat * (1.4 + pulse * 1.4)
 	_hot_glow_light.light_energy = heat * hot_glow_light_energy * pulse
+
+
+func _axle_glow_position() -> Vector3:
+	var glow_position := _wheel.global_position
+	var camera := get_viewport().get_camera_3d()
+	if camera == null:
+		return glow_position
+
+	var to_camera := camera.global_position - glow_position
+	if to_camera.length_squared() <= 0.001:
+		return glow_position
+
+	return glow_position + to_camera.normalized() * axle_glow_camera_offset
+
+
+func _axle_glow_color_for_state(state: int) -> Color:
+	match state:
+		1:
+			return axle_warning_color
+		2:
+			return axle_sweetspot_color
+		3:
+			return axle_danger_color
+		_:
+			return axle_warning_color
 
 func _update_sparks() -> void:
 	if _axle_sparks == null or _spark_process_material == null:
@@ -395,6 +449,7 @@ func _throw_gondola(index: int) -> void:
 		rider.global_position = basket.global_position + _rider_offset_from_basket
 
 	_start_spectacle_camera(basket, rider)
+	Events.fling.emit()
 	print("BASKET %d LAUNCHED AT %.1f RPM" % [index + 1, RideState.last_stop_severity * RideState.rpm_max])
 
 func _start_spectacle_camera(basket: Node3D, rider: Node3D) -> void:

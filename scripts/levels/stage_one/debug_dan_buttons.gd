@@ -6,9 +6,9 @@ extends CanvasLayer
 @export var dan: AudioStreamPlayer  # dan's audiostreamplayer
 
 func _ready() -> void:
-	# tear down the debug just in case it sneaks into production build somehow
+	# Release web builds still need the tester ride controls that live under this
+	# CanvasLayer. Only skip Dan's throwaway audition buttons.
 	if not OS.is_debug_build():
-		queue_free()
 		return
 	# to the known scene path so the effort/idle buttons can't hit a null Dan.
 	if dan == null:
