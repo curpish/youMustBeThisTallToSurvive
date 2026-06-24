@@ -2,10 +2,10 @@ extends Node
 # Crowd reactions to a fling. The rider screams as they sail (camera follows),
 # then the crowd catches up and cheers a beat later -- the payoff.
 
-const SCREAM_DELAY_MIN := 0.5  # seconds after the fling before the rider screams
-const SCREAM_DELAY_MAX := 1.0
-const CHEER_DELAY_MIN := 1.5  # seconds after the fling before the crowd reacts
-const CHEER_DELAY_MAX := 2.5
+const SCREAM_DELAY_MIN := 0.2  # seconds after the fling before the rider screams
+const SCREAM_DELAY_MAX := 0.4
+const CHEER_DELAY_MIN := 0.5  # seconds after the fling before the crowd reacts
+const CHEER_DELAY_MAX := 1.0
 
 @export var scream_fling: AudioStreamPlayer  # randomizer, the rider in the air
 @export var crowd_cheer: AudioStreamPlayer  # randomizer, the delayed payoff

@@ -449,6 +449,7 @@ func _throw_gondola(index: int) -> void:
 		rider.global_position = basket.global_position + _rider_offset_from_basket
 
 	_start_spectacle_camera(basket, rider)
+	Events.fling.emit()
 	print("BASKET %d LAUNCHED AT %.1f RPM" % [index + 1, RideState.last_stop_severity * RideState.rpm_max])
 
 func _start_spectacle_camera(basket: Node3D, rider: Node3D) -> void:
