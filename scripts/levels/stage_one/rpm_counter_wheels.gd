@@ -31,6 +31,15 @@ const BAND_TARGETS: Array[float] = [0.0, 65.0, 150.0, 280.0, 390.0]
 @export var big_stop_pop_back_time := 0.16
 @export var big_stop_glow_color := Color(1.0, 0.22, 0.1, 0.58)
 @export var big_stop_glow_energy := 1.9
+@export var mode_dial_name := &"dial_dial_geo"
+@export var mode_dial_axis := Vector3.UP
+@export_range(-180.0, 180.0, 1.0, "radians_as_degrees") var mode_one_angle := 0.0
+@export_range(-180.0, 180.0, 1.0, "radians_as_degrees") var mode_two_angle := deg_to_rad(30.0)
+@export_range(-180.0, 180.0, 1.0, "radians_as_degrees") var mode_three_angle := deg_to_rad(90.0)
+@export var mode_dial_hit_padding := 28.0
+@export var mode_dial_touch_hit_padding := 46.0
+@export var mode_dial_glow_color := Color(0.35, 0.95, 1.0, 0.5)
+@export var mode_dial_glow_energy := 1.7
 
 var _digits: Array[Node3D] = []
 var _rest_bases: Array[Basis] = []
@@ -48,21 +57,31 @@ var _big_stop_meshes: Array[MeshInstance3D] = []
 var _big_stop_glow: StandardMaterial3D
 var _big_stop_hovered := false
 var _big_stop_tween: Tween
+var _mode_dial: Node3D
+var _mode_dial_rest_basis := Basis.IDENTITY
+var _mode_dial_meshes: Array[MeshInstance3D] = []
+var _mode_dial_glow: StandardMaterial3D
+var _mode_dial_hovered := false
+var _dragging_mode_dial := false
 
 
 func _ready() -> void:
 	_collect_digits()
 	_setup_speed_handle()
 	_setup_big_stop_button()
+	_setup_mode_dial()
 	_update_counter()
 	_update_speed_handle()
+	_update_mode_dial()
 
 
 func _process(_delta: float) -> void:
 	_update_counter()
 	_update_speed_handle()
+	_update_mode_dial()
 	_update_speed_handle_hover()
 	_update_big_stop_hover()
+	_update_mode_dial_hover()
 	_update_cursor_shape()
 
 
@@ -75,6 +94,10 @@ func _input(event: InputEvent) -> void:
 			if _is_pointer_on_big_stop(event.position, big_stop_hit_padding):
 				_press_big_stop()
 				get_viewport().set_input_as_handled()
+			elif _is_pointer_on_mode_dial(event.position, mode_dial_hit_padding):
+				_dragging_mode_dial = true
+				_set_mode_from_screen_position(event.position)
+				get_viewport().set_input_as_handled()
 			elif _speed_handle != null:
 				_dragging_speed_handle = _is_pointer_on_speed_handle(event.position, handle_hit_padding)
 				if _dragging_speed_handle:
@@ -82,14 +105,23 @@ func _input(event: InputEvent) -> void:
 					get_viewport().set_input_as_handled()
 		else:
 			_dragging_speed_handle = false
+			_dragging_mode_dial = false
 	elif event is InputEventMouseMotion and _dragging_speed_handle:
 		_set_speed_from_screen_position(event.position)
+		get_viewport().set_input_as_handled()
+	elif event is InputEventMouseMotion and _dragging_mode_dial:
+		_set_mode_from_screen_position(event.position)
 		get_viewport().set_input_as_handled()
 	elif event is InputEventScreenTouch:
 		if event.pressed and _active_touch_index == -1:
 			if _is_pointer_on_big_stop(event.position, big_stop_touch_hit_padding):
 				_active_touch_index = event.index
 				_press_big_stop()
+				get_viewport().set_input_as_handled()
+			elif _is_pointer_on_mode_dial(event.position, mode_dial_touch_hit_padding):
+				_active_touch_index = event.index
+				_dragging_mode_dial = true
+				_set_mode_from_screen_position(event.position)
 				get_viewport().set_input_as_handled()
 			elif _speed_handle != null and _is_pointer_on_speed_handle(event.position, handle_touch_hit_padding):
 				_active_touch_index = event.index
@@ -99,10 +131,13 @@ func _input(event: InputEvent) -> void:
 		elif not event.pressed and event.index == _active_touch_index:
 			_active_touch_index = -1
 			_dragging_speed_handle = false
+			_dragging_mode_dial = false
 			get_viewport().set_input_as_handled()
 	elif event is InputEventScreenDrag and event.index == _active_touch_index:
 		if _dragging_speed_handle:
 			_set_speed_from_screen_position(event.position)
+		elif _dragging_mode_dial:
+			_set_mode_from_screen_position(event.position)
 		get_viewport().set_input_as_handled()
 
 
@@ -143,6 +178,17 @@ func _setup_big_stop_button() -> void:
 	_setup_big_stop_glow()
 
 
+func _setup_mode_dial() -> void:
+	_mode_dial = find_child(String(mode_dial_name), true, false) as Node3D
+	if _mode_dial == null:
+		push_warning("Mode select dial '%s' was not found." % mode_dial_name)
+		return
+
+	_mode_dial_rest_basis = _mode_dial.basis
+	_collect_meshes(_mode_dial, _mode_dial_meshes)
+	_setup_mode_dial_glow()
+
+
 func _update_counter() -> void:
 	if _digits.is_empty():
 		return
@@ -175,6 +221,17 @@ func _update_speed_handle() -> void:
 		axis = Vector3.FORWARD
 
 	_speed_handle.basis = Basis(axis, angle) * _speed_handle_rest_basis
+
+
+func _update_mode_dial() -> void:
+	if _mode_dial == null:
+		return
+
+	var axis := mode_dial_axis.normalized()
+	if axis.length_squared() <= 0.0:
+		axis = Vector3.FORWARD
+
+	_mode_dial.basis = _mode_dial_rest_basis * Basis(axis, _mode_angle_for_mode(RideState.selected_mode))
 
 
 func _update_speed_handle_hover() -> void:
@@ -217,12 +274,38 @@ func _update_big_stop_hover() -> void:
 	_set_big_stop_glow(hovered)
 
 
+func _update_mode_dial_hover() -> void:
+	if _mode_dial == null:
+		return
+	if RideState.controls_locked:
+		if _mode_dial_hovered:
+			_mode_dial_hovered = false
+			_set_mode_dial_glow(false)
+		return
+
+	var hovered := _dragging_mode_dial
+	if _active_touch_index == -1:
+		hovered = hovered or _is_pointer_on_mode_dial(get_viewport().get_mouse_position(), mode_dial_hit_padding)
+
+	if hovered == _mode_dial_hovered:
+		return
+
+	_mode_dial_hovered = hovered
+	_set_mode_dial_glow(hovered)
+
+
 func _update_cursor_shape() -> void:
 	if RideState.controls_locked:
 		Input.set_default_cursor_shape(Input.CURSOR_ARROW)
 		return
 
-	var hovering_interactable := _speed_handle_hovered or _big_stop_hovered or _dragging_speed_handle
+	var hovering_interactable := (
+		_speed_handle_hovered
+		or _big_stop_hovered
+		or _mode_dial_hovered
+		or _dragging_speed_handle
+		or _dragging_mode_dial
+	)
 	Input.set_default_cursor_shape(Input.CURSOR_POINTING_HAND if hovering_interactable else Input.CURSOR_ARROW)
 
 
@@ -245,6 +328,19 @@ func _is_pointer_on_big_stop(screen_position: Vector2, padding: float) -> bool:
 		return false
 
 	var bounds := _node_screen_rect(_big_stop_button, camera)
+	bounds = bounds.grow(padding)
+	return bounds.has_point(screen_position)
+
+
+func _is_pointer_on_mode_dial(screen_position: Vector2, padding: float) -> bool:
+	if _mode_dial == null:
+		return false
+
+	var camera := get_viewport().get_camera_3d()
+	if camera == null or camera.is_position_behind(_mode_dial.global_position):
+		return false
+
+	var bounds := _node_screen_rect(_mode_dial, camera)
 	bounds = bounds.grow(padding)
 	return bounds.has_point(screen_position)
 
@@ -272,6 +368,32 @@ func _press_big_stop() -> void:
 		_big_stop_button_rest_position,
 		big_stop_pop_back_time
 	).set_trans(Tween.TRANS_BACK)
+
+
+func _set_mode_from_screen_position(screen_position: Vector2) -> void:
+	var camera := get_viewport().get_camera_3d()
+	if camera == null or _mode_dial == null:
+		return
+
+	var center := camera.unproject_position(_mode_dial.global_position)
+	var vector := screen_position - center
+	if vector.length_squared() <= 16.0:
+		return
+
+	var clock_angle := rad_to_deg(atan2(vector.x, -vector.y))
+	if clock_angle < 0.0:
+		clock_angle += 360.0
+
+	var targets := [300.0, 270.0, 210.0]
+	var best_mode := 1
+	var best_distance := INF
+	for i in targets.size():
+		var distance := absf(angle_difference(deg_to_rad(clock_angle), deg_to_rad(targets[i])))
+		if distance < best_distance:
+			best_distance = distance
+			best_mode = i + 1
+
+	RideState.set_selected_mode(best_mode)
 
 
 func _set_speed_from_screen_position(screen_position: Vector2) -> void:
@@ -353,6 +475,16 @@ func _setup_big_stop_glow() -> void:
 	_big_stop_glow.emission_energy_multiplier = big_stop_glow_energy
 
 
+func _setup_mode_dial_glow() -> void:
+	_mode_dial_glow = StandardMaterial3D.new()
+	_mode_dial_glow.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	_mode_dial_glow.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	_mode_dial_glow.albedo_color = mode_dial_glow_color
+	_mode_dial_glow.emission_enabled = true
+	_mode_dial_glow.emission = Color(mode_dial_glow_color.r, mode_dial_glow_color.g, mode_dial_glow_color.b)
+	_mode_dial_glow.emission_energy_multiplier = mode_dial_glow_energy
+
+
 func _set_speed_handle_glow(enabled: bool) -> void:
 	for mesh in _speed_handle_meshes:
 		mesh.material_overlay = _speed_handle_glow if enabled else null
@@ -361,6 +493,23 @@ func _set_speed_handle_glow(enabled: bool) -> void:
 func _set_big_stop_glow(enabled: bool) -> void:
 	for mesh in _big_stop_meshes:
 		mesh.material_overlay = _big_stop_glow if enabled else null
+
+
+func _set_mode_dial_glow(enabled: bool) -> void:
+	for mesh in _mode_dial_meshes:
+		mesh.material_overlay = _mode_dial_glow if enabled else null
+
+
+func _mode_angle_for_mode(mode: int) -> float:
+	match clampi(mode, 1, 3):
+		1:
+			return mode_one_angle
+		2:
+			return mode_two_angle
+		3:
+			return mode_three_angle
+		_:
+			return mode_one_angle
 
 
 func _target_rpm_to_unit(target_rpm: float) -> float:

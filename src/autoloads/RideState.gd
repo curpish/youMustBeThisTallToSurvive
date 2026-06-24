@@ -50,6 +50,7 @@ var damage: float = 0.0
 var damage_max: float = 100.0
 var last_stop_damage: float = 0.0
 var controls_locked: bool = false
+var selected_mode: int = 1
 
 var _fault_pressure: float = 0.0
 var _fault_cursor: int = 0
@@ -57,6 +58,7 @@ var _fault_cursor: int = 0
 signal faults_changed
 signal damage_changed
 signal controls_locked_changed(locked: bool)
+signal selected_mode_changed(mode: int)
 
 
 func _physics_process(delta: float) -> void:
@@ -147,6 +149,14 @@ func get_fault_mode(action: String) -> int:
 
 func get_uncleared_fault_count() -> int:
 	return active_faults.size()
+
+
+func set_selected_mode(mode: int) -> void:
+	mode = clampi(mode, 1, 3)
+	if selected_mode == mode:
+		return
+	selected_mode = mode
+	selected_mode_changed.emit(selected_mode)
 
 
 func set_controls_locked(locked: bool) -> void:
@@ -257,8 +267,10 @@ func reset() -> void:
 	damage = 0.0
 	last_stop_damage = 0.0
 	controls_locked = false
+	selected_mode = 1
 	_fault_pressure = 0.0
 	_fault_cursor = 0
 	faults_changed.emit()
 	damage_changed.emit()
 	controls_locked_changed.emit(false)
+	selected_mode_changed.emit(selected_mode)

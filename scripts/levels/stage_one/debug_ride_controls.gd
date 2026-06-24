@@ -42,13 +42,13 @@ const FAULT_MODE_COLORS: Dictionary = {
 @export var show_debug_visuals := true
 @export var enable_debug_speed_slider := false
 @export var show_debug_big_stop_button := false
+@export var show_debug_mode_buttons := false
 
 var _band_labels: Array[Label] = []
 var _fault_buttons: Dictionary = {}  # action name -> Button
 var _fault_styles: Dictionary = {}  # mode number -> flat color stylebox
 var _mode_buttons: Array[Button] = []
 var _damage_label: Label
-var _mode: int = 1
 var _controls_ready := false
 
 func _ready() -> void:
@@ -63,6 +63,7 @@ func _ready() -> void:
 	_setup_damage_readout()
 	RideState.faults_changed.connect(_refresh_fault_buttons)
 	RideState.damage_changed.connect(_refresh_extra_readouts)
+	RideState.selected_mode_changed.connect(_on_selected_mode_changed)
 	RideState.controls_locked_changed.connect(_on_controls_locked_changed)
 	_set_controls_enabled(false)
 	_apply_debug_visibility()
@@ -189,6 +190,10 @@ func _setup_faults() -> void:
 	_refresh_fault_buttons()
 
 func _setup_mode_select() -> void:
+	if not show_debug_mode_buttons:
+		_hide_mode_select()
+		return
+
 	var box := VBoxContainer.new()
 	box.name = "vboxModeSelect"
 	box.anchor_left = 0.37
@@ -235,25 +240,28 @@ func _update_fault_buttons() -> void:
 func _try_clear_fault(action: String) -> void:
 	if not _controls_ready or RideState.controls_locked:
 		return
-	var cleared := RideState.clear_fault(action, _mode)
+	var selected_mode := RideState.selected_mode
+	var cleared := RideState.clear_fault(action, selected_mode)
 	if cleared:
-		print("CLEARED FAULT %s IN MODE %d" % [action.to_upper(), _mode])
+		print("CLEARED FAULT %s IN MODE %d" % [action.to_upper(), selected_mode])
 	else:
 		var fault_mode := RideState.get_fault_mode(action)
 		if fault_mode > 0:
-			print("FAULT %s NEEDS MODE %d, SELECTED MODE %d" % [action.to_upper(), fault_mode, _mode])
+			print("FAULT %s NEEDS MODE %d, SELECTED MODE %d" % [action.to_upper(), fault_mode, selected_mode])
 
 func _set_mode(mode: int) -> void:
 	if RideState.controls_locked:
 		return
-	_mode = clampi(mode, 1, 3)
+	RideState.set_selected_mode(mode)
+
+func _on_selected_mode_changed(_mode: int) -> void:
 	_refresh_mode_buttons()
 
 func _refresh_mode_buttons() -> void:
 	for i in _mode_buttons.size():
 		var mode := i + 1
 		var button := _mode_buttons[i]
-		if mode == _mode:
+		if mode == RideState.selected_mode:
 			button.add_theme_stylebox_override("normal", _fault_styles.get(mode, _flat_style(FAULT_PRESSED_COLOR)))
 			button.add_theme_stylebox_override("hover", _fault_styles.get(mode, _flat_style(FAULT_PRESSED_COLOR)))
 		else:
@@ -396,3 +404,10 @@ func _hide_speed_bands() -> void:
 		speed_box.visible = false
 	if speed_bands != null:
 		speed_bands.editable = false
+
+
+func _hide_mode_select() -> void:
+	var mode_box := get_node_or_null("vboxModeSelect")
+	if mode_box != null:
+		mode_box.queue_free()
+	_mode_buttons.clear()
