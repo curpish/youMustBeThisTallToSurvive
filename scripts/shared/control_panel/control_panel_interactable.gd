@@ -33,6 +33,14 @@ func set_glow(enabled: bool) -> void:
 		mesh.material_overlay = glow_material if enabled else null
 
 
+# For indicator lights that are always lit with one of several colors
+# (e.g. green/safe vs red/danger) rather than a simple on/off hover glow.
+func set_glow_color(glow_color: Color, glow_energy: float) -> void:
+	glow_material = _make_glow_material(glow_color, glow_energy)
+	for mesh in meshes:
+		mesh.material_overlay = glow_material
+
+
 func set_hovered(value: bool) -> bool:
 	if hovered == value:
 		return false

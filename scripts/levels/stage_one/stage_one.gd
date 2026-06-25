@@ -19,8 +19,6 @@ extends Node3D
 @export var spark_start_speed: float = 84.0
 @export var spark_full_speed: float = 420.0
 @export var spark_color := Color(1.0, 0.58, 0.1, 1.0)
-@export var basket_fling_speed: float = 379.0
-@export var basket_fling_max_speed: float = 410.0
 @export var fling_ground_y: float = 0.25
 @export var failure_drop_distance := 3.0
 @export var failure_roll_distance := 46.0
@@ -31,6 +29,21 @@ extends Node3D
 @export var game_over_display_duration := 3.0
 @export var game_over_text := "GAME OVER"
 @export var game_over_subtext := "The wheel has left the building."
+@export var victory_lift_height := 6.0
+@export var victory_lift_duration := 0.8
+# Total time the wheel hovers, spins, and glows - the victory text appears
+# partway into this window (after victory_text_delay) and stays up for the
+# rest of it, right up until the title transition.
+@export var victory_spin_duration := 5.0
+@export var victory_spin_speed_multiplier := 1.25
+@export var victory_hover_spin_speed := 1800.0
+@export var victory_glow_energy := 2.5
+@export var victory_glow_hue_speed := 2.5
+@export var victory_glow_fade_out_time := 0.4
+@export var victory_text_delay := 0.2
+@export var victory_camera_shake_strength := 0.05
+@export var victory_text := "SPIN TO WIN!"
+@export var victory_subtext_format := "%d RIDERS LAUNCHED.\nYOU WERE TALL ENOUGH TO SURVIVE."
 
 const WHEEL_NODE_NAME := "frame_wheel"
 const WHEEL_NODE_FALLBACK_NAME := "frame"
@@ -74,19 +87,36 @@ var _axle_sparks: GPUParticles3D
 var _spark_process_material: ParticleProcessMaterial
 var _failure_sequence_active := false
 var _game_over_layer: CanvasLayer
+var _victory_sequence_active := false
+var _victory_layer: CanvasLayer
+var _victory_glow_materials: Array[StandardMaterial3D] = []
+var _victory_glow_active := false
+var _victory_glow_hue := 0.0
+var _victory_hover_active := false
+var _victory_hover_angle := 0.0
 
 func _ready() -> void:
 	_setup_ferris_wheel()
 	Events.big_stop.connect(_on_big_stop)
 	RideState.axle_failure_triggered.connect(_on_axle_failure_triggered)
+	RideState.victory_triggered.connect(_on_victory_triggered)
 
 func _process(_delta: float) -> void:
 	if _failure_sequence_active:
 		return
+	if _victory_glow_active:
+		_update_victory_glow(_delta)
 	if _wheel == null or _baskets.is_empty():
 		return
 
-	var angle := spin_direction * RideState.wheel_angle
+	var angle: float
+	if _victory_hover_active:
+		# Runs on its own accumulator rather than RideState.angular_velocity,
+		# so it can spin far past the gameplay max speed for pure spectacle.
+		_victory_hover_angle += victory_hover_spin_speed * (TAU / 60.0) * _delta
+		angle = spin_direction * _victory_hover_angle
+	else:
+		angle = spin_direction * RideState.wheel_angle
 	_wheel.basis = Basis(Vector3.RIGHT, angle) * _wheel_rest_basis
 
 	_update_gondolas()
@@ -299,9 +329,9 @@ func _update_hot_glow() -> void:
 		return
 
 	var speed := absf(RideState.angular_velocity)
-	var warning_start := maxf(0.0, basket_fling_speed - axle_warning_lead_speed)
-	var sweetspot_min := basket_fling_speed
-	var sweetspot_max := basket_fling_max_speed
+	var sweetspot_min := RideState.big_stop_current_min_speed
+	var sweetspot_max := RideState.big_stop_current_max_speed
+	var warning_start := maxf(0.0, sweetspot_min - axle_warning_lead_speed)
 
 	var state := 0
 	var heat := 0.0
@@ -395,10 +425,11 @@ func _update_gondola(index: int) -> void:
 	_update_hanger_bars(index, attachment, basket.global_position)
 
 func _on_big_stop() -> void:
-	if _failure_sequence_active:
+	if _failure_sequence_active or _victory_sequence_active:
 		return
-	var stop_speed := RideState.last_stop_severity * RideState.rpm_max
-	if stop_speed < basket_fling_speed or stop_speed > basket_fling_max_speed:
+	# RideState already judged this press against the current progressive
+	# window the moment it happened; this is just acting on that verdict.
+	if not RideState.last_big_stop_was_successful:
 		return
 
 	var index := _find_leftmost_gondola()
@@ -475,6 +506,210 @@ func _run_failure_sequence() -> void:
 	await get_tree().create_timer(game_over_display_duration).timeout
 	print("AXLE HEAT: title menu transition starts")
 	await GameOrchestrator.return_to_title()
+
+
+func _on_victory_triggered() -> void:
+	if _victory_sequence_active or _failure_sequence_active:
+		return
+	_victory_sequence_active = true
+	print("VICTORY: sequence starts")
+	_run_victory_sequence()
+
+
+func _run_victory_sequence() -> void:
+	await _animate_victory_spin()
+	print("VICTORY: title menu transition starts")
+	await GameOrchestrator.return_to_title()
+
+
+func _animate_victory_spin() -> void:
+	# Shares the failure sequence's pivot builder, which pulls the wheel
+	# assembly (frame, axle, baskets, ropes) free of the support arms since
+	# frame_arm* is excluded from it by name.
+	var target := _build_wheel_breakaway_pivot()
+	if target != null:
+		var lift_position := target.global_position + Vector3.UP * victory_lift_height
+		var lift_tween := create_tween()
+		lift_tween.tween_property(target, "global_position", lift_position, victory_lift_duration) \
+			.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		await lift_tween.finished
+	else:
+		await get_tree().create_timer(victory_lift_duration).timeout
+
+	# Hovers there for the rest of the sequence, spinning much faster than
+	# normal play allows and glowing through a fast-moving rainbow gradient.
+	# Opening the governor and bursting target_rpm toward max speed also
+	# makes the existing speed-reactive hot glow and sparks flare up for free,
+	# since they already read angular_velocity.
+	_victory_hover_active = true
+	_start_victory_glow(target if target != null else self)
+	RideState.is_governed = false
+	RideState.target_rpm = RideState.rpm_max * victory_spin_speed_multiplier
+	_shake_camera(victory_spin_duration * 0.5, victory_camera_shake_strength)
+
+	# The text comes up soon after the hover starts and stays up for the
+	# remainder of the hover, so it is on screen continuously until the
+	# title transition begins right after this function returns.
+	await get_tree().create_timer(victory_text_delay).timeout
+	print("VICTORY: victory text appears")
+	_show_victory_text()
+	await get_tree().create_timer(maxf(victory_spin_duration - victory_text_delay, 0.0)).timeout
+
+	RideState.target_rpm = 0.0
+	_stop_victory_glow()
+	_victory_hover_active = false
+
+
+func _start_victory_glow(root: Node) -> void:
+	var instances: Array[MeshInstance3D] = []
+	_collect_mesh_instances(root, instances)
+
+	_victory_glow_materials.clear()
+	for mesh_instance in instances:
+		if mesh_instance.mesh == null:
+			continue
+		for surface_index in mesh_instance.mesh.get_surface_count():
+			var material := _glow_material_from(mesh_instance, surface_index)
+			mesh_instance.set_surface_override_material(surface_index, material)
+			_victory_glow_materials.append(material)
+
+	_victory_glow_hue = 0.0
+	_victory_glow_active = true
+
+
+func _glow_material_from(mesh_instance: MeshInstance3D, surface_index: int) -> StandardMaterial3D:
+	var source := mesh_instance.get_surface_override_material(surface_index)
+	if source == null:
+		source = mesh_instance.mesh.surface_get_material(surface_index)
+
+	var material: StandardMaterial3D
+	if source is StandardMaterial3D:
+		material = source.duplicate(true) as StandardMaterial3D
+	else:
+		material = StandardMaterial3D.new()
+
+	material.emission_enabled = true
+	material.emission_energy_multiplier = victory_glow_energy
+	return material
+
+
+func _collect_mesh_instances(node: Node, instances: Array[MeshInstance3D]) -> void:
+	if node is MeshInstance3D:
+		instances.append(node)
+	for child in node.get_children():
+		_collect_mesh_instances(child, instances)
+
+
+func _update_victory_glow(delta: float) -> void:
+	# A continuously rotating hue, with each material offset by its position
+	# in the list, paints a rainbow gradient across the wheel rather than one
+	# flat color - and the whole gradient sweeps around fast.
+	_victory_glow_hue = fmod(_victory_glow_hue + victory_glow_hue_speed * delta, 1.0)
+	var count := maxi(_victory_glow_materials.size(), 1)
+	for i in _victory_glow_materials.size():
+		var phase := float(i) / float(count)
+		var hue := fmod(_victory_glow_hue + phase, 1.0)
+		_victory_glow_materials[i].emission = Color.from_hsv(hue, 1.0, 1.0)
+
+
+func _stop_victory_glow() -> void:
+	_victory_glow_active = false
+	if _victory_glow_materials.is_empty():
+		return
+
+	var tween := create_tween()
+	tween.set_parallel(true)
+	for material in _victory_glow_materials:
+		tween.tween_property(material, "emission_energy_multiplier", 0.0, victory_glow_fade_out_time)
+
+
+func _shake_camera(duration: float, strength: float) -> void:
+	var camera := get_viewport().get_camera_3d()
+	if camera == null or strength <= 0.0:
+		return
+
+	var tween := create_tween()
+	var shake_steps := 8
+	var step_time := maxf(duration / float(shake_steps), 0.01)
+	for _i in shake_steps:
+		var offset := Vector2(randf_range(-strength, strength), randf_range(-strength, strength))
+		tween.tween_property(camera, "h_offset", offset.x, step_time)
+		tween.parallel().tween_property(camera, "v_offset", offset.y, step_time)
+	tween.tween_property(camera, "h_offset", 0.0, step_time)
+	tween.parallel().tween_property(camera, "v_offset", 0.0, step_time)
+
+
+func _show_victory_text() -> void:
+	if _victory_layer != null:
+		_victory_layer.queue_free()
+
+	_victory_layer = CanvasLayer.new()
+	_victory_layer.layer = 64
+	add_child(_victory_layer)
+
+	var center := CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_victory_layer.add_child(center)
+
+	var panel := PanelContainer.new()
+	var panel_style := StyleBoxFlat.new()
+	panel_style.bg_color = Color(0.08, 0.05, 0.0, 0.78)
+	panel_style.border_width_left = 3
+	panel_style.border_width_top = 3
+	panel_style.border_width_right = 3
+	panel_style.border_width_bottom = 3
+	panel_style.border_color = Color(1.0, 0.82, 0.2, 0.95)
+	panel_style.corner_radius_top_left = 6
+	panel_style.corner_radius_top_right = 6
+	panel_style.corner_radius_bottom_left = 6
+	panel_style.corner_radius_bottom_right = 6
+	panel_style.content_margin_left = 34.0
+	panel_style.content_margin_top = 20.0
+	panel_style.content_margin_right = 34.0
+	panel_style.content_margin_bottom = 22.0
+	panel.add_theme_stylebox_override("panel", panel_style)
+	center.add_child(panel)
+
+	var box := VBoxContainer.new()
+	box.alignment = BoxContainer.ALIGNMENT_CENTER
+	box.modulate.a = 0.0
+	box.scale = Vector2(0.7, 0.7)
+	box.pivot_offset = Vector2(320.0, 90.0)
+	panel.add_child(box)
+
+	var title := Label.new()
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.text = victory_text
+	title.add_theme_font_size_override("font_size", 104)
+	title.add_theme_color_override("font_color", Color(1.0, 0.84, 0.2))
+	title.add_theme_color_override("font_outline_color", Color.BLACK)
+	title.add_theme_constant_override("outline_size", 12)
+	box.add_child(title)
+
+	var subtext := Label.new()
+	subtext.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	subtext.text = victory_subtext_format % RideState.riders_required_to_win
+	subtext.add_theme_font_size_override("font_size", 32)
+	subtext.add_theme_color_override("font_color", Color(1.0, 0.96, 0.82))
+	subtext.add_theme_color_override("font_outline_color", Color.BLACK)
+	subtext.add_theme_constant_override("outline_size", 6)
+	box.add_child(subtext)
+
+	var tween := create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(box, "modulate:a", 1.0, 0.35).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_property(box, "scale", Vector2(1.12, 1.12), 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.chain().tween_property(box, "scale", Vector2.ONE, 0.18).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tween.chain().tween_callback(_start_victory_text_pulse.bind(box))
+
+
+func _start_victory_text_pulse(box: VBoxContainer) -> void:
+	if not is_instance_valid(box):
+		return
+	var pulse := create_tween()
+	pulse.set_loops()
+	pulse.tween_property(box, "scale", Vector2(1.06, 1.06), 0.45).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	pulse.tween_property(box, "scale", Vector2.ONE, 0.45).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
 
 func _animate_wheel_breakaway() -> void:

@@ -11,9 +11,13 @@ func _process(_delta: float) -> void:
 	if _readout == null:
 		return
 
-	var fling_speed := 379.0
-	var fling_max_speed := 410.0
+	var fling_speed := RideState.big_stop_current_min_speed
+	var fling_max_speed := RideState.big_stop_current_max_speed
 	var fling_ready := RideState.angular_velocity >= fling_speed and RideState.angular_velocity <= fling_max_speed
+	var auto_big_stop_armed := (
+		RideState.panel_pressure_enabled
+		and not RideState.panel_auto_big_stop_triggered_this_spin
+	)
 	_readout.text = (
 		"target_rpm:  %.1f\n"
 		+ "redline:     %.1f rpm\n"
@@ -22,7 +26,12 @@ func _process(_delta: float) -> void:
 		+ "axle heat:   %.1f / %.1f\n"
 		+ "heat floor:  stage %d (%.1f)\n"
 		+ "last chance: %s\n"
-		+ "overheat:    %s"
+		+ "overheat:    %s\n"
+		+ "Big Stop Window: %.0f - %.0f\n"
+		+ "Big Stop Stage:  %d / %d\n"
+		+ "Panel Lights: %s\n"
+		+ "Panel Pressure Delay: %.1fs\n"
+		+ "Auto Big Stop Armed: %s"
 	) % [
 		RideState.target_rpm,
 		fling_max_speed,
@@ -36,7 +45,21 @@ func _process(_delta: float) -> void:
 		RideState.heat_floor_value,
 		"YES" if RideState.is_last_chance else "NO",
 		"YES" if RideState.overheat_penalty_applied_this_spin else "NO",
+		fling_speed,
+		fling_max_speed,
+		RideState.big_stop_difficulty_stage,
+		RideState.big_stop_difficulty_stage_count - 1,
+		_format_panel_lights(),
+		RideState.get_current_panel_spawn_interval(),
+		"true" if auto_big_stop_armed else "false",
 	]
+
+func _format_panel_lights() -> String:
+	var parts: Array[String] = []
+	for action in RideState.FAULT_ACTIONS:
+		var state := "R" if RideState.active_faults.has(action) else "G"
+		parts.append("%s %s" % [action.to_upper(), state])
+	return " | ".join(parts)
 
 func _build_ui() -> void:
 	var layer := CanvasLayer.new()

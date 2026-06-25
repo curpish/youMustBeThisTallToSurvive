@@ -19,6 +19,7 @@ const BULB_NODE_MARKER := "warm_bulb"
 
 var _visual_root: Node3D
 var _counter: Label3D
+var _pop_tween: Tween
 var _score := 0
 var _base_scale := Vector3.ONE
 var _fade_materials: Array[StandardMaterial3D] = []
@@ -173,9 +174,12 @@ func _on_fling() -> void:
 		return
 
 	_counter.text = _score_text()
-	var tween := create_tween()
-	tween.tween_property(_counter, "scale", Vector3.ONE * counter_scale * 1.18, pop_time).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	tween.tween_property(_counter, "scale", Vector3.ONE * counter_scale, pop_time).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	if _pop_tween != null:
+		_pop_tween.kill()
+	_counter.scale = Vector3.ONE * counter_scale
+	_pop_tween = create_tween()
+	_pop_tween.tween_property(_counter, "scale", Vector3.ONE * counter_scale * 1.18, pop_time).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	_pop_tween.tween_property(_counter, "scale", Vector3.ONE * counter_scale, pop_time).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 
 
 func _set_alpha(alpha: float) -> void:

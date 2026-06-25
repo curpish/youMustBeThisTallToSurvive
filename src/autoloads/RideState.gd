@@ -11,7 +11,7 @@ const DECEL := 28.0
 # Low speed should feel heavy, then build power as the wheel gets moving.
 const SPIN_UP_INERTIA := 0.25
 
-const FAULT_ACTIONS: Array[String] = ["q", "w", "e", "r"]
+const FAULT_ACTIONS: Array[String] = ["q", "w", "e", "r", "t", "y"]
 const FAULT_SPAWN_RPM := 65.0
 const DAMAGE_PER_FAULT := 10.0
 const DAMAGE_STOP_BONUS := 28.0
@@ -31,6 +31,22 @@ const SHUDDER_DECAY := 3.0
 @export var heat_increase_rate := 20.0
 @export var heat_cool_rate := 35.0
 @export var overheat_speed := MAX_WHEEL_SPEED
+@export var riders_required_to_win := 6
+
+# The Big Stop success window starts forgiving and tightens with every press
+# or missed (overheat) stop, with a floor so it never gets impossibly precise.
+@export var big_stop_initial_min_speed := 379.0
+@export var big_stop_initial_max_speed := 410.0
+@export var big_stop_difficulty_stage_count := 10
+@export var big_stop_minimum_window_size := 12.0
+@export var big_stop_shrink_per_stage := 2.0
+
+# The panel lights are the fault system's active_faults / FAULT_ACTIONS -
+# they get harder to keep clear as heat stage rises, and all six lit at once
+# is the danger state that auto-triggers Big Stop.
+@export var panel_pressure_enabled := true
+@export var panel_heat_stage_pressure_multiplier := 0.12
+@export var panel_min_spawn_interval_factor := 0.35
 
 var feel: float = 1.0
 var rpm_max: float = MAX_WHEEL_SPEED
@@ -47,6 +63,14 @@ var basket_released_this_spin := false
 var overheat_penalty_applied_this_spin := false
 var is_last_chance := false
 var is_failure_sequence_active := false
+var riders_launched_count: int = 0
+var is_victory_sequence_active := false
+var big_stop_difficulty_stage := 0
+var big_stop_max_speed_penalty_applied_this_spin := false
+var big_stop_current_min_speed := 0.0
+var big_stop_current_max_speed := 0.0
+var last_big_stop_was_successful := false
+var panel_auto_big_stop_triggered_this_spin := false
 var governor_prime_time_left: float = 0.0
 var governor_override_time_left: float = 0.0
 var governor_cooldown_left: float = 0.0
@@ -74,6 +98,7 @@ signal selected_mode_changed(mode: int)
 signal axle_heat_changed
 signal heat_floor_changed(stage: int, floor_value: float)
 signal axle_failure_triggered
+signal victory_triggered
 
 
 func _physics_process(delta: float) -> void:
@@ -104,6 +129,7 @@ func _physics_process(delta: float) -> void:
 	_update_axle_heat(delta)
 	_update_spin_lifecycle()
 	_update_faults(delta)
+	_check_panel_auto_big_stop()
 	_update_shudder(delta)
 
 
@@ -129,17 +155,46 @@ func big_stop() -> void:
 	_begin_big_stop("manual")
 
 
+func is_big_stop_success(current_speed: float) -> bool:
+	return current_speed >= big_stop_current_min_speed and current_speed <= big_stop_current_max_speed
+
+
+func get_current_big_stop_success_window() -> Dictionary:
+	return {"min_speed": big_stop_current_min_speed, "max_speed": big_stop_current_max_speed}
+
+
 func _begin_big_stop(source: String) -> void:
-	if controls_locked or is_failure_sequence_active:
+	if controls_locked or is_failure_sequence_active or is_victory_sequence_active:
 		return
 	if is_emergency_stopping:
 		return
 	target_rpm = 0.0
 	is_emergency_stopping = true
 	last_stop_severity = angular_velocity / rpm_max
+
+	if source == "manual":
+		# The press is judged against the window the player was actually
+		# shown, then difficulty advances for next time.
+		var speed := absf(angular_velocity)
+		last_big_stop_was_successful = is_big_stop_success(speed)
+		print("BIG STOP: speed %.1f vs window %.1f-%.1f -> %s" % [
+			speed,
+			big_stop_current_min_speed,
+			big_stop_current_max_speed,
+			"SUCCESS" if last_big_stop_was_successful else "MISS",
+		])
+		_increase_big_stop_difficulty("big_stop_pressed")
+	else:
+		# Forced/automatic stop (overheat or all-six-panel-lights-red) - the
+		# player did not choose this moment, so it is always a miss and does
+		# not touch the manual-press difficulty progression.
+		last_big_stop_was_successful = false
+
 	_apply_big_stop_damage()
 	if source == "overheat":
 		print("AXLE HEAT: auto big stop triggered at %.1f RPM" % absf(angular_velocity))
+	elif source == "panel_pressure":
+		print("PANEL LIGHTS: auto big stop triggered at %.1f RPM" % absf(angular_velocity))
 	Events.big_stop.emit()
 
 
@@ -147,9 +202,20 @@ func mark_basket_released() -> void:
 	basket_released_this_spin = true
 	print("AXLE HEAT: basket release succeeded this spin")
 
+	# basket_released_this_spin above resets every spin for the heat system;
+	# this counter is cumulative for the whole run and drives the win condition.
+	riders_launched_count += 1
+	print("RIDER LAUNCH: success, total launched = %d" % riders_launched_count)
+	if riders_launched_count >= riders_required_to_win:
+		_trigger_victory()
+
 
 func debug_trigger_axle_failure() -> void:
 	_trigger_axle_failure()
+
+
+func debug_trigger_victory() -> void:
+	_trigger_victory()
 
 
 func clear_fault(action: String, mode: int) -> bool:
@@ -161,6 +227,7 @@ func clear_fault(action: String, mode: int) -> bool:
 		return false
 
 	active_faults.erase(action)
+	print("PANEL LIGHTS: %s indicator reset to green (mode %d)" % [action.to_upper(), mode])
 	faults_changed.emit()
 	return true
 
@@ -196,9 +263,12 @@ func _sync_speed_tuning() -> void:
 	heat_threshold_speed = clampf(heat_threshold_speed, 0.0, rpm_max)
 	overheat_speed = clampf(overheat_speed, 0.0, rpm_max)
 	_recalculate_heat_floor()
+	_recalculate_big_stop_window()
 
 
 func _update_axle_heat(delta: float) -> void:
+	if is_victory_sequence_active:
+		return
 	var speed := absf(angular_velocity)
 	var old_heat := axle_heat
 	var is_building := speed > heat_threshold_speed and not is_failure_sequence_active
@@ -221,6 +291,7 @@ func _update_axle_heat(delta: float) -> void:
 		overheat_penalty_applied_this_spin = true
 		print("AXLE HEAT: overheat at %.1f RPM" % speed)
 		_increase_heat_floor("overheat penalty")
+		_apply_big_stop_missed_window_penalty()
 		Events.overheated.emit()
 		_begin_big_stop("overheat")
 
@@ -230,11 +301,15 @@ func _update_axle_heat(delta: float) -> void:
 
 
 func _update_spin_lifecycle() -> void:
+	if is_victory_sequence_active:
+		return
 	var moving := absf(angular_velocity) > STOPPED_SPEED_EPSILON
 	if moving and not _was_moving_last_tick:
 		basket_released_this_spin = false
 		has_crossed_heat_threshold_this_spin = false
 		overheat_penalty_applied_this_spin = false
+		big_stop_max_speed_penalty_applied_this_spin = false
+		panel_auto_big_stop_triggered_this_spin = false
 		_last_chance_this_spin = is_last_chance
 		print("AXLE HEAT: spin started, last chance=%s" % is_last_chance)
 	elif not moving and _was_moving_last_tick:
@@ -270,6 +345,11 @@ func _increase_heat_floor(reason: String) -> void:
 		heat_floor_value,
 		reason,
 	])
+	if panel_pressure_enabled:
+		print("PANEL LIGHTS: heat stage %d -> spawn interval factor %.2f (lights turn red faster)" % [
+			heat_floor_stage,
+			_panel_spawn_interval_factor(),
+		])
 	heat_floor_changed.emit(heat_floor_stage, heat_floor_value)
 	axle_heat_changed.emit()
 
@@ -283,8 +363,66 @@ func _recalculate_heat_floor() -> void:
 	is_last_chance = heat_floor_stage >= heat_marker_count - 1
 
 
+func _apply_big_stop_missed_window_penalty() -> void:
+	if big_stop_max_speed_penalty_applied_this_spin:
+		return
+	big_stop_max_speed_penalty_applied_this_spin = true
+	print("BIG STOP: missed window, wheel reached overheat/max speed - difficulty penalty applied")
+	_increase_big_stop_difficulty("missed_max_speed")
+
+
+func _increase_big_stop_difficulty(reason: String) -> void:
+	var old_stage := big_stop_difficulty_stage
+	big_stop_difficulty_stage = clampi(big_stop_difficulty_stage + 1, 0, big_stop_difficulty_stage_count - 1)
+	_recalculate_big_stop_window()
+	if big_stop_difficulty_stage == old_stage:
+		return
+
+	print("BIG STOP: difficulty stage increased to %d/%d via %s (window now %.1f-%.1f)" % [
+		big_stop_difficulty_stage,
+		big_stop_difficulty_stage_count - 1,
+		reason,
+		big_stop_current_min_speed,
+		big_stop_current_max_speed,
+	])
+
+
+func _recalculate_big_stop_window() -> void:
+	big_stop_difficulty_stage = clampi(big_stop_difficulty_stage, 0, big_stop_difficulty_stage_count - 1)
+	var center_speed := (big_stop_initial_min_speed + big_stop_initial_max_speed) / 2.0
+	var initial_window_size := big_stop_initial_max_speed - big_stop_initial_min_speed
+	var shrink := float(big_stop_difficulty_stage) * big_stop_shrink_per_stage
+	var window_size := maxf(initial_window_size - shrink, big_stop_minimum_window_size)
+	var half_window := window_size / 2.0
+	big_stop_current_min_speed = center_speed - half_window
+	big_stop_current_max_speed = center_speed + half_window
+
+
+func _check_panel_auto_big_stop() -> void:
+	if not panel_pressure_enabled:
+		return
+	# controls_locked already covers failure/victory on its own, but this
+	# checks both explicitly so it still holds even if that ever changes.
+	if controls_locked or is_failure_sequence_active or is_victory_sequence_active:
+		return
+	if panel_auto_big_stop_triggered_this_spin:
+		return
+	if not are_all_panel_lights_red():
+		return
+
+	panel_auto_big_stop_triggered_this_spin = true
+	print("PANEL LIGHTS: all six red at once - auto Big Stop triggers")
+	_begin_big_stop("panel_pressure")
+	active_faults.clear()
+	faults_changed.emit()
+	print("PANEL LIGHTS: all six reset to green after auto Big Stop")
+
+
 func _trigger_axle_failure() -> void:
-	if is_failure_sequence_active:
+	# A successful launch already marks basket_released_this_spin true, which
+	# rules out failure for that same spin - so this guard is really only for
+	# the debug trigger path.
+	if is_failure_sequence_active or is_victory_sequence_active:
 		return
 	is_failure_sequence_active = true
 	target_rpm = 0.0
@@ -292,6 +430,18 @@ func _trigger_axle_failure() -> void:
 	set_controls_locked(true)
 	print("AXLE HEAT: failure sequence triggers")
 	axle_failure_triggered.emit()
+
+
+func _trigger_victory() -> void:
+	if is_victory_sequence_active or is_failure_sequence_active:
+		return
+	is_victory_sequence_active = true
+	target_rpm = 0.0
+	is_emergency_stopping = false
+	set_controls_locked(true)
+	print("VICTORY: win condition reached, riders launched = %d" % riders_launched_count)
+	print("VICTORY: player input locked")
+	victory_triggered.emit()
 
 
 func _update_shudder(delta: float) -> void:
@@ -320,7 +470,10 @@ func _update_governor(delta: float) -> void:
 
 
 func _update_faults(delta: float) -> void:
-	if is_emergency_stopping or active_faults.size() >= FAULT_ACTIONS.size():
+	# controls_locked already covers failure/victory/Big-Stop-grinding/the
+	# fling spectacle camera lock - no point lighting panels the player can't
+	# react to.
+	if controls_locked or is_emergency_stopping or active_faults.size() >= FAULT_ACTIONS.size():
 		return
 	if angular_velocity < FAULT_SPAWN_RPM:
 		_fault_pressure = maxf(0.0, _fault_pressure - delta)
@@ -334,10 +487,36 @@ func _update_faults(delta: float) -> void:
 		pressure_gain += 0.8
 
 	var spawn_interval := lerpf(9.0, 3.0, speed_fraction)
+	if panel_pressure_enabled:
+		spawn_interval *= _panel_spawn_interval_factor()
+
 	_fault_pressure += pressure_gain * delta
 	if _fault_pressure >= spawn_interval:
 		_fault_pressure = 0.0
 		_spawn_fault(speed_fraction)
+
+
+func _panel_spawn_interval_factor() -> float:
+	# Higher heat stages compress the spawn interval further, on top of the
+	# existing speed-based scaling, clamped so it never becomes impossibly
+	# fast no matter how high the stage climbs.
+	return clampf(
+		1.0 - float(heat_floor_stage) * panel_heat_stage_pressure_multiplier,
+		panel_min_spawn_interval_factor,
+		1.0
+	)
+
+
+func get_current_panel_spawn_interval() -> float:
+	var speed_fraction := clampf(angular_velocity / rpm_max, 0.0, 1.0)
+	var interval := lerpf(9.0, 3.0, speed_fraction)
+	if panel_pressure_enabled:
+		interval *= _panel_spawn_interval_factor()
+	return interval
+
+
+func are_all_panel_lights_red() -> bool:
+	return active_faults.size() >= FAULT_ACTIONS.size()
 
 
 func _spawn_fault(speed_fraction: float) -> void:
@@ -387,6 +566,13 @@ func reset() -> void:
 	overheat_penalty_applied_this_spin = false
 	is_last_chance = false
 	is_failure_sequence_active = false
+	riders_launched_count = 0
+	is_victory_sequence_active = false
+	big_stop_difficulty_stage = 0
+	big_stop_max_speed_penalty_applied_this_spin = false
+	panel_auto_big_stop_triggered_this_spin = false
+	last_big_stop_was_successful = false
+	_recalculate_big_stop_window()
 	is_governed = true
 	governor_prime_time_left = 0.0
 	governor_override_time_left = 0.0

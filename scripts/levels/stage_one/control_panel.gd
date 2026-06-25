@@ -76,6 +76,7 @@ const BAND_TARGETS: Array[float] = [0.0, 65.0, 150.0, 280.0, 420.0]
 	"y": &"indicatorLight_light_Y",
 }
 @export var fault_indicator_color := Color(1.0, 0.06, 0.02, 0.85)
+@export var fault_indicator_safe_color := Color(0.1, 1.0, 0.15, 0.85)
 @export var fault_indicator_energy := 3.2
 @export var heat_gauge_needle_path: NodePath
 @export var heat_gauge_needle_name := &"analogDial_needle_geo"
@@ -115,6 +116,7 @@ var _fault_indicator_parts: Dictionary = {}
 var _heat_gauge_needle: Node3D
 var _heat_gauge_needle_rest_basis := Basis.IDENTITY
 var _heat_gauge_angle_degrees := 0.0
+var _cursor_shape: Input.CursorShape = Input.CURSOR_ARROW
 
 
 func _ready() -> void:
@@ -139,11 +141,23 @@ func _process(_delta: float) -> void:
 	_update_speed_handle()
 	_update_mode_dial()
 	_update_heat_gauge(_delta)
-	_update_speed_handle_hover()
-	_update_big_stop_hover()
-	_update_mode_dial_hover()
-	_update_governor_screwdriver_hover()
-	_update_panel_button_hover()
+
+	# Computed once here and reused below, since several of the hover/priority
+	# checks need to know whether the pointer is on big stop, the mode dial,
+	# or the governor screwdriver.
+	var mouse_position := get_viewport().get_mouse_position()
+	var on_speed_handle := _active_touch_index == -1 and _is_pointer_on_speed_handle(mouse_position, handle_hit_padding)
+	var on_big_stop := _active_touch_index == -1 and _is_pointer_on_big_stop(mouse_position, big_stop_hit_padding)
+	var on_mode_dial := _active_touch_index == -1 and _is_pointer_on_mode_dial(mouse_position, mode_dial_hit_padding)
+	var on_governor := _active_touch_index == -1 and _is_pointer_on_governor_screwdriver(mouse_position, governor_hit_padding)
+	var higher_priority_hover := on_big_stop or on_mode_dial or on_governor
+	var on_panel_button := "" if (_active_touch_index != -1 or higher_priority_hover) else _panel_button_at_position(mouse_position, panel_button_hit_padding)
+
+	_update_speed_handle_hover(on_speed_handle)
+	_update_big_stop_hover(on_big_stop)
+	_update_mode_dial_hover(on_mode_dial)
+	_update_governor_screwdriver_hover(on_governor, on_big_stop)
+	_update_panel_button_hover(on_panel_button)
 	_update_governor_cooldown_sparks()
 	_update_cursor_shape()
 
@@ -269,15 +283,22 @@ func _setup_panel_buttons() -> void:
 
 		_panel_buttons[action] = part.node
 		_panel_button_parts[action] = part
+		if action == "t" or action == "y":
+			print("PANEL: %s button wired up (node %s) - press/highlight animation active" % [
+				action.to_upper(),
+				part.node.name,
+			])
 
 
 func _setup_fault_indicators() -> void:
 	for action in fault_indicator_names:
 		var part := ControlPanelInteractable.new()
-		if not part.bind(self, fault_indicator_names[action], fault_indicator_color, fault_indicator_energy):
+		if not part.bind(self, fault_indicator_names[action], fault_indicator_safe_color, fault_indicator_energy):
 			continue
 
 		_fault_indicator_parts[action] = part
+		if action == "t" or action == "y":
+			print("PANEL: %s indicator light wired up (node %s)" % [action.to_upper(), part.node.name])
 
 	if _fault_indicator_parts.size() >= fault_indicator_names.size():
 		return
@@ -288,8 +309,13 @@ func _setup_fault_indicators() -> void:
 		var actions := ["q", "w", "e", "r", "t", "y"]
 		for i in mini(actions.size(), ordered_indicators.size()):
 			var part := ControlPanelInteractable.new()
-			part.bind_node(ordered_indicators[i], fault_indicator_color, fault_indicator_energy)
+			part.bind_node(ordered_indicators[i], fault_indicator_safe_color, fault_indicator_energy)
 			_fault_indicator_parts[actions[i]] = part
+			if actions[i] == "t" or actions[i] == "y":
+				print("PANEL: %s indicator light wired up via fallback ordering (node %s)" % [
+					actions[i].to_upper(),
+					ordered_indicators[i].name,
+				])
 		return
 
 	if _fault_indicator_parts.is_empty():
@@ -379,7 +405,7 @@ func _update_heat_gauge(delta: float) -> void:
 	_heat_gauge_needle.basis = _heat_gauge_needle_rest_basis * Basis(axis, deg_to_rad(_heat_gauge_angle_degrees))
 
 
-func _update_speed_handle_hover() -> void:
+func _update_speed_handle_hover(pointer_on_handle: bool) -> void:
 	if _speed_handle == null:
 		return
 	if RideState.controls_locked:
@@ -388,10 +414,7 @@ func _update_speed_handle_hover() -> void:
 			_set_speed_handle_glow(false)
 		return
 
-	var hovered := _dragging_speed_handle
-	if _active_touch_index == -1:
-		hovered = hovered or _is_pointer_on_speed_handle(get_viewport().get_mouse_position(), handle_hit_padding)
-
+	var hovered := _dragging_speed_handle or pointer_on_handle
 	if hovered == _speed_handle_hovered:
 		return
 
@@ -399,7 +422,7 @@ func _update_speed_handle_hover() -> void:
 	_set_speed_handle_glow(hovered)
 
 
-func _update_big_stop_hover() -> void:
+func _update_big_stop_hover(pointer_on_big_stop: bool) -> void:
 	if _big_stop_button == null:
 		return
 	if RideState.controls_locked:
@@ -408,18 +431,14 @@ func _update_big_stop_hover() -> void:
 			_set_big_stop_glow(false)
 		return
 
-	var hovered := _active_touch_index == -1 and _is_pointer_on_big_stop(
-		get_viewport().get_mouse_position(),
-		big_stop_hit_padding
-	)
-	if hovered == _big_stop_hovered:
+	if pointer_on_big_stop == _big_stop_hovered:
 		return
 
-	_big_stop_hovered = hovered
-	_set_big_stop_glow(hovered)
+	_big_stop_hovered = pointer_on_big_stop
+	_set_big_stop_glow(pointer_on_big_stop)
 
 
-func _update_mode_dial_hover() -> void:
+func _update_mode_dial_hover(pointer_on_mode_dial: bool) -> void:
 	if _mode_dial == null:
 		return
 	if RideState.controls_locked:
@@ -428,10 +447,7 @@ func _update_mode_dial_hover() -> void:
 			_set_mode_dial_glow(false)
 		return
 
-	var hovered := _dragging_mode_dial
-	if _active_touch_index == -1:
-		hovered = hovered or _is_pointer_on_mode_dial(get_viewport().get_mouse_position(), mode_dial_hit_padding)
-
+	var hovered := _dragging_mode_dial or pointer_on_mode_dial
 	if hovered == _mode_dial_hovered:
 		return
 
@@ -439,7 +455,7 @@ func _update_mode_dial_hover() -> void:
 	_set_mode_dial_glow(hovered)
 
 
-func _update_governor_screwdriver_hover() -> void:
+func _update_governor_screwdriver_hover(pointer_on_governor: bool, pointer_on_big_stop: bool) -> void:
 	if _governor_screwdriver == null:
 		return
 	if RideState.controls_locked:
@@ -448,12 +464,7 @@ func _update_governor_screwdriver_hover() -> void:
 			_set_governor_screwdriver_glow(false)
 		return
 
-	var mouse_position := get_viewport().get_mouse_position()
-	var hovered := (
-		_active_touch_index == -1
-		and not _is_pointer_on_big_stop(mouse_position, big_stop_hit_padding)
-		and _is_pointer_on_governor_screwdriver(mouse_position, governor_hit_padding)
-	)
+	var hovered := pointer_on_governor and not pointer_on_big_stop
 	if hovered == _governor_screwdriver_hovered:
 		return
 
@@ -473,23 +484,12 @@ func _update_governor_cooldown_sparks() -> void:
 	)
 
 
-func _update_panel_button_hover() -> void:
+func _update_panel_button_hover(hovered_action: String) -> void:
 	if RideState.controls_locked:
 		if _hovered_panel_button != "":
 			_set_panel_button_glow(_hovered_panel_button, false)
 			_hovered_panel_button = ""
 		return
-
-	var hovered_action := ""
-	if _active_touch_index == -1:
-		var mouse_position := get_viewport().get_mouse_position()
-		var higher_priority_hover := (
-			_is_pointer_on_big_stop(mouse_position, big_stop_hit_padding)
-			or _is_pointer_on_mode_dial(mouse_position, mode_dial_hit_padding)
-			or _is_pointer_on_governor_screwdriver(mouse_position, governor_hit_padding)
-		)
-		if not higher_priority_hover:
-			hovered_action = _panel_button_at_position(mouse_position, panel_button_hit_padding)
 
 	if hovered_action == _hovered_panel_button:
 		return
@@ -503,7 +503,7 @@ func _update_panel_button_hover() -> void:
 
 func _update_cursor_shape() -> void:
 	if RideState.controls_locked:
-		Input.set_default_cursor_shape(Input.CURSOR_ARROW)
+		_set_cursor_shape(Input.CURSOR_ARROW)
 		return
 
 	var hovering_interactable := (
@@ -515,7 +515,14 @@ func _update_cursor_shape() -> void:
 		or _dragging_speed_handle
 		or _dragging_mode_dial
 	)
-	Input.set_default_cursor_shape(Input.CURSOR_POINTING_HAND if hovering_interactable else Input.CURSOR_ARROW)
+	_set_cursor_shape(Input.CURSOR_POINTING_HAND if hovering_interactable else Input.CURSOR_ARROW)
+
+
+func _set_cursor_shape(shape: Input.CursorShape) -> void:
+	if shape == _cursor_shape:
+		return
+	_cursor_shape = shape
+	Input.set_default_cursor_shape(shape)
 
 
 func _is_pointer_on_speed_handle(screen_position: Vector2, padding: float) -> bool:
@@ -612,7 +619,15 @@ func _press_panel_button(action: String) -> void:
 		return
 
 	if RideState.FAULT_ACTIONS.has(action):
-		RideState.clear_fault(action, RideState.selected_mode)
+		var cleared := RideState.clear_fault(action, RideState.selected_mode)
+		if not cleared:
+			var fault_mode := RideState.get_fault_mode(action)
+			if fault_mode > 0:
+				print("PANEL: %s pressed but needs mode %d (selected %d)" % [
+					action.to_upper(),
+					fault_mode,
+					RideState.selected_mode,
+				])
 	Events.panel_button_pressed.emit(action)
 
 	var part := _panel_button_parts[action] as ControlPanelInteractable
@@ -621,7 +636,8 @@ func _press_panel_button(action: String) -> void:
 
 func _refresh_fault_indicators() -> void:
 	for action in fault_indicator_names:
-		_set_fault_indicator_glow(action, RideState.active_faults.has(action))
+		var is_danger := RideState.active_faults.has(action)
+		_set_fault_indicator_color(action, fault_indicator_color if is_danger else fault_indicator_safe_color)
 
 
 func _set_mode_from_screen_position(screen_position: Vector2) -> void:
@@ -730,11 +746,11 @@ func _set_panel_button_glow(action: String, enabled: bool) -> void:
 	part.set_glow(enabled)
 
 
-func _set_fault_indicator_glow(action: String, enabled: bool) -> void:
+func _set_fault_indicator_color(action: String, color: Color) -> void:
 	if not _fault_indicator_parts.has(action):
 		return
 	var part := _fault_indicator_parts[action] as ControlPanelInteractable
-	part.set_glow(enabled)
+	part.set_glow_color(color, fault_indicator_energy)
 
 
 func _governor_spark_position() -> Vector3:

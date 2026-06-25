@@ -2,6 +2,8 @@ extends CanvasLayer
 
 signal hands_ready
 
+const WHITE_DISCARD_SHADER := preload("res://scripts/levels/stage_one/player_hands_white_discard.gdshader")
+
 @export var hand_sheet: Texture2D
 @export var camera_path: NodePath = NodePath("../Camera3D")
 @export var frame_size := Vector2i(480, 270)
@@ -170,20 +172,7 @@ func _smooth_step(value: float) -> float:
 	return value * value * (3.0 - 2.0 * value)
 
 func _build_white_discard_material() -> ShaderMaterial:
-	var shader := Shader.new()
-	shader.code = """
-shader_type canvas_item;
-
-uniform float white_cutoff = 0.96;
-
-void fragment() {
-	vec4 color = texture(TEXTURE, UV);
-	if (color.r > white_cutoff && color.g > white_cutoff && color.b > white_cutoff) {
-		discard;
-	}
-	COLOR = color;
-}
-"""
+	# Precompiled resource shader, so there's no runtime compile cost.
 	var material := ShaderMaterial.new()
-	material.shader = shader
+	material.shader = WHITE_DISCARD_SHADER
 	return material
