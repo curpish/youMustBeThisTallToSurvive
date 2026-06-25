@@ -125,7 +125,7 @@ func _fade_material_from(source: Material) -> StandardMaterial3D:
 		material.albedo_color = Color(1.0, 1.0, 1.0, 1.0)
 	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 
-	# PS1-style flat lighting: per-vertex shading, no specular sheen.
+	# Flat lighting and no shine here, so it reads chunky instead of glossy plastic.
 	material.shading_mode = BaseMaterial3D.SHADING_MODE_PER_VERTEX
 	material.metallic = 0.0
 	material.roughness = 1.0

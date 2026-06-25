@@ -1,6 +1,6 @@
 extends Node3D
 
-const BAND_TARGETS: Array[float] = [0.0, 65.0, 150.0, 280.0, 390.0]
+const BAND_TARGETS: Array[float] = [0.0, 65.0, 150.0, 280.0, 420.0]
 
 @export var counter_digit_names: Array[StringName] = [
 	&"rpmCounter_ten_thousands_digit",
@@ -77,6 +77,12 @@ const BAND_TARGETS: Array[float] = [0.0, 65.0, 150.0, 280.0, 390.0]
 }
 @export var fault_indicator_color := Color(1.0, 0.06, 0.02, 0.85)
 @export var fault_indicator_energy := 3.2
+@export var heat_gauge_needle_path: NodePath
+@export var heat_gauge_needle_name := &"analogDial_needle_geo"
+@export var heat_gauge_axis := Vector3.FORWARD
+@export var heat_gauge_min_rotation_degrees := -85.0
+@export var heat_gauge_max_rotation_degrees := 85.0
+@export var heat_gauge_smoothing := 8.0
 
 var _rpm_counter := RpmDigitCounter.new()
 var _speed_handle: Node3D
@@ -106,6 +112,9 @@ var _panel_buttons: Dictionary = {}
 var _panel_button_parts: Dictionary = {}
 var _hovered_panel_button := ""
 var _fault_indicator_parts: Dictionary = {}
+var _heat_gauge_needle: Node3D
+var _heat_gauge_needle_rest_basis := Basis.IDENTITY
+var _heat_gauge_angle_degrees := 0.0
 
 
 func _ready() -> void:
@@ -116,10 +125,12 @@ func _ready() -> void:
 	_setup_governor_screwdriver()
 	_setup_panel_buttons()
 	_setup_fault_indicators()
+	_setup_heat_gauge()
 	RideState.faults_changed.connect(_refresh_fault_indicators)
 	_update_counter()
 	_update_speed_handle()
 	_update_mode_dial()
+	_update_heat_gauge(0.0)
 	_refresh_fault_indicators()
 
 
@@ -127,6 +138,7 @@ func _process(_delta: float) -> void:
 	_update_counter()
 	_update_speed_handle()
 	_update_mode_dial()
+	_update_heat_gauge(_delta)
 	_update_speed_handle_hover()
 	_update_big_stop_hover()
 	_update_mode_dial_hover()
@@ -284,6 +296,23 @@ func _setup_fault_indicators() -> void:
 		push_warning("No fault indicator lights were found.")
 
 
+func _setup_heat_gauge() -> void:
+	if String(heat_gauge_needle_path) != "":
+		_heat_gauge_needle = get_node_or_null(heat_gauge_needle_path) as Node3D
+	if _heat_gauge_needle == null:
+		_heat_gauge_needle = find_child(String(heat_gauge_needle_name), true, false) as Node3D
+	if _heat_gauge_needle == null:
+		push_warning("Heat gauge needle '%s' was not found." % heat_gauge_needle_name)
+		return
+
+	_heat_gauge_needle_rest_basis = _heat_gauge_needle.basis
+	_heat_gauge_angle_degrees = heat_gauge_min_rotation_degrees
+	print("AXLE HEAT: gauge needle found at %s, axis=%s" % [
+		_heat_gauge_needle.get_path(),
+		heat_gauge_axis,
+	])
+
+
 func _ordered_fault_indicator_nodes() -> Array[Node3D]:
 	var indicators: Array[Node3D] = []
 	_collect_fault_indicator_nodes(self, indicators)
@@ -330,6 +359,24 @@ func _update_mode_dial() -> void:
 		axis = Vector3.FORWARD
 
 	_mode_dial.basis = _mode_dial_rest_basis * Basis(axis, _mode_angle_for_mode(RideState.selected_mode))
+
+
+func _update_heat_gauge(delta: float) -> void:
+	if _heat_gauge_needle == null:
+		return
+
+	var max_heat := maxf(RideState.rpm_max, 1.0)
+	var heat_percent := clampf(RideState.axle_heat / max_heat, 0.0, 1.0)
+	var target_angle := lerpf(heat_gauge_min_rotation_degrees, heat_gauge_max_rotation_degrees, heat_percent)
+	var smoothing := clampf(heat_gauge_smoothing, 0.0, 60.0)
+	var weight := 1.0 if delta <= 0.0 or smoothing <= 0.0 else 1.0 - exp(-smoothing * delta)
+	_heat_gauge_angle_degrees = lerpf(_heat_gauge_angle_degrees, target_angle, weight)
+
+	var axis := heat_gauge_axis.normalized()
+	if axis.length_squared() <= 0.0:
+		axis = Vector3.FORWARD
+
+	_heat_gauge_needle.basis = _heat_gauge_needle_rest_basis * Basis(axis, deg_to_rad(_heat_gauge_angle_degrees))
 
 
 func _update_speed_handle_hover() -> void:

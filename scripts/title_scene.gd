@@ -243,6 +243,7 @@ func _build_ui() -> void:
 	_main_menu = _make_menu(Vector2(0.07, 0.48), root)
 	_main_menu.add_child(_make_button("Play Game", _on_play_pressed))
 	_main_menu.add_child(_make_button("Credits", _on_credits_pressed))
+	_main_menu.add_child(_make_button("Gameplay Feedback Survey", _on_feedback_survey_pressed))
 
 	_difficulty_menu = _make_menu(Vector2(0.07, 0.46), root)
 	_difficulty_menu.add_child(_make_button("Normal", _on_normal_pressed))
@@ -340,6 +341,10 @@ func _on_normal_pressed() -> void:
 
 func _on_hard_pressed() -> void:
 	GameOrchestrator.start_stage_one("hard")
+
+
+func _on_feedback_survey_pressed() -> void:
+	OS.shell_open("https://forms.office.com/r/vrZU7N0ZuU")
 
 
 func _on_credits_pressed() -> void:

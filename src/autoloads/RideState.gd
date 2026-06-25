@@ -3,6 +3,9 @@ extends Node
 # Shared ride values live here.
 # Scene scripts read this and decide how to show it.
 
+const MAX_WHEEL_SPEED := 420.0
+const STOPPED_SPEED_EPSILON := 0.1
+
 const ACCEL := 30.0
 const DECEL := 28.0
 # Low speed should feel heavy, then build power as the wheel gets moving.
@@ -13,7 +16,7 @@ const FAULT_SPAWN_RPM := 65.0
 const DAMAGE_PER_FAULT := 10.0
 const DAMAGE_STOP_BONUS := 28.0
 
-const GOVERNOR_OVERRIDE_DURATION := 10.0
+const GOVERNOR_OVERRIDE_DURATION := 12.0
 const GOVERNOR_COOLDOWN := 20.0
 # The screwdriver takes a moment to seat before the governor drops.
 const GOVERNOR_PRIME_MIN := 1.0
@@ -22,13 +25,28 @@ const GOVERNOR_PRIME_MAX := 2.0
 const BIG_STOP_DECEL := 260.0
 const SHUDDER_DECAY := 3.0
 
+@export var max_wheel_speed := MAX_WHEEL_SPEED
+@export var heat_threshold_speed := 170.0
+@export var heat_marker_count := 10
+@export var heat_increase_rate := 20.0
+@export var heat_cool_rate := 35.0
+@export var overheat_speed := MAX_WHEEL_SPEED
+
 var feel: float = 1.0
-var rpm_max: float = 420.0
+var rpm_max: float = MAX_WHEEL_SPEED
 var rpm_governed: float = 170.0
 var is_governed: bool = true
 var target_rpm: float = 0.0
 var angular_velocity: float = 0.0
 var wheel_angle: float = 0.0
+var axle_heat: float = 0.0
+var heat_floor_stage: int = 0
+var heat_floor_value: float = 0.0
+var has_crossed_heat_threshold_this_spin := false
+var basket_released_this_spin := false
+var overheat_penalty_applied_this_spin := false
+var is_last_chance := false
+var is_failure_sequence_active := false
 var governor_prime_time_left: float = 0.0
 var governor_override_time_left: float = 0.0
 var governor_cooldown_left: float = 0.0
@@ -44,14 +62,22 @@ var selected_mode: int = 1
 
 var _fault_pressure: float = 0.0
 var _fault_cursor: int = 0
+var _was_moving_last_tick := false
+var _last_chance_this_spin := false
+var _heat_was_building := false
+var _heat_was_cooling := false
 
 signal faults_changed
 signal damage_changed
 signal controls_locked_changed(locked: bool)
 signal selected_mode_changed(mode: int)
+signal axle_heat_changed
+signal heat_floor_changed(stage: int, floor_value: float)
+signal axle_failure_triggered
 
 
 func _physics_process(delta: float) -> void:
+	_sync_speed_tuning()
 	_update_governor(delta)
 
 	var clamped_target: float
@@ -75,6 +101,8 @@ func _physics_process(delta: float) -> void:
 	angular_velocity = move_toward(angular_velocity, clamped_target, rate * delta)
 	wheel_angle += angular_velocity * (TAU / 60.0) * delta
 
+	_update_axle_heat(delta)
+	_update_spin_lifecycle()
 	_update_faults(delta)
 	_update_shudder(delta)
 
@@ -98,7 +126,11 @@ func can_override_governor() -> bool:
 
 
 func big_stop() -> void:
-	if controls_locked:
+	_begin_big_stop("manual")
+
+
+func _begin_big_stop(source: String) -> void:
+	if controls_locked or is_failure_sequence_active:
 		return
 	if is_emergency_stopping:
 		return
@@ -106,7 +138,18 @@ func big_stop() -> void:
 	is_emergency_stopping = true
 	last_stop_severity = angular_velocity / rpm_max
 	_apply_big_stop_damage()
+	if source == "overheat":
+		print("AXLE HEAT: auto big stop triggered at %.1f RPM" % absf(angular_velocity))
 	Events.big_stop.emit()
+
+
+func mark_basket_released() -> void:
+	basket_released_this_spin = true
+	print("AXLE HEAT: basket release succeeded this spin")
+
+
+func debug_trigger_axle_failure() -> void:
+	_trigger_axle_failure()
 
 
 func clear_fault(action: String, mode: int) -> bool:
@@ -145,6 +188,110 @@ func set_controls_locked(locked: bool) -> void:
 		return
 	controls_locked = locked
 	controls_locked_changed.emit(locked)
+
+
+func _sync_speed_tuning() -> void:
+	rpm_max = maxf(max_wheel_speed, 1.0)
+	heat_marker_count = maxi(heat_marker_count, 1)
+	heat_threshold_speed = clampf(heat_threshold_speed, 0.0, rpm_max)
+	overheat_speed = clampf(overheat_speed, 0.0, rpm_max)
+	_recalculate_heat_floor()
+
+
+func _update_axle_heat(delta: float) -> void:
+	var speed := absf(angular_velocity)
+	var old_heat := axle_heat
+	var is_building := speed > heat_threshold_speed and not is_failure_sequence_active
+	var is_stopped := speed <= STOPPED_SPEED_EPSILON
+
+	if is_building:
+		axle_heat = minf(rpm_max, axle_heat + heat_increase_rate * delta)
+		has_crossed_heat_threshold_this_spin = true
+		if not _heat_was_building:
+			print("AXLE HEAT: heat starts building at %.1f RPM" % speed)
+	elif is_stopped:
+		axle_heat = move_toward(axle_heat, heat_floor_value, heat_cool_rate * delta)
+		if old_heat > axle_heat and not _heat_was_cooling:
+			print("AXLE HEAT: cooling toward floor %.1f" % heat_floor_value)
+
+	_heat_was_building = is_building
+	_heat_was_cooling = is_stopped and old_heat > axle_heat
+
+	if speed >= overheat_speed and not overheat_penalty_applied_this_spin:
+		overheat_penalty_applied_this_spin = true
+		print("AXLE HEAT: overheat at %.1f RPM" % speed)
+		_increase_heat_floor("overheat penalty")
+		Events.overheated.emit()
+		_begin_big_stop("overheat")
+
+	axle_heat = clampf(axle_heat, 0.0, rpm_max)
+	if not is_equal_approx(old_heat, axle_heat):
+		axle_heat_changed.emit()
+
+
+func _update_spin_lifecycle() -> void:
+	var moving := absf(angular_velocity) > STOPPED_SPEED_EPSILON
+	if moving and not _was_moving_last_tick:
+		basket_released_this_spin = false
+		has_crossed_heat_threshold_this_spin = false
+		overheat_penalty_applied_this_spin = false
+		_last_chance_this_spin = is_last_chance
+		print("AXLE HEAT: spin started, last chance=%s" % is_last_chance)
+	elif not moving and _was_moving_last_tick:
+		_resolve_stopped_spin()
+
+	_was_moving_last_tick = moving
+
+
+func _resolve_stopped_spin() -> void:
+	print("AXLE HEAT: spin stopped, basket_released=%s" % basket_released_this_spin)
+	if has_crossed_heat_threshold_this_spin:
+		_increase_heat_floor("heated spin stop")
+
+	if _last_chance_this_spin and not basket_released_this_spin:
+		_trigger_axle_failure()
+
+	has_crossed_heat_threshold_this_spin = false
+	overheat_penalty_applied_this_spin = false
+	_last_chance_this_spin = is_last_chance
+
+
+func _increase_heat_floor(reason: String) -> void:
+	var old_stage := heat_floor_stage
+	var was_last_chance := is_last_chance
+	heat_floor_stage = clampi(heat_floor_stage + 1, 0, heat_marker_count)
+	_recalculate_heat_floor()
+	axle_heat = maxf(axle_heat, heat_floor_value)
+	if heat_floor_stage == old_stage:
+		return
+
+	print("AXLE HEAT: floor stage increased to %d (%.1f) via %s" % [
+		heat_floor_stage,
+		heat_floor_value,
+		reason,
+	])
+	heat_floor_changed.emit(heat_floor_stage, heat_floor_value)
+	axle_heat_changed.emit()
+
+	if is_last_chance and not was_last_chance:
+		print("AXLE HEAT: last chance begins")
+
+
+func _recalculate_heat_floor() -> void:
+	heat_floor_stage = clampi(heat_floor_stage, 0, heat_marker_count)
+	heat_floor_value = (rpm_max / float(maxi(heat_marker_count, 1))) * float(heat_floor_stage)
+	is_last_chance = heat_floor_stage >= heat_marker_count - 1
+
+
+func _trigger_axle_failure() -> void:
+	if is_failure_sequence_active:
+		return
+	is_failure_sequence_active = true
+	target_rpm = 0.0
+	is_emergency_stopping = false
+	set_controls_locked(true)
+	print("AXLE HEAT: failure sequence triggers")
+	axle_failure_triggered.emit()
 
 
 func _update_shudder(delta: float) -> void:
@@ -228,9 +375,18 @@ func _apply_big_stop_damage() -> void:
 
 
 func reset() -> void:
+	_sync_speed_tuning()
 	target_rpm = 0.0
 	angular_velocity = 0.0
 	wheel_angle = 0.0
+	axle_heat = 0.0
+	heat_floor_stage = 0
+	heat_floor_value = 0.0
+	has_crossed_heat_threshold_this_spin = false
+	basket_released_this_spin = false
+	overheat_penalty_applied_this_spin = false
+	is_last_chance = false
+	is_failure_sequence_active = false
 	is_governed = true
 	governor_prime_time_left = 0.0
 	governor_override_time_left = 0.0
@@ -245,7 +401,13 @@ func reset() -> void:
 	selected_mode = 1
 	_fault_pressure = 0.0
 	_fault_cursor = 0
+	_was_moving_last_tick = false
+	_last_chance_this_spin = false
+	_heat_was_building = false
+	_heat_was_cooling = false
 	faults_changed.emit()
 	damage_changed.emit()
+	axle_heat_changed.emit()
+	heat_floor_changed.emit(heat_floor_stage, heat_floor_value)
 	controls_locked_changed.emit(false)
 	selected_mode_changed.emit(selected_mode)

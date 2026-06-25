@@ -1,6 +1,6 @@
 extends Control
 
-const BAND_TARGETS: Array[float] = [0.0, 65.0, 150.0, 280.0, 390.0]
+const BAND_TARGETS: Array[float] = [0.0, 65.0, 150.0, 280.0, 420.0]
 const BAND_NAMES: Array[String] = ["STATIC", "JOG", "NOMINAL", "EXCEEDANCE", "OVERSPEED"]
 const BAND_COLORS: Array[Color] = [
 	Color(0.45, 0.85, 0.45),
@@ -35,12 +35,14 @@ const FAULT_MODE_COLORS: Dictionary = {
 @export var show_debug_governor_button := false
 @export var show_debug_fault_buttons := false
 @export var show_debug_mode_buttons := false
+@export var show_debug_game_over_button := true
 
 var _band_labels: Array[Label] = []
 var _fault_buttons: Dictionary = {}
 var _fault_styles: Dictionary = {}
 var _mode_buttons: Array[Button] = []
 var _damage_label: Label
+var _game_over_button: Button
 var _controls_ready := false
 
 func _ready() -> void:
@@ -52,6 +54,7 @@ func _ready() -> void:
 	_setup_big_stop()
 	_setup_faults()
 	_setup_mode_select()
+	_setup_game_over_button()
 	_setup_damage_readout()
 	RideState.faults_changed.connect(_refresh_fault_buttons)
 	RideState.damage_changed.connect(_refresh_extra_readouts)
@@ -105,6 +108,8 @@ func _set_controls_enabled(enabled: bool) -> void:
 		governor_button.disabled = true if not show_debug_governor_button else not enabled
 	if big_stop_button != null and show_debug_big_stop_button:
 		big_stop_button.disabled = not enabled
+	if _game_over_button != null:
+		_game_over_button.disabled = not enabled
 	for button in _mode_buttons:
 		button.disabled = not enabled
 	for action in _fault_buttons:
@@ -212,6 +217,33 @@ func _setup_mode_select() -> void:
 		_mode_buttons.append(button)
 	_refresh_mode_buttons()
 
+
+func _setup_game_over_button() -> void:
+	if not show_debug_game_over_button:
+		return
+
+	var box := VBoxContainer.new()
+	box.name = "vboxGameOver"
+	box.anchor_left = 0.02
+	box.anchor_top = 0.58
+	box.anchor_right = 0.17
+	box.anchor_bottom = 0.72
+	add_child(box)
+
+	var label := Label.new()
+	label.theme = _debug_theme()
+	label.text = "GAME OVER"
+	box.add_child(label)
+
+	_game_over_button = Button.new()
+	_game_over_button.custom_minimum_size = Vector2(120.0, 36.0)
+	_game_over_button.focus_mode = Control.FOCUS_NONE
+	_game_over_button.theme = _debug_theme()
+	_game_over_button.text = "TEST"
+	_game_over_button.pressed.connect(_trigger_game_over_test)
+	box.add_child(_game_over_button)
+
+
 func _setup_damage_readout() -> void:
 	var readouts := get_node_or_null("../extraReadOuts")
 	if readouts == null:
@@ -243,6 +275,14 @@ func _set_mode(mode: int) -> void:
 	if RideState.controls_locked:
 		return
 	RideState.set_selected_mode(mode)
+
+
+func _trigger_game_over_test() -> void:
+	if RideState.controls_locked:
+		return
+	print("DEBUG: triggering game over test")
+	RideState.debug_trigger_axle_failure()
+
 
 func _on_selected_mode_changed(_mode: int) -> void:
 	_refresh_mode_buttons()
@@ -382,6 +422,10 @@ func _apply_debug_visibility() -> void:
 		_hide_governor()
 	if not show_debug_fault_buttons:
 		_hide_fault_cluster()
+	if _game_over_button != null:
+		var game_over_box := _game_over_button.get_parent()
+		if game_over_box is Control:
+			game_over_box.visible = show_debug_visuals and show_debug_game_over_button
 	var readouts := get_node_or_null("../extraReadOuts")
 	if readouts != null:
 		readouts.visible = show_debug_visuals

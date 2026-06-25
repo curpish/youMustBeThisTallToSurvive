@@ -37,9 +37,6 @@
 [ext_resource type="AudioStream" uid="uid://b1ybujwexyg10" path="res://assets/audio/world/controls/governor_out.ogg" id="24_flnjp"]
 [ext_resource type="PackedScene" uid="uid://c8k6wqvdjol4" path="res://assets/blender_imports/scoreboard/riders_launched_scoreboard.glb" id="25_scoreboard"]
 [ext_resource type="Script" uid="uid://w00jrjadvcs5" path="res://scripts/levels/stage_one/stage_one_scoreboard.gd" id="26_scoreboard"]
-[ext_resource type="PackedScene" uid="uid://n0fphs6hgnnp" path="res://assets/blender_imports/carnival_props/foodcart.glb" id="27_foodcart"]
-[ext_resource type="PackedScene" uid="uid://dcesdr2ey4tjj" path="res://assets/blender_imports/carnival_props/icecreamcart.glb" id="28_icecreamcart"]
-[ext_resource type="PackedScene" uid="uid://cfxrcdeisuf3f" path="res://assets/blender_imports/carnival_props/merrygoround.glb" id="29_merrygoround"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_stage_one"]
 sky_top_color = Color(0.13, 0.19, 0.26, 1)
@@ -170,15 +167,6 @@ script = ExtResource("6_intro_orbit_camera")
 transform = Transform3D(0.27, 0, 0, 0, 0.27, 0, 0, 0, 0.27, 1.22, 0.68, -2.35)
 script = ExtResource("26_scoreboard")
 scoreboard_scene = ExtResource("25_scoreboard")
-
-[node name="FoodCart" parent="." unique_id=1027963622 instance=ExtResource("27_foodcart")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 0, -19.236332)
-
-[node name="IceCreamCart" parent="." unique_id=1551730907 instance=ExtResource("28_icecreamcart")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.04718, 0, -9)
-
-[node name="MerryGoRound" parent="." unique_id=989975350 instance=ExtResource("29_merrygoround")]
-transform = Transform3D(1, 0, 0, 0, 2.0996702, 0, 0, 0, 2.0996702, -5.5198364, 0, -21.413872)
 
 [node name="OperatorControlPanel" parent="." unique_id=932911297 instance=ExtResource("12_control_panel")]
 transform = Transform3D(0.025178477, 0.11085446, 1.0056173, 0.099557444, 1.099595, -0.103074074, -0.95272046, 0.1178352, 0.015805371, 39.743595, 1.7100306, 1.6832534)

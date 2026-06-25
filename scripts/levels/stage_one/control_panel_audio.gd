@@ -1,7 +1,7 @@
 extends Node
 
 const FAULT_KEYS: Array[String] = ["q", "w", "e", "r"]
-const SPEED_TARGETS: Array[float] = [0.0, 65.0, 150.0, 280.0, 390.0]
+const SPEED_TARGETS: Array[float] = [0.0, 65.0, 150.0, 280.0, 420.0]
 const SPEED_SETTING_PITCHES: Array[float] = [0.85, 0.98, 1.1, 1.22, 1.36]
 
 @export var button: AudioStreamPlayer
