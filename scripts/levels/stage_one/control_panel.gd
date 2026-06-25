@@ -76,6 +76,7 @@ const BAND_TARGETS: Array[float] = [0.0, 65.0, 150.0, 280.0, 420.0]
 	"y": &"indicatorLight_light_Y",
 }
 @export var fault_indicator_color := Color(1.0, 0.06, 0.02, 0.85)
+@export var fault_indicator_warning_color := Color(1.0, 0.78, 0.08, 0.85)
 @export var fault_indicator_safe_color := Color(0.1, 1.0, 0.15, 0.85)
 @export var fault_indicator_energy := 3.2
 @export var heat_gauge_needle_path: NodePath
@@ -636,8 +637,13 @@ func _press_panel_button(action: String) -> void:
 
 func _refresh_fault_indicators() -> void:
 	for action in fault_indicator_names:
-		var is_danger := RideState.active_faults.has(action)
-		_set_fault_indicator_color(action, fault_indicator_color if is_danger else fault_indicator_safe_color)
+		var mode := RideState.get_fault_mode(action)
+		var color := fault_indicator_safe_color
+		if mode == 3:
+			color = fault_indicator_color
+		elif mode == 2:
+			color = fault_indicator_warning_color
+		_set_fault_indicator_color(action, color)
 
 
 func _set_mode_from_screen_position(screen_position: Vector2) -> void:

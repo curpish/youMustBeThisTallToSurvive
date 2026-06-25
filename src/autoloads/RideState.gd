@@ -43,13 +43,16 @@ const SHUDDER_DECAY := 3.0
 @export var big_stop_minimum_window_size := 12.0
 @export var big_stop_shrink_per_stage := 2.0
 
-# The panel lights are the fault system's active_faults / FAULT_ACTIONS -
-# they get harder to keep clear as heat stage rises, and all six lit at once
-# is the danger state that auto-triggers Big Stop.
+# The panel lights are the fault system's active_faults / FAULT_ACTIONS.
+# Each one lights up yellow (mode 2 to clear) and turns red (mode 3 to
+# clear) if left alone past fault_escalation_time - they get harder to
+# keep clear as heat stage rises, and all six red at once is the danger
+# state that auto-triggers Big Stop.
 @export var panel_pressure_enabled := true
 @export var panel_heat_stage_pressure_multiplier := 0.12
 @export var panel_min_spawn_interval_factor := 0.35
 @export var fault_spawn_interval_multiplier := 1.0
+@export var fault_escalation_time := 5.0
 
 var feel: float = 1.0
 var rpm_max: float = MAX_WHEEL_SPEED
@@ -90,6 +93,7 @@ var difficulty: Difficulty = Difficulty.HARD
 
 var _fault_pressure: float = 0.0
 var _fault_cursor: int = 0
+var _fault_age: Dictionary = {}
 var _was_moving_last_tick := false
 var _last_chance_this_spin := false
 var _heat_was_building := false
@@ -232,6 +236,7 @@ func clear_fault(action: String, mode: int) -> bool:
 		return false
 
 	active_faults.erase(action)
+	_fault_age.erase(action)
 	print("PANEL LIGHTS: %s indicator reset to green (mode %d)" % [action.to_upper(), mode])
 	faults_changed.emit()
 	return true
@@ -266,6 +271,7 @@ func set_difficulty(new_difficulty: Difficulty) -> void:
 			panel_heat_stage_pressure_multiplier = 0.07
 			panel_min_spawn_interval_factor = 0.55
 			fault_spawn_interval_multiplier = 1.6
+			fault_escalation_time = 9.0
 		_:
 			big_stop_initial_min_speed = 379.0
 			big_stop_initial_max_speed = 410.0
@@ -274,6 +280,7 @@ func set_difficulty(new_difficulty: Difficulty) -> void:
 			panel_heat_stage_pressure_multiplier = 0.12
 			panel_min_spawn_interval_factor = 0.35
 			fault_spawn_interval_multiplier = 1.0
+			fault_escalation_time = 5.0
 	_recalculate_big_stop_window()
 	difficulty_changed.emit(difficulty)
 
@@ -442,6 +449,7 @@ func _check_panel_auto_big_stop() -> void:
 	print("PANEL LIGHTS: all six red at once - auto Big Stop triggers")
 	_begin_big_stop("panel_pressure")
 	active_faults.clear()
+	_fault_age.clear()
 	faults_changed.emit()
 	print("PANEL LIGHTS: all six reset to green after auto Big Stop")
 
@@ -499,9 +507,14 @@ func _update_governor(delta: float) -> void:
 
 func _update_faults(delta: float) -> void:
 	# controls_locked already covers failure/victory/Big-Stop-grinding/the
-	# fling spectacle camera lock - no point lighting panels the player can't
-	# react to.
-	if controls_locked or is_emergency_stopping or active_faults.size() >= FAULT_ACTIONS.size():
+	# fling spectacle camera lock - no point progressing panel state the
+	# player can't react to.
+	if controls_locked or is_emergency_stopping:
+		return
+
+	_update_fault_escalation(delta)
+
+	if active_faults.size() >= FAULT_ACTIONS.size():
 		return
 	if angular_velocity < FAULT_SPAWN_RPM:
 		_fault_pressure = maxf(0.0, _fault_pressure - delta)
@@ -521,7 +534,21 @@ func _update_faults(delta: float) -> void:
 	_fault_pressure += pressure_gain * delta
 	if _fault_pressure >= spawn_interval:
 		_fault_pressure = 0.0
-		_spawn_fault(speed_fraction)
+		_spawn_fault()
+
+
+func _update_fault_escalation(delta: float) -> void:
+	var escalated := false
+	for action in active_faults.keys():
+		if int(active_faults[action]) != 2:
+			continue
+		_fault_age[action] = _fault_age.get(action, 0.0) + delta
+		if _fault_age[action] >= fault_escalation_time:
+			active_faults[action] = 3
+			escalated = true
+			print("FAULT %s ESCALATED TO RED" % action.to_upper())
+	if escalated:
+		faults_changed.emit()
 
 
 func _panel_spawn_interval_factor() -> float:
@@ -544,28 +571,26 @@ func get_current_panel_spawn_interval() -> float:
 
 
 func are_all_panel_lights_red() -> bool:
-	return active_faults.size() >= FAULT_ACTIONS.size()
+	if active_faults.size() < FAULT_ACTIONS.size():
+		return false
+	for mode in active_faults.values():
+		if int(mode) != 3:
+			return false
+	return true
 
 
-func _spawn_fault(speed_fraction: float) -> void:
+func _spawn_fault() -> void:
 	for i in FAULT_ACTIONS.size():
 		var action := FAULT_ACTIONS[(_fault_cursor + i) % FAULT_ACTIONS.size()]
 		if active_faults.has(action):
 			continue
 
 		_fault_cursor = (_fault_cursor + i + 1) % FAULT_ACTIONS.size()
-		active_faults[action] = _mode_for_speed(speed_fraction)
-		print("FAULT %s LIT - MODE %d" % [action.to_upper(), active_faults[action]])
+		active_faults[action] = 2
+		_fault_age[action] = 0.0
+		print("FAULT %s LIT - MODE %d (yellow)" % [action.to_upper(), active_faults[action]])
 		faults_changed.emit()
 		return
-
-
-func _mode_for_speed(speed_fraction: float) -> int:
-	if speed_fraction >= 0.7:
-		return 3
-	if speed_fraction >= 0.35:
-		return 2
-	return 1
 
 
 func _apply_big_stop_damage() -> void:
@@ -609,6 +634,7 @@ func reset() -> void:
 	shudder = 0.0
 	last_stop_severity = 0.0
 	active_faults.clear()
+	_fault_age.clear()
 	damage = 0.0
 	last_stop_damage = 0.0
 	controls_locked = false
