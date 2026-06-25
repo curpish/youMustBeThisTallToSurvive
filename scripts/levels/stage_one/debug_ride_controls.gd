@@ -12,7 +12,7 @@ const BAND_COLORS: Array[Color] = [
 const LIT_ALPHA := 1.0
 const UNLIT_ALPHA := 0.28
 
-const FAULT_KEYS: Array[String] = ["q", "w", "e", "r"]
+const FAULT_KEYS: Array[String] = ["q", "w", "e", "r", "t", "y"]
 const FAULT_PRESSED_COLOR := Color(1.0, 0.85, 0.2)
 const FAULT_MODE_COLORS: Dictionary = {
 	1: Color(0.35, 0.95, 0.35),
@@ -36,6 +36,7 @@ const FAULT_MODE_COLORS: Dictionary = {
 @export var show_debug_fault_buttons := false
 @export var show_debug_mode_buttons := false
 @export var show_debug_game_over_button := true
+@export var show_debug_win_button := true
 
 var _band_labels: Array[Label] = []
 var _fault_buttons: Dictionary = {}
@@ -43,6 +44,7 @@ var _fault_styles: Dictionary = {}
 var _mode_buttons: Array[Button] = []
 var _damage_label: Label
 var _game_over_button: Button
+var _win_button: Button
 var _controls_ready := false
 
 func _ready() -> void:
@@ -55,6 +57,7 @@ func _ready() -> void:
 	_setup_faults()
 	_setup_mode_select()
 	_setup_game_over_button()
+	_setup_win_button()
 	_setup_damage_readout()
 	RideState.faults_changed.connect(_refresh_fault_buttons)
 	RideState.damage_changed.connect(_refresh_extra_readouts)
@@ -65,8 +68,11 @@ func _ready() -> void:
 	_wait_for_hands()
 
 func _process(_delta: float) -> void:
-	_refresh_governor_button()
-	_refresh_extra_readouts()
+	# These two only touch labels/buttons that are invisible anyway when
+	# show_debug_visuals is false, so there's nothing lost by skipping them.
+	if show_debug_visuals:
+		_refresh_governor_button()
+		_refresh_extra_readouts()
 	if not _controls_ready or RideState.controls_locked:
 		return
 
@@ -110,6 +116,8 @@ func _set_controls_enabled(enabled: bool) -> void:
 		big_stop_button.disabled = not enabled
 	if _game_over_button != null:
 		_game_over_button.disabled = not enabled
+	if _win_button != null:
+		_win_button.disabled = not enabled
 	for button in _mode_buttons:
 		button.disabled = not enabled
 	for action in _fault_buttons:
@@ -244,6 +252,32 @@ func _setup_game_over_button() -> void:
 	box.add_child(_game_over_button)
 
 
+func _setup_win_button() -> void:
+	if not show_debug_win_button:
+		return
+
+	var box := VBoxContainer.new()
+	box.name = "vboxWin"
+	box.anchor_left = 0.02
+	box.anchor_top = 0.74
+	box.anchor_right = 0.17
+	box.anchor_bottom = 0.88
+	add_child(box)
+
+	var label := Label.new()
+	label.theme = _debug_theme()
+	label.text = "DEBUG WIN"
+	box.add_child(label)
+
+	_win_button = Button.new()
+	_win_button.custom_minimum_size = Vector2(120.0, 36.0)
+	_win_button.focus_mode = Control.FOCUS_NONE
+	_win_button.theme = _debug_theme()
+	_win_button.text = "TEST"
+	_win_button.pressed.connect(_trigger_win_test)
+	box.add_child(_win_button)
+
+
 func _setup_damage_readout() -> void:
 	var readouts := get_node_or_null("../extraReadOuts")
 	if readouts == null:
@@ -282,6 +316,13 @@ func _trigger_game_over_test() -> void:
 		return
 	print("DEBUG: triggering game over test")
 	RideState.debug_trigger_axle_failure()
+
+
+func _trigger_win_test() -> void:
+	if RideState.controls_locked:
+		return
+	print("DEBUG: win button pressed")
+	RideState.debug_trigger_victory()
 
 
 func _on_selected_mode_changed(_mode: int) -> void:
@@ -426,6 +467,10 @@ func _apply_debug_visibility() -> void:
 		var game_over_box := _game_over_button.get_parent()
 		if game_over_box is Control:
 			game_over_box.visible = show_debug_visuals and show_debug_game_over_button
+	if _win_button != null:
+		var win_box := _win_button.get_parent()
+		if win_box is Control:
+			win_box.visible = show_debug_visuals and show_debug_win_button
 	var readouts := get_node_or_null("../extraReadOuts")
 	if readouts != null:
 		readouts.visible = show_debug_visuals
