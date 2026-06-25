@@ -48,6 +48,19 @@ var _win_button: Button
 var _controls_ready := false
 
 func _ready() -> void:
+	# Release exports never show debug controls, regardless of the exported
+	# defaults above - matches stage_one_controller.gd's readout overlay and
+	# debug_dan_buttons.gd, which already gate the same way.
+	if not OS.is_debug_build():
+		show_debug_visuals = false
+		enable_debug_speed_slider = false
+		show_debug_big_stop_button = false
+		show_debug_governor_button = false
+		show_debug_fault_buttons = false
+		show_debug_mode_buttons = false
+		show_debug_game_over_button = false
+		show_debug_win_button = false
+
 	if enable_debug_speed_slider:
 		_setup_speed_bands()
 	else:

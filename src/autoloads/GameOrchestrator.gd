@@ -31,8 +31,12 @@ func restart() -> void:
 	await start_stage_one()
 
 
-func start_stage_one(_difficulty: String = "normal") -> void:
+func start_stage_one(difficulty: String = "") -> void:
 	await Transitions.fade_out()
+	if difficulty == "hard":
+		RideState.set_difficulty(RideState.Difficulty.HARD)
+	elif difficulty == "normal":
+		RideState.set_difficulty(RideState.Difficulty.NORMAL)
 	RideState.reset()
 	phase = Phase.RUNNING
 	get_tree().change_scene_to_packed(load(STAGE_ONE_SCENE))

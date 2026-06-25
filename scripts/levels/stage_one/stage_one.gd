@@ -465,7 +465,6 @@ func _throw_gondola(index: int) -> void:
 	_basket_bounces[index] = 0
 	_rider_bounces[index] = 0
 	_flight_ages[index] = 0.0
-	RideState.mark_basket_released()
 	RideState.set_controls_locked(true)
 
 	if index < _left_hanger_bars.size():
@@ -488,6 +487,9 @@ func _throw_gondola(index: int) -> void:
 	_start_spectacle_camera(basket, rider)
 	Events.fling.emit()
 	print("BASKET %d LAUNCHED AT %.1f RPM" % [index + 1, RideState.last_stop_severity * RideState.rpm_max])
+	# Camera is already watching the fling by the time this can trigger the
+	# win condition, so the victory sequence (if any) waits for it to return.
+	RideState.mark_basket_released()
 
 
 func _on_axle_failure_triggered() -> void:
@@ -517,9 +519,18 @@ func _on_victory_triggered() -> void:
 
 
 func _run_victory_sequence() -> void:
+	await _wait_for_spectacle_camera()
 	await _animate_victory_spin()
 	print("VICTORY: title menu transition starts")
 	await GameOrchestrator.return_to_title()
+
+
+func _wait_for_spectacle_camera() -> void:
+	# The winning launch's basket/rider fling still has the camera mid-watch
+	# at this point - let it finish and return before the wheel starts lifting.
+	var camera := get_viewport().get_camera_3d()
+	if camera != null and camera.has_method("is_watching_fling") and camera.is_watching_fling():
+		await camera.fling_watch_finished
 
 
 func _animate_victory_spin() -> void:
@@ -527,8 +538,11 @@ func _animate_victory_spin() -> void:
 	# assembly (frame, axle, baskets, ropes) free of the support arms since
 	# frame_arm* is excluded from it by name.
 	var target := _build_wheel_breakaway_pivot()
+	var camera := get_viewport().get_camera_3d()
 	if target != null:
 		var lift_position := target.global_position + Vector3.UP * victory_lift_height
+		if camera != null and camera.has_method("watch_victory"):
+			camera.watch_victory(lift_position)
 		var lift_tween := create_tween()
 		lift_tween.tween_property(target, "global_position", lift_position, victory_lift_duration) \
 			.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
