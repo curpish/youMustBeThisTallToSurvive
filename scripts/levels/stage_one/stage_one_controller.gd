@@ -59,7 +59,12 @@ func _process(_delta: float) -> void:
 func _format_panel_lights() -> String:
 	var parts: Array[String] = []
 	for action in RideState.FAULT_ACTIONS:
-		var state := "R" if RideState.active_faults.has(action) else "G"
+		var mode := RideState.get_fault_mode(action)
+		var state := "G"
+		if mode == 3:
+			state = "R"
+		elif mode == 2:
+			state = "Y"
 		parts.append("%s %s" % [action.to_upper(), state])
 	return " | ".join(parts)
 
