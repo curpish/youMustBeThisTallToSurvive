@@ -1,6 +1,5 @@
 extends CanvasLayer
 
-# Controls stay locked until the hands finish sliding into place.
 signal hands_ready
 
 @export var hand_sheet: Texture2D
@@ -158,7 +157,6 @@ func _minimum_reach_y(viewport_size: Vector2) -> float:
 	return minf(_bottom_locked_y(viewport_size), top_reach_y)
 
 func _set_frame(frame: int) -> void:
-	# The gif is baked into one sheet because Godot doesn't really want animated gifs here.
 	var column := frame % columns
 	var row := floori(float(frame) / float(columns))
 	_hands.region_rect = Rect2(

@@ -1,33 +1,26 @@
 extends AudioStreamPlayer
-# Dynamic score driven by RideState. The wheel powers the music like a generator:
-# it runs only while spinning, the Music-bus reverb crossfades from wash to dry as
-# speed climbs, and each guest flung steps the track up a tier (0 = scene stream).
 
-const MAX_TIERS := 6  # tier 0 (loaded) + up to 5 escalation tracks
-@export var intensity_tracks: Array[AudioStream] = []  # tiers 1..5, escalating
+const MAX_TIERS := 6
+@export var intensity_tracks: Array[AudioStream] = []
 
-# Generator gate. Pause/resume (not stop/play) so the phrase survives a stall.
-const ENGAGE_FRAC := 0.03  # speed fraction that powers up
-const DISENGAGE_FRAC := 0.005  # falls below this to cut out
+const ENGAGE_FRAC := 0.03
+const DISENGAGE_FRAC := 0.005
 
-# Volume: rises fast (sqrt), ~90% by JOG and full just past it.
-const VOLUME_FULL_RPM := 7.4  # angular_velocity at full volume
-const MUSIC_SILENT_DB := -60.0  # disengaged floor; pause once we reach it
-const VOLUME_RATE := 24.0  # dB/s smoothing
+const VOLUME_FULL_RPM := 7.4
+const MUSIC_SILENT_DB := -60.0
+const VOLUME_RATE := 24.0
 
-# Pitch: spins up to normal across STATIC->JOG, holds to NOMINAL, log creep beyond.
-const PITCH_START := 0.65  # standstill pitch
-const PITCH_JOG_RPM := 6.0  # reaches normal here
-const PITCH_HOLD_RPM := 18.0  # holds normal until here (NOMINAL)
-const PITCH_LOG_GAIN := 0.04  # log creep past NOMINAL
-const PITCH_RATE := 1.2  # pitch units/s smoothing
+const PITCH_START := 0.65
+const PITCH_JOG_RPM := 6.0
+const PITCH_HOLD_RPM := 18.0
+const PITCH_LOG_GAIN := 0.04
+const PITCH_RATE := 1.2
 
-# Reverb crossfade on the Music bus: dry swells in as wet recedes (smoothstep).
 const DRY_REST := 0.1
 const DRY_FULL := 1.0
 const WET_REST := 0.2
 const WET_FULL := 0.0
-const REVERB_RATE := 1.5  # units/s smoothing, slow on purpose
+const REVERB_RATE := 1.5
 
 var _full_volume_db := 0.0
 var _normal_pitch := 1.0
@@ -50,7 +43,6 @@ func _ready() -> void:
 	Events.fling.connect(_on_fling)
 	_apply_tier(0)
 
-	# Start so stream_paused can resume, then power down: a dead generator.
 	volume_db = MUSIC_SILENT_DB
 	play()
 	stream_paused = true
@@ -65,7 +57,7 @@ func _process(delta: float) -> void:
 	var target_db := _volume_target_db(av) if _engaged else MUSIC_SILENT_DB
 	volume_db = move_toward(volume_db, target_db, VOLUME_RATE * delta)
 	if not _engaged and volume_db <= MUSIC_SILENT_DB + 0.5:
-		stream_paused = true  # wind-down reached silence; cut power
+		stream_paused = true
 
 	pitch_scale = move_toward(pitch_scale, _pitch_target(av), PITCH_RATE * delta)
 
@@ -94,7 +86,7 @@ func _update_engagement(speed_frac: float) -> void:
 			_engaged = false
 	elif speed_frac > ENGAGE_FRAC:
 		_engaged = true
-		stream_paused = false  # power back on, resumes where it paused
+		stream_paused = false
 
 
 func _on_fling() -> void:
@@ -107,11 +99,10 @@ func _apply_tier(tier: int) -> void:
 		return
 	_current_tier = tier
 	if tier == 0:
-		return  # keep the scene-loaded stream
+		return
 
 	var index := tier - 1
 	if index < intensity_tracks.size() and intensity_tracks[index] != null:
-		# Swapping restarts the stream -- a deliberate intensity step.
 		stream = intensity_tracks[index]
 		_ensure_loop()
 		if not stream_paused:
@@ -121,12 +112,12 @@ func _apply_tier(tier: int) -> void:
 
 
 func _resolve_reverb() -> void:
-	var bus := AudioServer.get_bus_index("Music")
-	if bus < 0:
+	var bus_index := AudioServer.get_bus_index("Music")
+	if bus_index < 0:
 		push_warning("StageOneMusic: Music bus not found; reverb crossfade disabled.")
 		return
-	for i in AudioServer.get_bus_effect_count(bus):
-		var effect := AudioServer.get_bus_effect(bus, i)
+	for i in AudioServer.get_bus_effect_count(bus_index):
+		var effect := AudioServer.get_bus_effect(bus_index, i)
 		if effect is AudioEffectReverb:
 			_reverb = effect
 			return

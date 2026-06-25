@@ -1,16 +1,14 @@
 extends Node
-# Control-panel SFX. Each player is a randomizer for variation; this just maps
-# events and inputs to playback.
 
-const FAULT_KEYS: Array[String] = ["q", "w", "e", "r"]  # the fault-button cluster
+const FAULT_KEYS: Array[String] = ["q", "w", "e", "r"]
 const SPEED_TARGETS: Array[float] = [0.0, 65.0, 150.0, 280.0, 390.0]
 const SPEED_SETTING_PITCHES: Array[float] = [0.85, 0.98, 1.1, 1.22, 1.36]
 
-@export var button: AudioStreamPlayer  # Q/W/E/R fault-key presses
-@export var big_stop: AudioStreamPlayer  # emergency-stop slam
-@export var lever: AudioStreamPlayer  # speed-band change
-@export var governor_in: AudioStreamPlayer  # screwdriver seats; bypass engaged
-@export var governor_out: AudioStreamPlayer  # screwdriver pulled; bypass arming
+@export var button: AudioStreamPlayer
+@export var big_stop: AudioStreamPlayer
+@export var lever: AudioStreamPlayer
+@export var governor_in: AudioStreamPlayer
+@export var governor_out: AudioStreamPlayer
 
 var _last_target_rpm := 0.0
 
@@ -31,6 +29,7 @@ func _ready() -> void:
 	Events.big_stop.connect(_on_big_stop)
 	Events.governor_priming.connect(_on_governor_priming)
 	Events.governor_overridden.connect(_on_governor_overridden)
+	Events.panel_button_pressed.connect(_on_panel_button_pressed)
 
 
 func _process(_delta: float) -> void:
@@ -40,8 +39,6 @@ func _process(_delta: float) -> void:
 				button.play()
 			break
 
-	# target_rpm only moves in discrete band steps (incl. Big Stop pinning it to
-	# 0), so any change is a band change -- click the lever.
 	if RideState.target_rpm != _last_target_rpm:
 		_last_target_rpm = RideState.target_rpm
 		if lever != null:
@@ -52,6 +49,11 @@ func _process(_delta: float) -> void:
 func _on_big_stop() -> void:
 	if big_stop != null:
 		big_stop.play()
+
+
+func _on_panel_button_pressed(_action: String) -> void:
+	if button != null:
+		button.play()
 
 
 func _on_governor_priming() -> void:

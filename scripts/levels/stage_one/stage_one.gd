@@ -1,8 +1,5 @@
 extends Node3D
 
-# The wheel no longer owns its speed; it reads the shared spin model
-# (RideState.wheel_angle). This is only the spin direction along the hub axis.
-# Negative keeps the original "spins backwards" look.
 @export var spin_direction: float = -1.0
 
 @export var gondola_orbit_radius: float = 7.2
@@ -12,7 +9,6 @@ extends Node3D
 @export var hanger_half_width: float = 0.8
 @export var hanger_bar_radius: float = 0.035
 
-# These are RPM now because the wheel follows RideState.
 @export var axle_warning_lead_speed: float = 55.0
 @export var axle_sweetspot_width: float = 18.0
 @export var axle_glow_radius: float = 1.18
@@ -27,11 +23,9 @@ extends Node3D
 @export var basket_fling_speed: float = 379.0
 @export var fling_ground_y: float = 0.25
 
-# Sometimes treats this mesh name weird after import
 const WHEEL_NODE_NAME := "frame_wheel"
 const WHEEL_NODE_FALLBACK_NAME := "frame"
 
-# The Blender ropes looked bad once the basket started moving, adjusted
 const ROPE_NODE_NAMES := [
 	"rope_a",
 	"rope_b",
@@ -77,9 +71,6 @@ func _process(_delta: float) -> void:
 	if _wheel == null or _baskets.is_empty():
 		return
 
-	# Display the shared spin model. RideState.wheel_angle is the accumulated
-	# rotation in radians; we apply it around the hub's X axis from the rest
-	# pose. Pre-multiplying matches the old rotate_x accumulation exactly.
 	var angle := spin_direction * RideState.wheel_angle
 	_wheel.basis = Basis(Vector3.RIGHT, angle) * _wheel_rest_basis
 
@@ -131,7 +122,6 @@ func _create_gondolas() -> void:
 	_basket_rest_scales.clear()
 	_rider_rest_scales.clear()
 
-	# Duplicating the one Blender cart for now is faster than rebuilding the wheel asset.
 	var basket_parent := _basket.get_parent()
 	var rider_is_inside_basket := _rider != null and _is_descendant_of(_rider, _basket)
 	var rider_parent := _rider.get_parent() if _rider != null else null
@@ -252,7 +242,6 @@ func _setup_hot_glow() -> void:
 	_hot_glow_light.global_position = _axle_glow_position()
 
 func _setup_sparks() -> void:
-	# Little angry axle sparks once the player starts pushing the ride too hard.
 	var spark_mesh := QuadMesh.new()
 	spark_mesh.size = Vector2(0.08, 0.08)
 
@@ -356,7 +345,6 @@ func _update_sparks() -> void:
 	if _axle_sparks == null or _spark_process_material == null:
 		return
 
-	# Starts early so the wheel feels sketchy before it is fully cooked.
 	var spark_heat := inverse_lerp(spark_start_speed, spark_full_speed, absf(RideState.angular_velocity))
 	spark_heat = clampf(spark_heat, 0.0, 1.0)
 	_axle_sparks.global_position = _wheel.global_position
@@ -381,7 +369,6 @@ func _update_gondola(index: int) -> void:
 	var basket_position := attachment + Vector3.DOWN * gondola_hang_offset
 	basket_position.x = _gondola_center_x
 
-	# Keep attached baskets upright until Big Stop throws one loose.
 	basket.global_position = basket_position
 	basket.global_basis = _basket_basis
 
@@ -442,7 +429,6 @@ func _throw_gondola(index: int) -> void:
 	_basket_velocities[index] = Vector3(0.0, 9.5, side_throw * lerpf(10.0, 17.0, launch_speed))
 
 	if rider != null:
-		# Kid gets kicked free of the basket with extra spin. Fake ragdoll, good enough to laugh at.
 		_rider_velocities[index] = Vector3(randf_range(-1.0, 1.0), 12.5, side_throw * lerpf(14.0, 23.0, launch_speed))
 		_rider_spin_axes[index] = Vector3(randf(), randf(), randf()).normalized()
 		_rider_spin_speeds[index] = lerpf(5.5, 11.0, launch_speed)
@@ -555,7 +541,6 @@ func _set_bar_between(bar: MeshInstance3D, start: Vector3, end: Vector3) -> void
 	bar.global_basis = _basis_from_y_axis(direction.normalized())
 
 func _basis_from_y_axis(y_axis: Vector3) -> Basis:
-	# CylinderMesh uses Y as its length axis.
 	var x_axis := Vector3.FORWARD.cross(y_axis)
 	if x_axis.length_squared() < 0.001:
 		x_axis = Vector3.RIGHT
