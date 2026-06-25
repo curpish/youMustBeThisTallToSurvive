@@ -35,8 +35,7 @@
 [ext_resource type="AudioStream" uid="uid://b2nt56u477tn4" path="res://assets/audio/world/controls/big_stop.ogg" id="20_x6xw4"]
 [ext_resource type="AudioStream" uid="uid://bkqa22e11x0pc" path="res://assets/audio/world/controls/governor_in.ogg" id="23_r3g8u"]
 [ext_resource type="AudioStream" uid="uid://b1ybujwexyg10" path="res://assets/audio/world/controls/governor_out.ogg" id="24_flnjp"]
-[ext_resource type="PackedScene" uid="uid://c8k6wqvdjol4" path="res://assets/blender_imports/scoreboard/riders_launched_scoreboard.glb" id="25_scoreboard"]
-[ext_resource type="Script" uid="uid://w00jrjadvcs5" path="res://scripts/levels/stage_one/stage_one_scoreboard.gd" id="26_scoreboard"]
+[ext_resource type="Script" path="res://scripts/levels/stage_one/riders_launched_hud.gd" id="26_scoreboard"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_stage_one"]
 sky_top_color = Color(0.13, 0.19, 0.26, 1)
@@ -163,10 +162,8 @@ current = true
 fov = 55.0
 script = ExtResource("6_intro_orbit_camera")
 
-[node name="RidersLaunchedScoreboard" type="Node3D" parent="Camera3D" unique_id=1321340757]
-transform = Transform3D(0.27, 0, 0, 0, 0.27, 0, 0, 0, 0.27, 1.22, 0.68, -2.35)
+[node name="RidersLaunchedHud" type="CanvasLayer" parent="." unique_id=1321340757]
 script = ExtResource("26_scoreboard")
-scoreboard_scene = ExtResource("25_scoreboard")
 
 [node name="OperatorControlPanel" parent="." unique_id=932911297 instance=ExtResource("12_control_panel")]
 transform = Transform3D(0.025178477, 0.11085446, 1.0056173, 0.099557444, 1.099595, -0.103074074, -0.95272046, 0.1178352, 0.015805371, 39.743595, 1.7100306, 1.6832534)

@@ -3,6 +3,8 @@ extends Node
 # Shared ride values live here.
 # Scene scripts read this and decide how to show it.
 
+enum Difficulty { HARD, NORMAL }
+
 const MAX_WHEEL_SPEED := 420.0
 const STOPPED_SPEED_EPSILON := 0.1
 
@@ -47,6 +49,7 @@ const SHUDDER_DECAY := 3.0
 @export var panel_pressure_enabled := true
 @export var panel_heat_stage_pressure_multiplier := 0.12
 @export var panel_min_spawn_interval_factor := 0.35
+@export var fault_spawn_interval_multiplier := 1.0
 
 var feel: float = 1.0
 var rpm_max: float = MAX_WHEEL_SPEED
@@ -83,6 +86,7 @@ var damage_max: float = 100.0
 var last_stop_damage: float = 0.0
 var controls_locked: bool = false
 var selected_mode: int = 1
+var difficulty: Difficulty = Difficulty.HARD
 
 var _fault_pressure: float = 0.0
 var _fault_cursor: int = 0
@@ -95,6 +99,7 @@ signal faults_changed
 signal damage_changed
 signal controls_locked_changed(locked: bool)
 signal selected_mode_changed(mode: int)
+signal difficulty_changed(new_difficulty: Difficulty)
 signal axle_heat_changed
 signal heat_floor_changed(stage: int, floor_value: float)
 signal axle_failure_triggered
@@ -248,6 +253,29 @@ func set_selected_mode(mode: int) -> void:
 		return
 	selected_mode = mode
 	selected_mode_changed.emit(selected_mode)
+
+
+func set_difficulty(new_difficulty: Difficulty) -> void:
+	difficulty = new_difficulty
+	match difficulty:
+		Difficulty.NORMAL:
+			big_stop_initial_min_speed = 355.0
+			big_stop_initial_max_speed = 410.0
+			big_stop_minimum_window_size = 24.0
+			big_stop_shrink_per_stage = 1.2
+			panel_heat_stage_pressure_multiplier = 0.07
+			panel_min_spawn_interval_factor = 0.55
+			fault_spawn_interval_multiplier = 1.6
+		_:
+			big_stop_initial_min_speed = 379.0
+			big_stop_initial_max_speed = 410.0
+			big_stop_minimum_window_size = 12.0
+			big_stop_shrink_per_stage = 2.0
+			panel_heat_stage_pressure_multiplier = 0.12
+			panel_min_spawn_interval_factor = 0.35
+			fault_spawn_interval_multiplier = 1.0
+	_recalculate_big_stop_window()
+	difficulty_changed.emit(difficulty)
 
 
 func set_controls_locked(locked: bool) -> void:
@@ -486,7 +514,7 @@ func _update_faults(delta: float) -> void:
 	if speed_fraction > 0.7:
 		pressure_gain += 0.8
 
-	var spawn_interval := lerpf(9.0, 3.0, speed_fraction)
+	var spawn_interval := lerpf(9.0, 3.0, speed_fraction) * fault_spawn_interval_multiplier
 	if panel_pressure_enabled:
 		spawn_interval *= _panel_spawn_interval_factor()
 
@@ -509,7 +537,7 @@ func _panel_spawn_interval_factor() -> float:
 
 func get_current_panel_spawn_interval() -> float:
 	var speed_fraction := clampf(angular_velocity / rpm_max, 0.0, 1.0)
-	var interval := lerpf(9.0, 3.0, speed_fraction)
+	var interval := lerpf(9.0, 3.0, speed_fraction) * fault_spawn_interval_multiplier
 	if panel_pressure_enabled:
 		interval *= _panel_spawn_interval_factor()
 	return interval

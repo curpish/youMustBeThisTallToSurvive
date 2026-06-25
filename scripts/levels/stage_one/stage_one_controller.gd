@@ -19,7 +19,8 @@ func _process(_delta: float) -> void:
 		and not RideState.panel_auto_big_stop_triggered_this_spin
 	)
 	_readout.text = (
-		"target_rpm:  %.1f\n"
+		"Difficulty:  %s\n"
+		+ "target_rpm:  %.1f\n"
 		+ "redline:     %.1f rpm\n"
 		+ "auto stop:   %.1f rpm\n"
 		+ "fling ready:  %s (%.0f-%.0f rpm)\n"
@@ -33,6 +34,7 @@ func _process(_delta: float) -> void:
 		+ "Panel Pressure Delay: %.1fs\n"
 		+ "Auto Big Stop Armed: %s"
 	) % [
+		RideState.Difficulty.keys()[RideState.difficulty],
 		RideState.target_rpm,
 		fling_max_speed,
 		RideState.overheat_speed,
