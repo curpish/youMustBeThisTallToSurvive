@@ -1,6 +1,8 @@
 extends Node3D
 
 const BAND_TARGETS: Array[float] = [0.0, 65.0, 150.0, 280.0, 420.0]
+const HOVER_REFRESH_INTERVAL := 1.0 / 30.0
+const WEB_PARTICLE_SCALE := 0.5
 const MODE_LABELS := {
 	&"label_1_geo": {
 		"text": "1",
@@ -135,6 +137,9 @@ var _heat_gauge_needle: Node3D
 var _heat_gauge_needle_rest_basis := Basis.IDENTITY
 var _heat_gauge_angle_degrees := 0.0
 var _cursor_shape: Input.CursorShape = Input.CURSOR_ARROW
+var _hover_refresh_elapsed := HOVER_REFRESH_INTERVAL
+var _last_hover_mouse_position := Vector2(INF, INF)
+var _last_hover_controls_locked := false
 
 
 func _ready() -> void:
@@ -160,11 +165,33 @@ func _process(_delta: float) -> void:
 	_update_speed_handle()
 	_update_mode_dial()
 	_update_heat_gauge(_delta)
+	_update_hover_state(_delta)
+	_update_governor_cooldown_sparks()
+
+
+func _update_hover_state(delta: float) -> void:
+	_hover_refresh_elapsed += delta
+	var mouse_position := get_viewport().get_mouse_position()
+	var mouse_moved := mouse_position.distance_squared_to(_last_hover_mouse_position) > 0.25
+	var controls_lock_changed := RideState.controls_locked != _last_hover_controls_locked
+	var needs_refresh := (
+		mouse_moved
+		or controls_lock_changed
+		or _dragging_speed_handle
+		or _dragging_mode_dial
+		or _active_touch_index != -1
+		or _hover_refresh_elapsed >= HOVER_REFRESH_INTERVAL
+	)
+	if not needs_refresh:
+		return
+
+	_hover_refresh_elapsed = 0.0
+	_last_hover_mouse_position = mouse_position
+	_last_hover_controls_locked = RideState.controls_locked
 
 	# Computed once here and reused below, since several of the hover/priority
 	# checks need to know whether the pointer is on big stop, the mode dial,
 	# or the governor screwdriver.
-	var mouse_position := get_viewport().get_mouse_position()
 	var on_speed_handle := _active_touch_index == -1 and _is_pointer_on_speed_handle(mouse_position, handle_hit_padding)
 	var on_big_stop := _active_touch_index == -1 and _is_pointer_on_big_stop(mouse_position, big_stop_hit_padding)
 	var on_mode_dial := _active_touch_index == -1 and _is_pointer_on_mode_dial(mouse_position, mode_dial_hit_padding)
@@ -177,7 +204,6 @@ func _process(_delta: float) -> void:
 	_update_mode_dial_hover(on_mode_dial)
 	_update_governor_screwdriver_hover(on_governor, on_big_stop)
 	_update_panel_button_hover(on_panel_button)
-	_update_governor_cooldown_sparks()
 	_update_cursor_shape()
 
 
@@ -793,7 +819,7 @@ func _setup_governor_cooldown_sparks() -> void:
 
 	_governor_cooldown_sparks = GPUParticles3D.new()
 	_governor_cooldown_sparks.name = "GovernorCooldownSparks"
-	_governor_cooldown_sparks.amount = governor_cooldown_spark_amount
+	_governor_cooldown_sparks.amount = _web_particle_amount(governor_cooldown_spark_amount)
 	_governor_cooldown_sparks.amount_ratio = 1.0
 	_governor_cooldown_sparks.lifetime = governor_cooldown_spark_lifetime
 	_governor_cooldown_sparks.explosiveness = 0.65
@@ -803,6 +829,12 @@ func _setup_governor_cooldown_sparks() -> void:
 	_governor_cooldown_sparks.draw_pass_1 = spark_mesh
 	add_child(_governor_cooldown_sparks)
 	_governor_cooldown_sparks.global_position = _governor_spark_position()
+
+
+func _web_particle_amount(base_amount: int) -> int:
+	if OS.has_feature("web"):
+		return maxi(1, roundi(float(base_amount) * WEB_PARTICLE_SCALE))
+	return base_amount
 
 
 func _set_speed_handle_glow(enabled: bool) -> void:

@@ -108,6 +108,7 @@ signal axle_heat_changed
 signal heat_floor_changed(stage: int, floor_value: float)
 signal axle_failure_triggered
 signal victory_triggered
+signal riders_launched_changed(count: int)
 
 
 func _physics_process(delta: float) -> void:
@@ -214,6 +215,7 @@ func mark_basket_released() -> void:
 	# basket_released_this_spin above resets every spin for the heat system;
 	# this counter is cumulative for the whole run and drives the win condition.
 	riders_launched_count += 1
+	riders_launched_changed.emit(riders_launched_count)
 	print("RIDER LAUNCH: success, total launched = %d" % riders_launched_count)
 	if riders_launched_count >= riders_required_to_win:
 		_trigger_victory()
@@ -647,6 +649,7 @@ func reset() -> void:
 	_heat_was_cooling = false
 	faults_changed.emit()
 	damage_changed.emit()
+	riders_launched_changed.emit(riders_launched_count)
 	axle_heat_changed.emit()
 	heat_floor_changed.emit(heat_floor_stage, heat_floor_value)
 	controls_locked_changed.emit(false)

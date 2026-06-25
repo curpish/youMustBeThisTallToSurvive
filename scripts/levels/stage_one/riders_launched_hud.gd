@@ -19,7 +19,7 @@ func _ready() -> void:
 	visible = false
 	_card.modulate.a = 0.0
 	get_viewport().size_changed.connect(_reposition_card)
-	Events.fling.connect(_on_fling)
+	RideState.riders_launched_changed.connect(_on_riders_launched_changed)
 
 	var intro_camera := get_node_or_null(intro_camera_path)
 	if intro_camera != null and intro_camera.has_signal("intro_finished"):
@@ -95,8 +95,8 @@ func _show_card() -> void:
 	tween.tween_property(_card, "modulate:a", 1.0, fade_time).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 
 
-func _on_fling() -> void:
-	_count_label.text = _score_text()
+func _on_riders_launched_changed(count: int) -> void:
+	_count_label.text = "%d" % count
 	_reposition_card()
 	if _pop_tween != null:
 		_pop_tween.kill()

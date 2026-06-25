@@ -9,9 +9,12 @@ const CREDITS := [
 	["Yam", "Artist, 2D/3D, world art"],
 	["Coopy", "Programming, design, ui, audio engineering, general (state machine + variables)"],
 ]
+const WEB_FOG_AMOUNT := 32
+const TITLE_BGM := preload("res://assets/audio/music/Survive Prog. 1.ogg")
 
 @export var wheel_spin_speed := 0.18
 @export var credits_roll_speed := 45.0
+@export var title_music_volume_db := -10.0
 @export var spin_direction := -1.0
 @export var gondola_orbit_radius := 7.2
 @export var gondola_hang_offset := 2.6
@@ -35,15 +38,49 @@ var _credits_layer: Control
 var _credits_label: Label
 var _return_button: Button
 var _credits_rolling := false
+var _title_music: AudioStreamPlayer
 
 
 func _ready() -> void:
 	GameOrchestrator.phase = GameOrchestrator.Phase.BOARDING
+	if OS.has_feature("web"):
+		_disable_light_shadows(self)
 	get_viewport().size_changed.connect(_on_viewport_resized)
+	_setup_title_music()
 	_setup_ferris_preview()
 	_build_fog()
 	_build_ui()
 	_show_main_menu()
+
+
+func _disable_light_shadows(node: Node) -> void:
+	if node is Light3D:
+		(node as Light3D).shadow_enabled = false
+	for child in node.get_children():
+		_disable_light_shadows(child)
+
+
+func _setup_title_music() -> void:
+	if DisplayServer.get_name() == "headless":
+		return
+
+	_title_music = AudioStreamPlayer.new()
+	_title_music.name = "TitleMusic"
+	_title_music.bus = "Music"
+	_title_music.stream = TITLE_BGM
+	_title_music.volume_db = title_music_volume_db
+	add_child(_title_music)
+	_ensure_title_music_loop()
+	_title_music.play()
+
+
+func _ensure_title_music_loop() -> void:
+	if _title_music.stream == null:
+		return
+	if _title_music.stream is AudioStreamWAV:
+		(_title_music.stream as AudioStreamWAV).loop_mode = AudioStreamWAV.LOOP_FORWARD
+	elif "loop" in _title_music.stream:
+		_title_music.stream.loop = true
 
 
 func _process(delta: float) -> void:
@@ -178,7 +215,8 @@ func _get_frame_center_x() -> float:
 func _build_fog() -> void:
 	var fog := GPUParticles3D.new()
 	fog.name = "TitleFog"
-	fog.amount = 80
+	fog.amount = WEB_FOG_AMOUNT if OS.has_feature("web") else 80
+	fog.fixed_fps = 24 if OS.has_feature("web") else 0
 	fog.lifetime = 9.0
 	fog.visibility_aabb = AABB(Vector3(-24.0, -6.0, -14.0), Vector3(48.0, 16.0, 28.0))
 	fog.position = Vector3(0.0, 1.5, -1.0)

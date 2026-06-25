@@ -20,6 +20,13 @@ extends Node3D
 @export var spark_full_speed: float = 420.0
 @export var spark_color := Color(1.0, 0.58, 0.1, 1.0)
 @export var fling_ground_y: float = 0.25
+@export var fling_collision_radius: float = 0.42
+@export var fling_collision_skin: float = 0.05
+@export var fling_collision_bounce_limit := 6
+@export var basket_collision_bounciness := 0.48
+@export var rider_collision_bounciness := 0.56
+@export var fling_collision_friction := 0.68
+@export var fling_rest_speed := 0.8
 @export var failure_drop_distance := 3.0
 @export var failure_roll_distance := 46.0
 @export var failure_drop_duration := 0.6
@@ -54,6 +61,8 @@ const ROPE_NODE_NAMES := [
 	"rope_c",
 	"rope_d",
 ]
+const WEB_EFFECT_REFRESH_INTERVAL := 1.0 / 30.0
+const WEB_AXLE_SPARK_AMOUNT := 36
 
 var _wheel: Node3D
 var _ferris_scene_root: Node3D
@@ -85,6 +94,7 @@ var _hot_glow_light: OmniLight3D
 var _last_axle_glow_state := -1
 var _axle_sparks: GPUParticles3D
 var _spark_process_material: ParticleProcessMaterial
+var _fling_collision_root: Node3D
 var _failure_sequence_active := false
 var _game_over_layer: CanvasLayer
 var _victory_sequence_active := false
@@ -94,9 +104,14 @@ var _victory_glow_active := false
 var _victory_glow_hue := 0.0
 var _victory_hover_active := false
 var _victory_hover_angle := 0.0
+var _web_render_budget_enabled := false
+var _effect_refresh_elapsed := 0.0
 
 func _ready() -> void:
+	_web_render_budget_enabled = OS.has_feature("web")
+	_apply_web_render_budget()
 	_setup_ferris_wheel()
+	_setup_fling_collision()
 	Events.big_stop.connect(_on_big_stop)
 	RideState.axle_failure_triggered.connect(_on_axle_failure_triggered)
 	RideState.victory_triggered.connect(_on_victory_triggered)
@@ -121,8 +136,31 @@ func _process(_delta: float) -> void:
 
 	_update_gondolas()
 	_update_flying_gondolas(_delta)
+	_update_visual_effects(_delta)
+
+func _update_visual_effects(delta: float) -> void:
+	if not _web_render_budget_enabled:
+		_update_hot_glow()
+		_update_sparks()
+		return
+
+	_effect_refresh_elapsed += delta
+	if _effect_refresh_elapsed < WEB_EFFECT_REFRESH_INTERVAL:
+		return
+	_effect_refresh_elapsed = 0.0
 	_update_hot_glow()
 	_update_sparks()
+
+func _apply_web_render_budget() -> void:
+	if not _web_render_budget_enabled:
+		return
+	_disable_light_shadows(self)
+
+func _disable_light_shadows(node: Node) -> void:
+	if node is Light3D:
+		(node as Light3D).shadow_enabled = false
+	for child in node.get_children():
+		_disable_light_shadows(child)
 
 func _setup_ferris_wheel() -> void:
 	_ferris_scene_root = _find_node3d("FerrisScene")
@@ -284,6 +322,7 @@ func _setup_hot_glow() -> void:
 	_hot_glow_light.light_energy = 0.0
 	_hot_glow_light.shadow_enabled = false
 	_hot_glow_light.omni_range = gondola_orbit_radius * 0.8
+	_hot_glow_light.visible = not _web_render_budget_enabled
 	add_child(_hot_glow_light)
 	_hot_glow_light.global_position = _axle_glow_position()
 
@@ -314,7 +353,8 @@ func _setup_sparks() -> void:
 
 	_axle_sparks = GPUParticles3D.new()
 	_axle_sparks.name = "AxleSparks"
-	_axle_sparks.amount = 90
+	_axle_sparks.amount = WEB_AXLE_SPARK_AMOUNT if _web_render_budget_enabled else 90
+	_axle_sparks.fixed_fps = 30 if _web_render_budget_enabled else 0
 	_axle_sparks.lifetime = 0.42
 	_axle_sparks.explosiveness = 0.0
 	_axle_sparks.randomness = 0.65
@@ -323,6 +363,44 @@ func _setup_sparks() -> void:
 	_axle_sparks.draw_pass_1 = spark_mesh
 	add_child(_axle_sparks)
 	_axle_sparks.global_position = _wheel.global_position
+
+func _setup_fling_collision() -> void:
+	var environment_root := _find_node3d("YamEnvironment")
+	if environment_root == null:
+		return
+
+	_fling_collision_root = Node3D.new()
+	_fling_collision_root.name = "FlingCollisionProxies"
+	_fling_collision_root.visible = false
+	add_child(_fling_collision_root)
+	_add_mesh_collision_proxies(environment_root)
+
+
+func _add_mesh_collision_proxies(node: Node) -> void:
+	if node is MeshInstance3D:
+		_add_mesh_collision_proxy(node as MeshInstance3D)
+	for child in node.get_children():
+		_add_mesh_collision_proxies(child)
+
+
+func _add_mesh_collision_proxy(mesh_instance: MeshInstance3D) -> void:
+	if mesh_instance.mesh == null:
+		return
+
+	var shape := mesh_instance.mesh.create_trimesh_shape()
+	if shape == null:
+		return
+
+	var body := StaticBody3D.new()
+	body.name = "%s_collision" % mesh_instance.name
+	body.collision_layer = 1
+	body.collision_mask = 0
+	_fling_collision_root.add_child(body)
+	body.global_transform = mesh_instance.global_transform
+
+	var collision := CollisionShape3D.new()
+	collision.shape = shape
+	body.add_child(collision)
 
 func _update_hot_glow() -> void:
 	if _axle_glow_mesh == null or _hot_glow_light == null or _hot_glow_material == null:
@@ -348,19 +426,22 @@ func _update_hot_glow() -> void:
 	var pulse := 0.78 + sin(Time.get_ticks_msec() * 0.018) * 0.22
 	var glow_position := _axle_glow_position()
 	_axle_glow_mesh.global_position = glow_position
-	_hot_glow_light.global_position = glow_position
+	if _hot_glow_light.visible:
+		_hot_glow_light.global_position = glow_position
 	_axle_glow_mesh.visible = state != 0
 
 	if state != _last_axle_glow_state:
 		_last_axle_glow_state = state
 		var state_color := _axle_glow_color_for_state(state)
 		_hot_glow_material.emission = state_color
-		_hot_glow_light.light_color = state_color
+		if _hot_glow_light.visible:
+			_hot_glow_light.light_color = state_color
 
 	var color := _axle_glow_color_for_state(state)
 	_hot_glow_material.albedo_color = Color(color.r, color.g, color.b, heat * 0.85)
 	_hot_glow_material.emission_energy_multiplier = heat * (1.4 + pulse * 1.4)
-	_hot_glow_light.light_energy = heat * hot_glow_light_energy * pulse
+	if _hot_glow_light.visible:
+		_hot_glow_light.light_energy = heat * hot_glow_light_energy * pulse
 
 
 func _axle_glow_position() -> Vector3:
@@ -950,17 +1031,16 @@ func _update_flying_basket(index: int, delta: float) -> void:
 	var basket := _baskets[index]
 	var velocity := _basket_velocities[index]
 	velocity += Vector3.DOWN * 12.0 * delta
-	basket.global_position += velocity * delta
+	var motion_result := _move_fling_body(
+		basket,
+		velocity,
+		delta,
+		_basket_bounces[index],
+		basket_collision_bounciness
+	)
+	velocity = motion_result["velocity"] as Vector3
+	_basket_bounces[index] = int(motion_result["bounce_count"])
 	basket.rotate_object_local(Vector3.RIGHT, 2.1 * delta)
-
-	if basket.global_position.y <= fling_ground_y and _basket_bounces[index] < 3:
-		basket.global_position.y = fling_ground_y
-		velocity.y = absf(velocity.y) * 0.48
-		velocity.z *= 0.62
-		_basket_bounces[index] += 1
-	elif basket.global_position.y <= fling_ground_y:
-		basket.global_position.y = fling_ground_y
-		velocity *= 0.86
 
 	_basket_velocities[index] = velocity
 
@@ -971,21 +1051,107 @@ func _update_flying_rider(index: int, delta: float) -> void:
 
 	var velocity := _rider_velocities[index]
 	velocity += Vector3.DOWN * 13.0 * delta
-	rider.global_position += velocity * delta
+	var motion_result := _move_fling_body(
+		rider,
+		velocity,
+		delta,
+		_rider_bounces[index],
+		rider_collision_bounciness
+	)
+	var previous_bounce_count := _rider_bounces[index]
+	velocity = motion_result["velocity"] as Vector3
+	_rider_bounces[index] = int(motion_result["bounce_count"])
 	rider.rotate_object_local(_rider_spin_axes[index], _rider_spin_speeds[index] * delta)
 
-	if rider.global_position.y <= fling_ground_y and _rider_bounces[index] < 4:
-		rider.global_position.y = fling_ground_y
-		velocity.y = absf(velocity.y) * 0.52
-		velocity.z *= 0.68
+	if _rider_bounces[index] > previous_bounce_count:
 		_rider_spin_speeds[index] *= 0.74
-		_rider_bounces[index] += 1
-	elif rider.global_position.y <= fling_ground_y:
-		rider.global_position.y = fling_ground_y
-		velocity *= 0.84
+	if velocity.length() <= fling_rest_speed:
 		_rider_spin_speeds[index] *= 0.9
 
 	_rider_velocities[index] = velocity
+
+
+func _move_fling_body(body: Node3D, velocity: Vector3, delta: float, bounce_count: int, bounciness: float) -> Dictionary:
+	var remaining := delta
+	var current_velocity := velocity
+	var iteration := 0
+
+	while remaining > 0.0 and iteration < 3:
+		iteration += 1
+		var from := body.global_position
+		var motion := current_velocity * remaining
+		if motion.length_squared() <= 0.000001:
+			break
+
+		var hit := _cast_fling_motion(from, from + motion)
+		if hit.is_empty():
+			body.global_position = from + motion
+			return _resolve_fallback_ground(body, current_velocity, bounce_count, bounciness)
+
+		var hit_position := hit["position"] as Vector3
+		var normal := (hit["normal"] as Vector3).normalized()
+		var travel_fraction := clampf(from.distance_to(hit_position) / maxf(motion.length(), 0.001), 0.0, 1.0)
+		body.global_position = hit_position + normal * fling_collision_skin
+		bounce_count += 1
+
+		if bounce_count > fling_collision_bounce_limit:
+			current_velocity = _slide_and_dampen(current_velocity, normal)
+		else:
+			current_velocity = current_velocity.bounce(normal) * bounciness
+			current_velocity = _apply_collision_friction(current_velocity, normal)
+
+		if current_velocity.length() <= fling_rest_speed:
+			current_velocity = Vector3.ZERO
+			break
+
+		remaining *= 1.0 - travel_fraction
+
+	return _resolve_fallback_ground(body, current_velocity, bounce_count, bounciness)
+
+
+func _cast_fling_motion(from: Vector3, to: Vector3) -> Dictionary:
+	var space_state := get_world_3d().direct_space_state
+	var direction := to - from
+	if direction.length_squared() <= 0.000001:
+		return {}
+
+	var offset := direction.normalized() * fling_collision_radius
+	var query := PhysicsRayQueryParameters3D.create(from, to + offset)
+	query.collide_with_areas = false
+	query.collide_with_bodies = true
+	return space_state.intersect_ray(query)
+
+
+func _resolve_fallback_ground(body: Node3D, velocity: Vector3, bounce_count: int, bounciness: float) -> Dictionary:
+	if body.global_position.y > fling_ground_y:
+		return {"velocity": velocity, "bounce_count": bounce_count}
+
+	body.global_position.y = fling_ground_y
+	var normal := Vector3.UP
+	if bounce_count > fling_collision_bounce_limit:
+		return {
+			"velocity": _slide_and_dampen(velocity, normal),
+			"bounce_count": bounce_count,
+		}
+
+	bounce_count += 1
+	var bounced := velocity.bounce(normal) * bounciness
+	bounced = _apply_collision_friction(bounced, normal)
+	return {
+		"velocity": Vector3.ZERO if bounced.length() <= fling_rest_speed else bounced,
+		"bounce_count": bounce_count,
+	}
+
+
+func _apply_collision_friction(velocity: Vector3, normal: Vector3) -> Vector3:
+	var normal_component := normal * velocity.dot(normal)
+	var tangent_component := velocity - normal_component
+	return normal_component + tangent_component * fling_collision_friction
+
+
+func _slide_and_dampen(velocity: Vector3, normal: Vector3) -> Vector3:
+	var slid := velocity.slide(normal) * fling_collision_friction
+	return Vector3.ZERO if slid.length() <= fling_rest_speed else slid
 
 func _update_fling_disappear(index: int) -> void:
 	var fade_progress := clampf((_flight_ages[index] - 2.2) / 1.25, 0.0, 1.0)

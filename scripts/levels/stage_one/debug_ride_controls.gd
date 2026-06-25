@@ -60,7 +60,7 @@ func _ready() -> void:
 		show_debug_win_button = false
 
 	if not show_debug_visuals:
-		visible = false
+		_hide_debug_layer()
 		set_process(false)
 		set_process_unhandled_input(false)
 		return
@@ -97,6 +97,16 @@ func _process(_delta: float) -> void:
 	if enable_debug_speed_slider:
 		_sync_lever_to_target()
 	_update_fault_buttons()
+
+
+func _hide_debug_layer() -> void:
+	visible = false
+	var readouts := get_node_or_null("../extraReadOuts")
+	if readouts != null:
+		readouts.visible = false
+	var debug_layer := get_parent()
+	if debug_layer is CanvasLayer:
+		(debug_layer as CanvasLayer).visible = false
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not _controls_ready or RideState.controls_locked:
