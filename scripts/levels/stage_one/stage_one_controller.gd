@@ -1,8 +1,4 @@
 extends Node
-# Debug readout overlay for the shared spin model: a live RideState dump so we
-# can watch the numbers while driving the wheel. Interactive controls live on
-# the node-based panel now (SpeedBands slider + vboxGovernor); this is read-only.
-# Throwaway: delete when the real panel readout lands.
 
 var _readout: Label
 
@@ -15,23 +11,31 @@ func _process(_delta: float) -> void:
 	if _readout == null:
 		return
 
-	var effective_max: float = (
-		RideState.rpm_governed if RideState.is_governed else RideState.rpm_max
-	)
-	var safety_limit := RideState.rpm_max * 0.9
 	var fling_speed := 379.0
-	var fling_ready := RideState.angular_velocity >= fling_speed
-	_readout.text = "target_rpm:  %.1f\nangular_velocity:  %.2f\nwheel_angle:  %.2f rad\ngovernor:  %s (cap %.0f)\nsafety limit:  %.1f rpm\nfling ready:  %s (%.0f+ rpm)\noverride:  %.1fs   cooldown:  %.1fs" % [
+	var fling_max_speed := 410.0
+	var fling_ready := RideState.angular_velocity >= fling_speed and RideState.angular_velocity <= fling_max_speed
+	_readout.text = (
+		"target_rpm:  %.1f\n"
+		+ "redline:     %.1f rpm\n"
+		+ "auto stop:   %.1f rpm\n"
+		+ "fling ready:  %s (%.0f-%.0f rpm)\n"
+		+ "axle heat:   %.1f / %.1f\n"
+		+ "heat floor:  stage %d (%.1f)\n"
+		+ "last chance: %s\n"
+		+ "overheat:    %s"
+	) % [
 		RideState.target_rpm,
-		RideState.angular_velocity,
-		RideState.wheel_angle,
-		"ON" if RideState.is_governed else "OFF",
-		effective_max,
-		safety_limit,
+		fling_max_speed,
+		RideState.overheat_speed,
 		"YES" if fling_ready else "NO",
 		fling_speed,
-		RideState.governor_override_time_left,
-		RideState.governor_cooldown_left,
+		fling_max_speed,
+		RideState.axle_heat,
+		RideState.rpm_max,
+		RideState.heat_floor_stage,
+		RideState.heat_floor_value,
+		"YES" if RideState.is_last_chance else "NO",
+		"YES" if RideState.overheat_penalty_applied_this_spin else "NO",
 	]
 
 func _build_ui() -> void:

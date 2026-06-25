@@ -1,0 +1,66 @@
+[gd_scene format=3 uid="uid://bo03le866isqs"]
+
+[ext_resource type="Script" uid="uid://c4kd1dkjqor0b" path="res://scripts/title_scene.gd" id="1_title_script"]
+[ext_resource type="PackedScene" uid="uid://dnvhw5fh45cn1" path="res://assets/blender_imports/stage_one/ferris_scene.glb" id="2_ferris_scene"]
+
+[sub_resource type="Environment" id="Environment_title"]
+background_mode = 1
+background_color = Color(0.045, 0.052, 0.062, 1)
+ambient_light_source = 3
+ambient_light_color = Color(0.42, 0.35, 0.3, 1)
+ambient_light_energy = 0.7
+glow_enabled = true
+glow_intensity = 0.32
+
+[sub_resource type="PlaneMesh" id="GroundMesh_title"]
+size = Vector2(60, 60)
+
+[sub_resource type="StandardMaterial3D" id="GroundMaterial_title"]
+albedo_color = Color(0.045, 0.025, 0.015, 1)
+
+[sub_resource type="SphereMesh" id="BackGlowMesh_title"]
+radius = 6.0
+height = 12.0
+
+[sub_resource type="StandardMaterial3D" id="BackGlowMaterial_title"]
+transparency = 1
+shading_mode = 0
+albedo_color = Color(0.96, 0.46, 0.14, 0.22)
+
+[node name="title_scene" type="Node3D" unique_id=766207807]
+script = ExtResource("1_title_script")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=508555223]
+environment = SubResource("Environment_title")
+
+[node name="FerrisPreview" type="Node3D" parent="." unique_id=1786382472]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.3, -1.45, -6)
+
+[node name="FerrisScene" parent="FerrisPreview" unique_id=2074411028 instance=ExtResource("2_ferris_scene")]
+
+[node name="Ground" type="MeshInstance3D" parent="." unique_id=277964987]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.08943939, -2.4584122, -6.007271)
+mesh = SubResource("GroundMesh_title")
+surface_material_override/0 = SubResource("GroundMaterial_title")
+
+[node name="BackGlow" type="MeshInstance3D" parent="." unique_id=211368027]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.5, 4.4, -6)
+mesh = SubResource("BackGlowMesh_title")
+surface_material_override/0 = SubResource("BackGlowMaterial_title")
+
+[node name="KeyLight" type="DirectionalLight3D" parent="." unique_id=828953018]
+transform = Transform3D(0.84935385, -0.4572354, 0.26369238, 0.1551424, 0.6937787, 0.7032794, -0.50450844, -0.5564232, 0.66020024, 0, 0, 0)
+light_color = Color(1, 0.72, 0.42, 1)
+light_energy = 1.35
+shadow_enabled = true
+
+[node name="FillLight" type="OmniLight3D" parent="." unique_id=752300577]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.5, 2.4, -1.8)
+light_color = Color(0.28, 0.62, 1, 1)
+light_energy = 1.15
+omni_range = 11.0
+
+[node name="Camera3D" type="Camera3D" parent="." unique_id=2056562155]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 22.5, 3, -6)
+current = true
+fov = 38.0

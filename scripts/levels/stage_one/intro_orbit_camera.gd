@@ -1,6 +1,5 @@
 extends Camera3D
 
-# Other stuff waits on this so the player can't mess with controls during the intro.
 signal intro_finished
 
 @export var play_intro := true

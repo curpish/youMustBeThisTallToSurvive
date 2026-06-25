@@ -1,9 +1,5 @@
 extends VBoxContainer
 
-# Debug stand-in for the telegraph handle.
-# Attach to a VBoxContainer in the debug UI.
-# Remove when the real Handle scene is in.
-
 @export var rpm_loading: float = 1.0
 @export var rpm_scenic: float = 3.0
 @export var rpm_brisk: float = 6.0

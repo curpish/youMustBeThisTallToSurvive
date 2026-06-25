@@ -1,14 +1,12 @@
 extends Node
-# Crowd reactions to a fling. The rider screams as they sail (camera follows),
-# then the crowd catches up and cheers a beat later -- the payoff.
 
-const SCREAM_DELAY_MIN := 0.2  # seconds after the fling before the rider screams
+const SCREAM_DELAY_MIN := 0.2
 const SCREAM_DELAY_MAX := 0.4
-const CHEER_DELAY_MIN := 0.5  # seconds after the fling before the crowd reacts
+const CHEER_DELAY_MIN := 0.5
 const CHEER_DELAY_MAX := 1.0
 
-@export var scream_fling: AudioStreamPlayer  # randomizer, the rider in the air
-@export var crowd_cheer: AudioStreamPlayer  # randomizer, the delayed payoff
+@export var scream_fling: AudioStreamPlayer
+@export var crowd_cheer: AudioStreamPlayer
 
 
 func _ready() -> void:
@@ -20,7 +18,6 @@ func _ready() -> void:
 
 
 func _on_fling() -> void:
-	# Rider screams a beat after launch (clear of the ride), crowd erupts later.
 	var scream_delay := randf_range(SCREAM_DELAY_MIN, SCREAM_DELAY_MAX)
 	get_tree().create_timer(scream_delay).timeout.connect(_play_scream, CONNECT_ONE_SHOT)
 	var cheer_delay := randf_range(CHEER_DELAY_MIN, CHEER_DELAY_MAX)

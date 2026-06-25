@@ -1,16 +1,12 @@
-# Owns any processes of setting up or tearing down gamestate
-
 extends Node
 
 enum Phase { BOARDING, RUNNING, CLOSED }
 
-const MAIN_SCENE := "res://scenes/levels/stage_one/stage_one.tscn"
+const TITLE_SCENE := "res://scenes/title_scene.tscn"
+const STAGE_ONE_SCENE := "res://scenes/levels/stage_one/stage_one.tscn"
 
-# Master bus fade-in safeguard: ramp from near-silent up to 0 dB at boot so any
-# first-frame audio garbage (reverb/enhance buffers warming up, autoplay streams
-# firing before the engine settles) happens while we're inaudible.
-const MASTER_FADE_DURATION := 0.8  # seconds to reach full volume
-const MASTER_FADE_START_DB := -60.0  # effectively silent
+const MASTER_FADE_DURATION := 0.8
+const MASTER_FADE_START_DB := -60.0
 
 var phase: Phase = Phase.BOARDING
 
@@ -32,8 +28,22 @@ func _fade_in_master() -> void:
 
 
 func restart() -> void:
+	await start_stage_one()
+
+
+func start_stage_one(_difficulty: String = "normal") -> void:
 	await Transitions.fade_out()
 	RideState.reset()
-	get_tree().change_scene_to_packed(load(MAIN_SCENE))
+	phase = Phase.RUNNING
+	get_tree().change_scene_to_packed(load(STAGE_ONE_SCENE))
+	await get_tree().process_frame
+	Transitions.fade_in()
+
+
+func return_to_title() -> void:
+	await Transitions.fade_out()
+	RideState.reset()
+	phase = Phase.BOARDING
+	get_tree().change_scene_to_packed(load(TITLE_SCENE))
 	await get_tree().process_frame
 	Transitions.fade_in()

@@ -26,7 +26,7 @@
 [ext_resource type="Script" uid="uid://s51djswnymry" path="res://scripts/levels/stage_one/control_panel_audio.gd" id="14_panel"]
 [ext_resource type="AudioStream" uid="uid://bdxknp5x1a5c7" path="res://assets/audio/world/guests/scream1.ogg" id="15_5e18x"]
 [ext_resource type="AudioStream" uid="uid://c0108m4aubvs3" path="res://assets/audio/world/controls/lever1.ogg" id="15_6jl4m"]
-[ext_resource type="Script" uid="uid://cpgqqxvsj2xax" path="res://scripts/levels/stage_one/rpm_counter_wheels.gd" id="15_rpmwheels"]
+[ext_resource type="Script" uid="uid://cpgqqxvsj2xax" path="res://scripts/levels/stage_one/control_panel.gd" id="15_rpmwheels"]
 [ext_resource type="AudioStream" uid="uid://defahdahndd4x" path="res://assets/audio/world/controls/lever2.ogg" id="16_i05uf"]
 [ext_resource type="AudioStream" uid="uid://d2dac4v1tsy1k" path="res://assets/audio/world/guests/scream2.ogg" id="16_jkjsa"]
 [ext_resource type="AudioStream" uid="uid://m1tmhono28wo" path="res://assets/audio/world/guests/scream3.ogg" id="17_2yn73"]
@@ -35,6 +35,8 @@
 [ext_resource type="AudioStream" uid="uid://b2nt56u477tn4" path="res://assets/audio/world/controls/big_stop.ogg" id="20_x6xw4"]
 [ext_resource type="AudioStream" uid="uid://bkqa22e11x0pc" path="res://assets/audio/world/controls/governor_in.ogg" id="23_r3g8u"]
 [ext_resource type="AudioStream" uid="uid://b1ybujwexyg10" path="res://assets/audio/world/controls/governor_out.ogg" id="24_flnjp"]
+[ext_resource type="PackedScene" uid="uid://c8k6wqvdjol4" path="res://assets/blender_imports/scoreboard/riders_launched_scoreboard.glb" id="25_scoreboard"]
+[ext_resource type="Script" uid="uid://w00jrjadvcs5" path="res://scripts/levels/stage_one/stage_one_scoreboard.gd" id="26_scoreboard"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_stage_one"]
 sky_top_color = Color(0.13, 0.19, 0.26, 1)
@@ -161,8 +163,13 @@ current = true
 fov = 55.0
 script = ExtResource("6_intro_orbit_camera")
 
+[node name="RidersLaunchedScoreboard" type="Node3D" parent="Camera3D" unique_id=1321340757]
+transform = Transform3D(0.27, 0, 0, 0, 0.27, 0, 0, 0, 0.27, 1.22, 0.68, -2.35)
+script = ExtResource("26_scoreboard")
+scoreboard_scene = ExtResource("25_scoreboard")
+
 [node name="OperatorControlPanel" parent="." unique_id=932911297 instance=ExtResource("12_control_panel")]
-transform = Transform3D(0.0043374808, -0.11581332, 1.0054953, 0.10260032, 1.0990835, 0.10425701, -0.95272046, 0.11783521, 0.015805375, 39.743595, 1.7100306, 1.6832534)
+transform = Transform3D(0.025178477, 0.11085446, 1.0056173, 0.099557444, 1.099595, -0.103074074, -0.95272046, 0.1178352, 0.015805371, 39.743595, 1.7100306, 1.6832534)
 script = ExtResource("15_rpmwheels")
 
 [node name="Audio" type="Node" parent="." unique_id=1097038480]
@@ -201,13 +208,11 @@ stream = SubResource("AudioStreamRandomizer_nfkyc")
 volume_db = -8.0
 pitch_scale = 1.1
 max_polyphony = 4
-bus = &"Ride"
 
 [node name="fling_gondola" type="AudioStreamPlayer" parent="Audio/ferrisRide" unique_id=302492363]
 stream = SubResource("AudioStreamRandomizer_qcsmn")
 volume_db = -6.0
 pitch_scale = 1.24
-bus = &"Ride"
 
 [node name="controlPanel" type="Node" parent="Audio" unique_id=1986688622 node_paths=PackedStringArray("button", "big_stop", "lever", "governor_in", "governor_out")]
 script = ExtResource("14_panel")
@@ -253,7 +258,6 @@ crowd_cheer = NodePath("crowd_cheer")
 stream = SubResource("AudioStreamRandomizer_236sx")
 volume_db = -14.0
 pitch_scale = 1.1
-bus = &"Screams"
 
 [node name="crowd_cheer" type="AudioStreamPlayer" parent="Audio/guests" unique_id=1421224961]
 stream = SubResource("AudioStreamRandomizer_7ih6x")

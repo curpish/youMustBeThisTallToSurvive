@@ -1,8 +1,5 @@
 extends Node3D
 
-# The wheel no longer owns its speed; it reads the shared spin model
-# (RideState.wheel_angle). This is only the spin direction along the hub axis.
-# Negative keeps the original "spins backwards" look.
 @export var spin_direction: float = -1.0
 
 @export var gondola_orbit_radius: float = 7.2
@@ -12,9 +9,7 @@ extends Node3D
 @export var hanger_half_width: float = 0.8
 @export var hanger_bar_radius: float = 0.035
 
-# These are RPM now because the wheel follows RideState.
 @export var axle_warning_lead_speed: float = 55.0
-@export var axle_sweetspot_width: float = 18.0
 @export var axle_glow_radius: float = 1.18
 @export var axle_glow_camera_offset: float = 0.85
 @export var axle_warning_color := Color(1.0, 0.78, 0.12, 1.0)
@@ -25,13 +20,21 @@ extends Node3D
 @export var spark_full_speed: float = 420.0
 @export var spark_color := Color(1.0, 0.58, 0.1, 1.0)
 @export var basket_fling_speed: float = 379.0
+@export var basket_fling_max_speed: float = 410.0
 @export var fling_ground_y: float = 0.25
+@export var failure_drop_distance := 3.0
+@export var failure_roll_distance := 46.0
+@export var failure_drop_duration := 0.6
+@export var failure_roll_duration := 4.2
+@export var failure_roll_rotation_degrees := 1260.0
+@export var game_over_text_delay := 0.75
+@export var game_over_display_duration := 3.0
+@export var game_over_text := "GAME OVER"
+@export var game_over_subtext := "The wheel has left the building."
 
-# Sometimes treats this mesh name weird after import
 const WHEEL_NODE_NAME := "frame_wheel"
 const WHEEL_NODE_FALLBACK_NAME := "frame"
 
-# The Blender ropes looked bad once the basket started moving, adjusted
 const ROPE_NODE_NAMES := [
 	"rope_a",
 	"rope_b",
@@ -40,6 +43,7 @@ const ROPE_NODE_NAMES := [
 ]
 
 var _wheel: Node3D
+var _ferris_scene_root: Node3D
 var _basket: Node3D
 var _rider: Node3D
 var _gondola_center_x := 0.0
@@ -68,18 +72,20 @@ var _hot_glow_light: OmniLight3D
 var _last_axle_glow_state := -1
 var _axle_sparks: GPUParticles3D
 var _spark_process_material: ParticleProcessMaterial
+var _failure_sequence_active := false
+var _game_over_layer: CanvasLayer
 
 func _ready() -> void:
 	_setup_ferris_wheel()
 	Events.big_stop.connect(_on_big_stop)
+	RideState.axle_failure_triggered.connect(_on_axle_failure_triggered)
 
 func _process(_delta: float) -> void:
+	if _failure_sequence_active:
+		return
 	if _wheel == null or _baskets.is_empty():
 		return
 
-	# Display the shared spin model. RideState.wheel_angle is the accumulated
-	# rotation in radians; we apply it around the hub's X axis from the rest
-	# pose. Pre-multiplying matches the old rotate_x accumulation exactly.
 	var angle := spin_direction * RideState.wheel_angle
 	_wheel.basis = Basis(Vector3.RIGHT, angle) * _wheel_rest_basis
 
@@ -89,6 +95,7 @@ func _process(_delta: float) -> void:
 	_update_sparks()
 
 func _setup_ferris_wheel() -> void:
+	_ferris_scene_root = _find_node3d("FerrisScene")
 	_wheel = _find_wheel_node()
 	_basket = _find_node3d("basket")
 	_rider = _find_node3d("kid_one")
@@ -131,7 +138,6 @@ func _create_gondolas() -> void:
 	_basket_rest_scales.clear()
 	_rider_rest_scales.clear()
 
-	# Duplicating the one Blender cart for now is faster than rebuilding the wheel asset.
 	var basket_parent := _basket.get_parent()
 	var rider_is_inside_basket := _rider != null and _is_descendant_of(_rider, _basket)
 	var rider_parent := _rider.get_parent() if _rider != null else null
@@ -252,7 +258,6 @@ func _setup_hot_glow() -> void:
 	_hot_glow_light.global_position = _axle_glow_position()
 
 func _setup_sparks() -> void:
-	# Little angry axle sparks once the player starts pushing the ride too hard.
 	var spark_mesh := QuadMesh.new()
 	spark_mesh.size = Vector2(0.08, 0.08)
 
@@ -296,17 +301,17 @@ func _update_hot_glow() -> void:
 	var speed := absf(RideState.angular_velocity)
 	var warning_start := maxf(0.0, basket_fling_speed - axle_warning_lead_speed)
 	var sweetspot_min := basket_fling_speed
-	var sweetspot_max := basket_fling_speed + axle_sweetspot_width
+	var sweetspot_max := basket_fling_max_speed
 
 	var state := 0
 	var heat := 0.0
 	if speed >= warning_start and speed < sweetspot_min:
 		state = 1
 		heat = clampf(inverse_lerp(warning_start, sweetspot_min, speed), 0.0, 1.0)
-	elif speed >= sweetspot_min and speed <= sweetspot_max:
+	elif speed >= sweetspot_min and speed < sweetspot_max:
 		state = 2
 		heat = 1.0
-	elif speed > sweetspot_max:
+	elif speed >= sweetspot_max:
 		state = 3
 		heat = clampf(inverse_lerp(sweetspot_max, RideState.rpm_max, speed), 0.65, 1.0)
 
@@ -356,7 +361,6 @@ func _update_sparks() -> void:
 	if _axle_sparks == null or _spark_process_material == null:
 		return
 
-	# Starts early so the wheel feels sketchy before it is fully cooked.
 	var spark_heat := inverse_lerp(spark_start_speed, spark_full_speed, absf(RideState.angular_velocity))
 	spark_heat = clampf(spark_heat, 0.0, 1.0)
 	_axle_sparks.global_position = _wheel.global_position
@@ -381,7 +385,6 @@ func _update_gondola(index: int) -> void:
 	var basket_position := attachment + Vector3.DOWN * gondola_hang_offset
 	basket_position.x = _gondola_center_x
 
-	# Keep attached baskets upright until Big Stop throws one loose.
 	basket.global_position = basket_position
 	basket.global_basis = _basket_basis
 
@@ -392,7 +395,10 @@ func _update_gondola(index: int) -> void:
 	_update_hanger_bars(index, attachment, basket.global_position)
 
 func _on_big_stop() -> void:
-	if RideState.last_stop_severity * RideState.rpm_max < basket_fling_speed:
+	if _failure_sequence_active:
+		return
+	var stop_speed := RideState.last_stop_severity * RideState.rpm_max
+	if stop_speed < basket_fling_speed or stop_speed > basket_fling_max_speed:
 		return
 
 	var index := _find_leftmost_gondola()
@@ -428,6 +434,7 @@ func _throw_gondola(index: int) -> void:
 	_basket_bounces[index] = 0
 	_rider_bounces[index] = 0
 	_flight_ages[index] = 0.0
+	RideState.mark_basket_released()
 	RideState.set_controls_locked(true)
 
 	if index < _left_hanger_bars.size():
@@ -442,7 +449,6 @@ func _throw_gondola(index: int) -> void:
 	_basket_velocities[index] = Vector3(0.0, 9.5, side_throw * lerpf(10.0, 17.0, launch_speed))
 
 	if rider != null:
-		# Kid gets kicked free of the basket with extra spin. Fake ragdoll, good enough to laugh at.
 		_rider_velocities[index] = Vector3(randf_range(-1.0, 1.0), 12.5, side_throw * lerpf(14.0, 23.0, launch_speed))
 		_rider_spin_axes[index] = Vector3(randf(), randf(), randf()).normalized()
 		_rider_spin_speeds[index] = lerpf(5.5, 11.0, launch_speed)
@@ -451,6 +457,228 @@ func _throw_gondola(index: int) -> void:
 	_start_spectacle_camera(basket, rider)
 	Events.fling.emit()
 	print("BASKET %d LAUNCHED AT %.1f RPM" % [index + 1, RideState.last_stop_severity * RideState.rpm_max])
+
+
+func _on_axle_failure_triggered() -> void:
+	if _failure_sequence_active:
+		return
+	_failure_sequence_active = true
+	print("AXLE HEAT: ferris wheel breakaway animation starts")
+	_run_failure_sequence()
+
+
+func _run_failure_sequence() -> void:
+	_animate_wheel_breakaway()
+	await get_tree().create_timer(game_over_text_delay).timeout
+	print("AXLE HEAT: placeholder game over text appears")
+	_show_game_over_text()
+	await get_tree().create_timer(game_over_display_duration).timeout
+	print("AXLE HEAT: title menu transition starts")
+	await GameOrchestrator.return_to_title()
+
+
+func _animate_wheel_breakaway() -> void:
+	var target := _build_wheel_breakaway_pivot()
+	if target == null:
+		await get_tree().create_timer(failure_drop_duration + failure_roll_duration).timeout
+		return
+
+	var start_position := target.global_position
+	var drop_position := start_position + Vector3.DOWN * failure_drop_distance
+	var roll_direction := _screen_right_world_direction()
+	var roll_position := drop_position + roll_direction * failure_roll_distance
+
+	var tween := create_tween()
+	tween.set_parallel(false)
+	tween.tween_property(
+		target,
+		"global_position",
+		drop_position,
+		failure_drop_duration
+	).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
+	tween.tween_property(
+		target,
+		"global_position",
+		roll_position,
+		failure_roll_duration
+	).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
+	tween.parallel().tween_property(
+		target,
+		"rotation_degrees:x",
+		target.rotation_degrees.x + failure_roll_rotation_degrees,
+		failure_roll_duration
+	).set_trans(Tween.TRANS_LINEAR)
+	await tween.finished
+
+
+func _build_wheel_breakaway_pivot() -> Node3D:
+	var breakaway_nodes := _collect_wheel_breakaway_nodes()
+	if breakaway_nodes.is_empty():
+		return _wheel
+
+	var pivot := Node3D.new()
+	pivot.name = "WheelBreakawayPivot"
+	add_child(pivot)
+	pivot.global_position = _wheel.global_position if _wheel != null else breakaway_nodes[0].global_position
+
+	for node in breakaway_nodes:
+		if node == null or not is_instance_valid(node):
+			continue
+		if node == pivot or node == self:
+			continue
+		node.reparent(pivot, true)
+
+	return pivot
+
+
+func _collect_wheel_breakaway_nodes() -> Array[Node3D]:
+	var candidates: Array[Node3D] = []
+	if _ferris_scene_root != null:
+		_collect_named_breakaway_nodes(_ferris_scene_root, candidates)
+
+	for index in _baskets.size():
+		if _gondola_flying[index]:
+			continue
+		_append_unique_node(candidates, _baskets[index])
+		_append_unique_node(candidates, _riders[index])
+
+	for bar in _left_hanger_bars:
+		if bar.visible:
+			_append_unique_node(candidates, bar)
+	for bar in _right_hanger_bars:
+		if bar.visible:
+			_append_unique_node(candidates, bar)
+
+	_append_unique_node(candidates, _axle_glow_mesh)
+	_append_unique_node(candidates, _hot_glow_light)
+	_append_unique_node(candidates, _axle_sparks)
+
+	var top_level_nodes: Array[Node3D] = []
+	for candidate in candidates:
+		if _has_selected_ancestor(candidate, candidates):
+			continue
+		_append_unique_node(top_level_nodes, candidate)
+
+	return top_level_nodes
+
+
+func _collect_named_breakaway_nodes(node: Node, candidates: Array[Node3D]) -> void:
+	if node is Node3D and _is_wheel_breakaway_name(String(node.name)):
+		_append_unique_node(candidates, node as Node3D)
+
+	for child in node.get_children():
+		_collect_named_breakaway_nodes(child, candidates)
+
+
+func _is_wheel_breakaway_name(node_name: String) -> bool:
+	var lower_name := node_name.to_lower()
+	if lower_name.begins_with("frame_arm"):
+		return false
+
+	return (
+		lower_name.begins_with("frame")
+		or lower_name.find("axle") >= 0
+		or lower_name.find("axel") >= 0
+		or lower_name.begins_with("basket")
+		or lower_name.begins_with("kid")
+		or lower_name.begins_with("rope")
+	)
+
+
+func _append_unique_node(nodes: Array[Node3D], node: Node3D) -> void:
+	if node == null:
+		return
+	if nodes.has(node):
+		return
+	nodes.append(node)
+
+
+func _has_selected_ancestor(node: Node3D, selected_nodes: Array[Node3D]) -> bool:
+	var parent := node.get_parent()
+	while parent != null:
+		if parent is Node3D and selected_nodes.has(parent):
+			return true
+		parent = parent.get_parent()
+	return false
+
+
+func _screen_right_world_direction() -> Vector3:
+	var camera := get_viewport().get_camera_3d()
+	if camera == null:
+		return Vector3.FORWARD
+
+	var direction := camera.global_basis.x
+	direction.y = 0.0
+	if direction.length_squared() <= 0.001:
+		return Vector3.FORWARD
+	return direction.normalized()
+
+
+func _show_game_over_text() -> void:
+	if _game_over_layer != null:
+		_game_over_layer.queue_free()
+
+	_game_over_layer = CanvasLayer.new()
+	_game_over_layer.layer = 64
+	add_child(_game_over_layer)
+
+	var center := CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	center.offset_top = -150.0
+	_game_over_layer.add_child(center)
+
+	var panel := PanelContainer.new()
+	var panel_style := StyleBoxFlat.new()
+	panel_style.bg_color = Color(0.02, 0.0, 0.0, 0.78)
+	panel_style.border_width_left = 3
+	panel_style.border_width_top = 3
+	panel_style.border_width_right = 3
+	panel_style.border_width_bottom = 3
+	panel_style.border_color = Color(1.0, 0.16, 0.08, 0.9)
+	panel_style.corner_radius_top_left = 6
+	panel_style.corner_radius_top_right = 6
+	panel_style.corner_radius_bottom_left = 6
+	panel_style.corner_radius_bottom_right = 6
+	panel_style.content_margin_left = 34.0
+	panel_style.content_margin_top = 20.0
+	panel_style.content_margin_right = 34.0
+	panel_style.content_margin_bottom = 22.0
+	panel.add_theme_stylebox_override("panel", panel_style)
+	center.add_child(panel)
+
+	var box := VBoxContainer.new()
+	box.alignment = BoxContainer.ALIGNMENT_CENTER
+	box.modulate.a = 0.0
+	box.scale = Vector2(0.7, 0.7)
+	box.pivot_offset = Vector2(320.0, 90.0)
+	panel.add_child(box)
+
+	var title := Label.new()
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.text = game_over_text
+	title.add_theme_font_size_override("font_size", 104)
+	title.add_theme_color_override("font_color", Color(1.0, 0.22, 0.12))
+	title.add_theme_color_override("font_outline_color", Color.BLACK)
+	title.add_theme_constant_override("outline_size", 12)
+	box.add_child(title)
+
+	if game_over_subtext != "":
+		var subtext := Label.new()
+		subtext.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		subtext.text = game_over_subtext
+		subtext.add_theme_font_size_override("font_size", 32)
+		subtext.add_theme_color_override("font_color", Color(1.0, 0.86, 0.42))
+		subtext.add_theme_color_override("font_outline_color", Color.BLACK)
+		subtext.add_theme_constant_override("outline_size", 6)
+		box.add_child(subtext)
+
+	var tween := create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(box, "modulate:a", 1.0, 0.35).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_property(box, "scale", Vector2(1.12, 1.12), 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.chain().tween_property(box, "scale", Vector2.ONE, 0.18).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tween.chain().tween_property(title, "modulate:a", 0.62, 0.08)
+	tween.chain().tween_property(title, "modulate:a", 1.0, 0.08)
 
 func _start_spectacle_camera(basket: Node3D, rider: Node3D) -> void:
 	var camera := get_viewport().get_camera_3d()
@@ -555,7 +783,6 @@ func _set_bar_between(bar: MeshInstance3D, start: Vector3, end: Vector3) -> void
 	bar.global_basis = _basis_from_y_axis(direction.normalized())
 
 func _basis_from_y_axis(y_axis: Vector3) -> Basis:
-	# CylinderMesh uses Y as its length axis.
 	var x_axis := Vector3.FORWARD.cross(y_axis)
 	if x_axis.length_squared() < 0.001:
 		x_axis = Vector3.RIGHT
