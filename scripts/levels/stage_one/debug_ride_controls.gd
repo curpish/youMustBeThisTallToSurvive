@@ -48,9 +48,7 @@ var _win_button: Button
 var _controls_ready := false
 
 func _ready() -> void:
-	# Release exports never show debug controls, regardless of the exported
-	# defaults above - matches stage_one_controller.gd's readout overlay and
-	# debug_dan_buttons.gd, which already gate the same way.
+	# Debug controls are editor/debug-build tooling and stay disabled in release exports.
 	if not OS.is_debug_build():
 		show_debug_visuals = false
 		enable_debug_speed_slider = false
@@ -60,6 +58,12 @@ func _ready() -> void:
 		show_debug_mode_buttons = false
 		show_debug_game_over_button = false
 		show_debug_win_button = false
+
+	if not show_debug_visuals:
+		visible = false
+		set_process(false)
+		set_process_unhandled_input(false)
+		return
 
 	if enable_debug_speed_slider:
 		_setup_speed_bands()
@@ -81,8 +85,7 @@ func _ready() -> void:
 	_wait_for_hands()
 
 func _process(_delta: float) -> void:
-	# These two only touch labels/buttons that are invisible anyway when
-	# show_debug_visuals is false, so there's nothing lost by skipping them.
+	# Visible debug panels keep their button labels and readouts synced with ride state.
 	if show_debug_visuals:
 		_refresh_governor_button()
 		_refresh_extra_readouts()

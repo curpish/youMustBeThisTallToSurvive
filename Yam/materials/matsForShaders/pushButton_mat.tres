@@ -1,0 +1,14 @@
+[gd_resource type="ShaderMaterial" format=3 uid="uid://b8vtj7yambi8l"]
+
+[ext_resource type="Shader" uid="uid://qmrorifqi1xg" path="res://Yam/shaders/illuminated_shader.tres" id="1_xsvnf"]
+[ext_resource type="Texture2D" uid="uid://c51ycu7ohss61" path="res://Yam/textures/texForShaders/pushButtons_c_001.png" id="2_u72qi"]
+[ext_resource type="Texture2D" uid="uid://m77ubcv16w3d" path="res://Yam/textures/texForShaders/pushButtons_A_001.png" id="3_2awnu"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_xsvnf")
+shader_parameter/baseColor = ExtResource("2_u72qi")
+shader_parameter/illuminationColor = Color(0, 0.56847006, 0, 1)
+shader_parameter/invertMask = true
+shader_parameter/illuminationMask = ExtResource("3_2awnu")
+shader_parameter/illuminationBrightness = 1.825

@@ -1,0 +1,47 @@
+[gd_resource type="VisualShader" format=3 uid="uid://hkue28s35p3"]
+
+[sub_resource type="VisualShaderNodeTexture" id="VisualShaderNodeTexture_mute6"]
+source = 5
+
+[sub_resource type="VisualShaderNodeTexture2DParameter" id="VisualShaderNodeTexture2DParameter_5u8nk"]
+parameter_name = "labelMask"
+texture_filter = 1
+
+[sub_resource type="VisualShaderNodeColorParameter" id="VisualShaderNodeColorParameter_rh07e"]
+parameter_name = "labelTextColor"
+default_value_enabled = true
+
+[sub_resource type="VisualShaderNodeColorParameter" id="VisualShaderNodeColorParameter_pkdh3"]
+parameter_name = "labelBackColor"
+default_value_enabled = true
+default_value = Color(0.814304, 0, 0.04997599, 1)
+
+[sub_resource type="VisualShaderNodeMix" id="VisualShaderNodeMix_6i257"]
+default_input_values = [0, Vector3(0, 0, 0), 1, Vector3(1, 1, 1), 2, Vector3(0.5, 0.5, 0.5)]
+op_type = 3
+
+[sub_resource type="VisualShaderNodeTexture2DParameter" id="VisualShaderNodeTexture2DParameter_mute6"]
+parameter_name = "labelNormal"
+texture_type = 2
+texture_filter = 1
+
+[sub_resource type="VisualShaderNodeTexture" id="VisualShaderNodeTexture_5u8nk"]
+source = 5
+
+[resource]
+nodes/vertex/0/position = Vector2(600, 140)
+nodes/fragment/2/node = SubResource("VisualShaderNodeTexture_mute6")
+nodes/fragment/2/position = Vector2(-1100, 180)
+nodes/fragment/3/node = SubResource("VisualShaderNodeTexture2DParameter_5u8nk")
+nodes/fragment/3/position = Vector2(-1620, 100)
+nodes/fragment/4/node = SubResource("VisualShaderNodeColorParameter_rh07e")
+nodes/fragment/4/position = Vector2(-1060, 700)
+nodes/fragment/5/node = SubResource("VisualShaderNodeColorParameter_pkdh3")
+nodes/fragment/5/position = Vector2(-1060, 460)
+nodes/fragment/6/node = SubResource("VisualShaderNodeMix_6i257")
+nodes/fragment/6/position = Vector2(-360, 380)
+nodes/fragment/7/node = SubResource("VisualShaderNodeTexture2DParameter_mute6")
+nodes/fragment/7/position = Vector2(-1620, 1020)
+nodes/fragment/8/node = SubResource("VisualShaderNodeTexture_5u8nk")
+nodes/fragment/8/position = Vector2(-940, 1040)
+nodes/fragment/connections = PackedInt32Array(3, 0, 2, 2, 6, 0, 0, 0, 2, 0, 6, 2, 5, 0, 6, 0, 4, 0, 6, 1, 7, 0, 8, 2, 8, 0, 0, 9)

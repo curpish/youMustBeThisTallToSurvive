@@ -1,6 +1,23 @@
 extends Node3D
 
 const BAND_TARGETS: Array[float] = [0.0, 65.0, 150.0, 280.0, 420.0]
+const MODE_LABELS := {
+	&"label_1_geo": {
+		"text": "1",
+		"background": Color(0.08, 0.66, 0.18, 1.0),
+		"foreground": Color(0.02, 0.03, 0.02, 1.0),
+	},
+	&"label_2_geo": {
+		"text": "2",
+		"background": Color(0.95, 0.78, 0.08, 1.0),
+		"foreground": Color(0.04, 0.03, 0.0, 1.0),
+	},
+	&"label_3_geo": {
+		"text": "3",
+		"background": Color(0.82, 0.06, 0.035, 1.0),
+		"foreground": Color(1.0, 0.94, 0.82, 1.0),
+	},
+}
 
 @export var counter_digit_names: Array[StringName] = [
 	&"rpmCounter_ten_thousands_digit",
@@ -129,6 +146,7 @@ func _ready() -> void:
 	_setup_panel_buttons()
 	_setup_fault_indicators()
 	_setup_heat_gauge()
+	_setup_mode_label_colors()
 	RideState.faults_changed.connect(_refresh_fault_indicators)
 	_update_counter()
 	_update_speed_handle()
@@ -338,6 +356,64 @@ func _setup_heat_gauge() -> void:
 		_heat_gauge_needle.get_path(),
 		heat_gauge_axis,
 	])
+
+
+func _setup_mode_label_colors() -> void:
+	for label_name in MODE_LABELS:
+		var source := find_child(String(label_name), true, false) as MeshInstance3D
+		if source == null:
+			push_warning("Mode selector label '%s' was not found." % label_name)
+			continue
+
+		var config: Dictionary = MODE_LABELS[label_name]
+		var bounds := source.get_aabb()
+		var plate_size := Vector2(bounds.size.x, bounds.size.z)
+		if plate_size.x <= 0.0 or plate_size.y <= 0.0:
+			push_warning("Mode selector label '%s' had invalid bounds." % label_name)
+			continue
+
+		var parent := source.get_parent()
+		var replacement := Node3D.new()
+		replacement.name = "%s_colored" % source.name
+		replacement.transform = source.transform
+		parent.add_child(replacement)
+		parent.move_child(replacement, source.get_index() + 1)
+
+		var plate := MeshInstance3D.new()
+		plate.name = "background"
+		var plate_mesh := PlaneMesh.new()
+		plate_mesh.size = plate_size
+		plate.mesh = plate_mesh
+		plate.material_override = _make_mode_label_material(config["background"])
+		plate.position = Vector3(0.0, 0.0008, 0.0)
+		replacement.add_child(plate)
+
+		var number := MeshInstance3D.new()
+		number.name = "number"
+		var text_mesh := TextMesh.new()
+		text_mesh.text = String(config["text"])
+		text_mesh.font_size = 36
+		text_mesh.depth = 0.001
+		text_mesh.pixel_size = 0.00155
+		text_mesh.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		text_mesh.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		number.mesh = text_mesh
+		number.material_override = _make_mode_label_material(config["foreground"])
+		number.position = Vector3(0.0, 0.0022, 0.0)
+		number.rotation.x = deg_to_rad(-90.0)
+		replacement.add_child(number)
+
+		source.visible = false
+
+
+func _make_mode_label_material(color: Color) -> StandardMaterial3D:
+	var material := StandardMaterial3D.new()
+	material.resource_name = "mode_label_%s" % color.to_html(false)
+	material.albedo_color = color
+	material.roughness = 0.78
+	material.metallic = 0.0
+	material.cull_mode = BaseMaterial3D.CULL_DISABLED
+	return material
 
 
 func _ordered_fault_indicator_nodes() -> Array[Node3D]:

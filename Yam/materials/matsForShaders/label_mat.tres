@@ -1,0 +1,13 @@
+[gd_resource type="ShaderMaterial" format=3 uid="uid://bkxfvcidno1vb"]
+
+[ext_resource type="Shader" uid="uid://hkue28s35p3" path="res://Yam/shaders/label_shader.tres" id="1_bep6h"]
+[ext_resource type="Texture2D" uid="uid://bbw54uikyt1gp" path="res://Yam/textures/texForShaders/labels_M_001.png" id="2_r6sf2"]
+[ext_resource type="Texture2D" uid="uid://8hriq08jibxa" path="res://Yam/textures/texForShaders/labels_n_001.png" id="3_r6sf2"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_bep6h")
+shader_parameter/labelBackColor = Color(0.814304, 0, 0.049976, 1)
+shader_parameter/labelTextColor = Color(1, 1, 1, 1)
+shader_parameter/labelMask = ExtResource("2_r6sf2")
+shader_parameter/labelNormal = ExtResource("3_r6sf2")

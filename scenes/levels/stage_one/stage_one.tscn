@@ -31,6 +31,7 @@
 [ext_resource type="AudioStream" uid="uid://d2dac4v1tsy1k" path="res://assets/audio/world/guests/scream2.ogg" id="16_jkjsa"]
 [ext_resource type="AudioStream" uid="uid://m1tmhono28wo" path="res://assets/audio/world/guests/scream3.ogg" id="17_2yn73"]
 [ext_resource type="AudioStream" uid="uid://cb5b482yc3od5" path="res://assets/audio/world/guests/crowd_cheer.ogg" id="18_8g4sv"]
+[ext_resource type="PackedScene" path="res://Yam/scenes/environment.tscn" id="18_yam_environment"]
 [ext_resource type="AudioStream" uid="uid://xrh0aqr0diub" path="res://assets/audio/world/controls/button1.ogg" id="19_5yy43"]
 [ext_resource type="AudioStream" uid="uid://b2nt56u477tn4" path="res://assets/audio/world/controls/big_stop.ogg" id="20_x6xw4"]
 [ext_resource type="AudioStream" uid="uid://bkqa22e11x0pc" path="res://assets/audio/world/controls/governor_in.ogg" id="23_r3g8u"]
@@ -140,6 +141,8 @@ script = ExtResource("2_stage_one_controller")
 
 [node name="FerrisScene" parent="." unique_id=2007477521 instance=ExtResource("1_ferris_scene")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3661175, 0)
+
+[node name="YamEnvironment" parent="." instance=ExtResource("18_yam_environment")]
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=441656920]
 environment = SubResource("Environment_stage_one")

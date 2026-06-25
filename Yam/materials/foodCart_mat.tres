@@ -1,0 +1,7 @@
+[gd_resource type="StandardMaterial3D" format=3 uid="uid://grtviweypx2o"]
+
+[ext_resource type="Texture2D" uid="uid://d0h68n3nfbmn3" path="res://Yam/textures/foodCart_c_001.png" id="1_wvyog"]
+
+[resource]
+albedo_texture = ExtResource("1_wvyog")
+texture_filter = 0

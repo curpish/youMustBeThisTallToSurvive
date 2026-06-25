@@ -1,0 +1,7 @@
+[gd_resource type="StandardMaterial3D" format=3 uid="uid://be2gtg5mxiap6"]
+
+[ext_resource type="Texture2D" uid="uid://dctar8eeik1ru" path="res://Yam/textures/iceCreamCart_c_001.png" id="1_63gc2"]
+
+[resource]
+albedo_texture = ExtResource("1_63gc2")
+texture_filter = 0

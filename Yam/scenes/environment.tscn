@@ -1,0 +1,59 @@
+[gd_scene format=3 uid="uid://craluej1js5dq"]
+
+[ext_resource type="ArrayMesh" uid="uid://da6bdgl80jolm" path="res://Yam/geometry/pavement.obj" id="1_f1reh"]
+[ext_resource type="Material" uid="uid://c7f4b75p5thpe" path="res://Yam/materials/pavement_mat.tres" id="2_cdlex"]
+[ext_resource type="ArrayMesh" uid="uid://cvpr65upswdva" path="res://Yam/geometry/carousel.obj" id="3_0qh4o"]
+[ext_resource type="Material" uid="uid://b12p5durq38co" path="res://Yam/materials/carousel_mat.tres" id="4_b87xd"]
+[ext_resource type="ArrayMesh" uid="uid://ch1uk24rs1m0p" path="res://Yam/geometry/midway.obj" id="5_qj8v5"]
+[ext_resource type="Material" uid="uid://535rcpfr2k54" path="res://Yam/materials/midway_mat.tres" id="6_2wup5"]
+[ext_resource type="ArrayMesh" uid="uid://cqsvvyek0lb0h" path="res://Yam/geometry/tree_002.obj" id="7_g6gbs"]
+[ext_resource type="Material" uid="uid://cnvifjwwku0wb" path="res://Yam/materials/trees_mat.tres" id="8_u8gwy"]
+[ext_resource type="ArrayMesh" uid="uid://dud7ey8pee1uh" path="res://Yam/geometry/tree_001.obj" id="9_06smg"]
+[ext_resource type="ArrayMesh" uid="uid://dnvt8ytgqlw75" path="res://Yam/geometry/foodCart.obj" id="10_qogen"]
+[ext_resource type="Material" uid="uid://grtviweypx2o" path="res://Yam/materials/foodCart_mat.tres" id="11_l4ygk"]
+[ext_resource type="ArrayMesh" uid="uid://yns5g8ar71ki" path="res://Yam/geometry/iceCreamCart.obj" id="12_ihlf5"]
+[ext_resource type="Material" uid="uid://be2gtg5mxiap6" path="res://Yam/materials/iceCreamCart_mat.tres" id="13_k0l8m"]
+[ext_resource type="ArrayMesh" uid="uid://too6lqbms00b" path="res://Yam/geometry/background.obj" id="14_cdlex"]
+
+[node name="Background" type="Node3D" unique_id=354290053]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -4.255, 2.838, 4.037)
+
+[node name="Environment" type="Node3D" parent="." unique_id=140688864]
+
+[node name="pavement" type="MeshInstance3D" parent="Environment" unique_id=1604029226]
+mesh = ExtResource("1_f1reh")
+surface_material_override/0 = ExtResource("2_cdlex")
+
+[node name="carousel" type="MeshInstance3D" parent="Environment" unique_id=68761689]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -42.9311, 0.41933703, -36.619576)
+mesh = ExtResource("3_0qh4o")
+surface_material_override/0 = ExtResource("4_b87xd")
+
+[node name="midway" type="MeshInstance3D" parent="Environment" unique_id=1152847941]
+transform = Transform3D(0.51912576, 0, -0.8546979, 0, 1, 0, 0.8546979, 0, 0.51912576, 44.6951, 6.4164915, -21.208715)
+mesh = ExtResource("5_qj8v5")
+surface_material_override/0 = ExtResource("6_2wup5")
+
+[node name="tree_02" type="MeshInstance3D" parent="Environment" unique_id=1402789004]
+transform = Transform3D(0.96184385, 0, 0.2735991, 0, 1, 0, -0.2735991, 0, 0.96184385, 29.942066, 1.0672731, -43.88325)
+mesh = ExtResource("7_g6gbs")
+surface_material_override/0 = ExtResource("8_u8gwy")
+
+[node name="tree_002" type="MeshInstance3D" parent="Environment" unique_id=2110622535]
+transform = Transform3D(0.7014355, 0, 0.712733, 0, 1, 0, -0.712733, 0, 0.7014355, -45.857517, 4.9997635, 8.569918)
+mesh = ExtResource("9_06smg")
+surface_material_override/0 = ExtResource("8_u8gwy")
+
+[node name="foodCart" type="MeshInstance3D" parent="Environment" unique_id=1179137099]
+transform = Transform3D(0.9635879, 0, 0.26739195, 0, 1, 0, -0.26739195, 0, 0.9635879, -27.501726, 3.6566434, 16.751371)
+mesh = ExtResource("10_qogen")
+surface_material_override/0 = ExtResource("11_l4ygk")
+
+[node name="iceCreamCart" type="MeshInstance3D" parent="Environment" unique_id=1279301228]
+transform = Transform3D(0.94577515, 0, -0.32482198, 0, 1, 0, 0.32482198, 0, 0.94577515, 15.806252, 2.629274, 14.333423)
+mesh = ExtResource("12_ihlf5")
+surface_material_override/0 = ExtResource("13_k0l8m")
+
+[node name="backdrop" type="MeshInstance3D" parent="Environment" unique_id=1557689484]
+mesh = ExtResource("14_cdlex")
+surface_material_override/0 = ExtResource("2_cdlex")

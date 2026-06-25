@@ -1,0 +1,8 @@
+[gd_resource type="StandardMaterial3D" format=3 uid="uid://cnvifjwwku0wb"]
+
+[ext_resource type="Texture2D" uid="uid://bahm8h7m6w0mh" path="res://Yam/textures/tree_001.png" id="1_kbebi"]
+
+[resource]
+transparency = 1
+albedo_texture = ExtResource("1_kbebi")
+texture_filter = 0

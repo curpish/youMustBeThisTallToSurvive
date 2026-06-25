@@ -344,7 +344,13 @@ func _on_hard_pressed() -> void:
 
 
 func _on_feedback_survey_pressed() -> void:
-	OS.shell_open("https://forms.office.com/r/vrZU7N0ZuU")
+	var survey_url := "https://forms.office.com/r/vrZU7N0ZuU"
+	if OS.has_feature("web"):
+		var javascript_bridge := Engine.get_singleton("JavaScriptBridge")
+		if javascript_bridge != null:
+			javascript_bridge.eval("window.open('%s', '_blank');" % survey_url)
+	else:
+		OS.shell_open(survey_url)
 
 
 func _on_credits_pressed() -> void:

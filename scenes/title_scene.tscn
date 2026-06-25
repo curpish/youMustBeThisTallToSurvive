@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://c4kd1dkjqor0b" path="res://scripts/title_scene.gd" id="1_title_script"]
 [ext_resource type="PackedScene" uid="uid://dnvhw5fh45cn1" path="res://assets/blender_imports/stage_one/ferris_scene.glb" id="2_ferris_scene"]
+[ext_resource type="PackedScene" path="res://Yam/scenes/environment.tscn" id="3_yam_environment"]
 
 [sub_resource type="Environment" id="Environment_title"]
 background_mode = 1
@@ -37,6 +38,9 @@ environment = SubResource("Environment_title")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.3, -1.45, -6)
 
 [node name="FerrisScene" parent="FerrisPreview" unique_id=2074411028 instance=ExtResource("2_ferris_scene")]
+
+[node name="YamTitleEnvironment" parent="." instance=ExtResource("3_yam_environment")]
+transform = Transform3D(0.55, 0, 0, 0, 0.55, 0, 0, 0, 0.55, 4, -1.8, -6)
 
 [node name="Ground" type="MeshInstance3D" parent="." unique_id=277964987]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.08943939, -2.4584122, -6.007271)

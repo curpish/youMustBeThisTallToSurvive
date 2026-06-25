@@ -1,0 +1,7 @@
+[gd_resource type="StandardMaterial3D" format=3 uid="uid://b12p5durq38co"]
+
+[ext_resource type="Texture2D" uid="uid://kynchadh61w8" path="res://Yam/textures/carousel_c_001.png" id="1_vvani"]
+
+[resource]
+albedo_texture = ExtResource("1_vvani")
+texture_filter = 0

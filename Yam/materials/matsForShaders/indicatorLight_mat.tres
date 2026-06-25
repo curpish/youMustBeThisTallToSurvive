@@ -1,0 +1,14 @@
+[gd_resource type="ShaderMaterial" format=3 uid="uid://dy4nm72gqnf52"]
+
+[ext_resource type="Shader" uid="uid://qmrorifqi1xg" path="res://Yam/shaders/illuminated_shader.tres" id="1_w047t"]
+[ext_resource type="Texture2D" uid="uid://bb5u3nn1nyj3i" path="res://Yam/textures/texForShaders/indicatorLight_c_001.png" id="2_7uma8"]
+[ext_resource type="Texture2D" uid="uid://brxdxbea06bhs" path="res://Yam/textures/texForShaders/indicatorLight_A_001.png" id="3_bkrgs"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_w047t")
+shader_parameter/baseColor = ExtResource("2_7uma8")
+shader_parameter/illuminationColor = Color(1, 0.120000005, 0.120000005, 1)
+shader_parameter/invertMask = false
+shader_parameter/illuminationMask = ExtResource("3_bkrgs")
+shader_parameter/illuminationBrightness = 3.1

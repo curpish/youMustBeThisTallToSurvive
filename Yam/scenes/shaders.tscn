@@ -1,0 +1,35 @@
+[gd_scene format=3 uid="uid://bbe6dnbadhjg6"]
+
+[ext_resource type="ArrayMesh" uid="uid://boeallkiu2f3w" path="res://Yam/geometry/geoForShaders/pushButton_body.obj" id="1_tlxnb"]
+[ext_resource type="Material" uid="uid://b8vtj7yambi8l" path="res://Yam/materials/matsForShaders/pushButton_mat.tres" id="2_xurj6"]
+[ext_resource type="ArrayMesh" uid="uid://cdoteqqygwpwi" path="res://Yam/geometry/geoForShaders/pushButton_button.obj" id="3_oou2i"]
+[ext_resource type="ArrayMesh" uid="uid://c0eble6wp7rri" path="res://Yam/geometry/geoForShaders/indicatorLight.obj" id="4_gt415"]
+[ext_resource type="Material" uid="uid://dy4nm72gqnf52" path="res://Yam/materials/matsForShaders/indicatorLight_mat.tres" id="5_msqou"]
+[ext_resource type="ArrayMesh" uid="uid://coy0huv5uw6lt" path="res://Yam/geometry/geoForShaders/label_RPM.obj" id="6_4jreo"]
+[ext_resource type="Material" uid="uid://bkxfvcidno1vb" path="res://Yam/materials/matsForShaders/label_mat.tres" id="7_wdgmr"]
+
+[node name="Shaders" type="Node3D" unique_id=1571628260]
+
+[node name="SHADERS" type="Node3D" parent="." unique_id=1513528089]
+
+[node name="IlluminatedShader" type="Node3D" parent="SHADERS" unique_id=2115281017]
+
+[node name="buttonHousing" type="MeshInstance3D" parent="SHADERS/IlluminatedShader" unique_id=1588489986]
+mesh = ExtResource("1_tlxnb")
+surface_material_override/0 = ExtResource("2_xurj6")
+
+[node name="pushButton" type="MeshInstance3D" parent="SHADERS/IlluminatedShader/buttonHousing" unique_id=829563961]
+mesh = ExtResource("3_oou2i")
+surface_material_override/0 = ExtResource("2_xurj6")
+
+[node name="IndicatorLight" type="MeshInstance3D" parent="SHADERS/IlluminatedShader" unique_id=1588910485]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.21150789, 0, 0)
+mesh = ExtResource("4_gt415")
+surface_material_override/0 = ExtResource("5_msqou")
+
+[node name="LabelShader" type="Node3D" parent="SHADERS" unique_id=1823582623]
+
+[node name="label_RPM" type="MeshInstance3D" parent="SHADERS/LabelShader" unique_id=1264878358]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.25127017)
+mesh = ExtResource("6_4jreo")
+surface_material_override/0 = ExtResource("7_wdgmr")
