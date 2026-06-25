@@ -27,6 +27,7 @@ extends Node3D
 @export var rider_collision_bounciness := 0.56
 @export var fling_collision_friction := 0.68
 @export var fling_rest_speed := 0.8
+@export var web_fling_wall_z := 18.0
 @export var failure_drop_distance := 3.0
 @export var failure_roll_distance := 46.0
 @export var failure_drop_duration := 0.6
@@ -365,6 +366,9 @@ func _setup_sparks() -> void:
 	_axle_sparks.global_position = _wheel.global_position
 
 func _setup_fling_collision() -> void:
+	if _web_render_budget_enabled:
+		return
+
 	var environment_root := _find_node3d("YamEnvironment")
 	if environment_root == null:
 		return
@@ -1110,6 +1114,9 @@ func _move_fling_body(body: Node3D, velocity: Vector3, delta: float, bounce_coun
 
 
 func _cast_fling_motion(from: Vector3, to: Vector3) -> Dictionary:
+	if _web_render_budget_enabled:
+		return _cast_web_fling_motion(from, to)
+
 	var space_state := get_world_3d().direct_space_state
 	var direction := to - from
 	if direction.length_squared() <= 0.000001:
@@ -1120,6 +1127,30 @@ func _cast_fling_motion(from: Vector3, to: Vector3) -> Dictionary:
 	query.collide_with_areas = false
 	query.collide_with_bodies = true
 	return space_state.intersect_ray(query)
+
+
+func _cast_web_fling_motion(from: Vector3, to: Vector3) -> Dictionary:
+	var best_t := INF
+	var best_normal := Vector3.ZERO
+	var delta := to - from
+
+	if from.y > fling_ground_y and to.y <= fling_ground_y and absf(delta.y) > 0.000001:
+		best_t = clampf((fling_ground_y - from.y) / delta.y, 0.0, 1.0)
+		best_normal = Vector3.UP
+
+	if from.z < web_fling_wall_z and to.z >= web_fling_wall_z and absf(delta.z) > 0.000001:
+		var wall_t := clampf((web_fling_wall_z - from.z) / delta.z, 0.0, 1.0)
+		if wall_t < best_t:
+			best_t = wall_t
+			best_normal = Vector3.BACK
+
+	if best_t == INF:
+		return {}
+
+	return {
+		"position": from.lerp(to, best_t),
+		"normal": best_normal,
+	}
 
 
 func _resolve_fallback_ground(body: Node3D, velocity: Vector3, bounce_count: int, bounciness: float) -> Dictionary:
