@@ -39,6 +39,8 @@ var _credits_label: Label
 var _return_button: Button
 var _credits_rolling := false
 var _title_music: AudioStreamPlayer
+var _ui_root: Control
+var _options: OptionsPanel
 
 
 func _ready() -> void:
@@ -66,12 +68,28 @@ func _setup_title_music() -> void:
 
 	_title_music = AudioStreamPlayer.new()
 	_title_music.name = "TitleMusic"
-	_title_music.bus = "Master"
+	_title_music.bus = "Music"
 	_title_music.stream = TITLE_BGM
 	_title_music.volume_db = title_music_volume_db
 	add_child(_title_music)
 	_ensure_title_music_loop()
+	_force_music_bus_dry()
 	_title_music.play()
+
+
+# The title has no stage_one_music driving the Music-bus reverb, so it would sit
+# at its authored wet default. Force a fully dry signal so the menu track is
+# clean. stage_one_music re-applies its own dry/wet when gameplay starts.
+func _force_music_bus_dry() -> void:
+	var bus_index := AudioServer.get_bus_index("Music")
+	if bus_index < 0:
+		return
+	for i in AudioServer.get_bus_effect_count(bus_index):
+		var effect := AudioServer.get_bus_effect(bus_index, i)
+		if effect is AudioEffectReverb:
+			effect.dry = 1.0
+			effect.wet = 0.0
+			return
 
 
 func _ensure_title_music_loop() -> void:
@@ -280,8 +298,11 @@ func _build_ui() -> void:
 
 	_main_menu = _make_menu(Vector2(0.07, 0.48), root)
 	_main_menu.add_child(_make_button("Play Game", _on_play_pressed))
+	_main_menu.add_child(_make_button("Options", _on_options_pressed))
 	_main_menu.add_child(_make_button("Credits", _on_credits_pressed))
 	_main_menu.add_child(_make_button("Gameplay Feedback Survey", _on_feedback_survey_pressed))
+
+	_ui_root = root
 
 	_difficulty_menu = _make_menu(Vector2(0.07, 0.46), root)
 	_difficulty_menu.add_child(_make_button("Normal", _on_normal_pressed))
@@ -326,35 +347,7 @@ func _make_menu(anchor: Vector2, parent: Control) -> VBoxContainer:
 
 
 func _make_button(label: String, callback: Callable) -> Button:
-	var button := Button.new()
-	button.text = label
-	button.custom_minimum_size = Vector2(300.0, 58.0)
-	button.focus_mode = Control.FOCUS_NONE
-	button.add_theme_font_size_override("font_size", 28)
-	button.add_theme_stylebox_override("normal", _button_style(Color(0.06, 0.05, 0.04, 0.78), Color(0.95, 0.75, 0.28)))
-	button.add_theme_stylebox_override("hover", _button_style(Color(0.08, 0.16, 0.2, 0.9), Color(0.25, 0.72, 1.0)))
-	button.add_theme_stylebox_override("pressed", _button_style(Color(0.02, 0.08, 0.1, 0.95), Color(0.25, 0.72, 1.0)))
-	button.add_theme_color_override("font_color", Color(1.0, 0.92, 0.7))
-	button.add_theme_color_override("font_hover_color", Color(0.72, 0.95, 1.0))
-	button.pressed.connect(callback)
-	return button
-
-
-func _button_style(fill: Color, border: Color) -> StyleBoxFlat:
-	var style := StyleBoxFlat.new()
-	style.bg_color = fill
-	style.border_color = border
-	style.border_width_left = 3
-	style.border_width_top = 3
-	style.border_width_right = 3
-	style.border_width_bottom = 3
-	style.corner_radius_top_left = 4
-	style.corner_radius_top_right = 4
-	style.corner_radius_bottom_left = 4
-	style.corner_radius_bottom_right = 4
-	style.content_margin_left = 18
-	style.content_margin_right = 18
-	return style
+	return MenuStyle.button(label, callback)
 
 
 func _format_credits() -> String:
@@ -382,13 +375,15 @@ func _on_hard_pressed() -> void:
 
 
 func _on_feedback_survey_pressed() -> void:
-	var survey_url := "https://forms.office.com/r/vrZU7N0ZuU"
-	if OS.has_feature("web"):
-		var javascript_bridge := Engine.get_singleton("JavaScriptBridge")
-		if javascript_bridge != null:
-			javascript_bridge.eval("window.open('%s', '_blank');" % survey_url)
-	else:
-		OS.shell_open(survey_url)
+	GameOrchestrator.open_feedback_survey()
+
+
+func _on_options_pressed() -> void:
+	if _options != null:
+		return
+	_options = OptionsPanel.new()
+	_options.closed.connect(func() -> void: _options = null)
+	_ui_root.add_child(_options)
 
 
 func _on_credits_pressed() -> void:

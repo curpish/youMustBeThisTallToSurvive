@@ -40,7 +40,7 @@ mesh = ExtResource("7_g6gbs")
 surface_material_override/0 = ExtResource("8_u8gwy")
 
 [node name="tree_002" type="MeshInstance3D" parent="Environment" unique_id=2110622535]
-transform = Transform3D(0.7014355, 0, 0.712733, 0, 1, 0, -0.712733, 0, 0.7014355, -45.857517, 4.9997635, 8.569918)
+transform = Transform3D(0.7014355, 0, 0.712733, 0, 1, 0, -0.712733, 0, 0.7014355, -54.204426, 4.9997635, 8.569918)
 mesh = ExtResource("9_06smg")
 surface_material_override/0 = ExtResource("8_u8gwy")
 

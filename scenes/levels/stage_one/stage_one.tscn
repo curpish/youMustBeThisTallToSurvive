@@ -42,6 +42,7 @@
 [ext_resource type="AudioStream" uid="uid://btn3u1ov6urs5" path="res://assets/audio/world/controls/mode_select.ogg" id="28_d2lwq"]
 [ext_resource type="AudioStream" uid="uid://b383ychoc1226" path="res://assets/audio/music/Survive Game Over.ogg" id="29_gameover"]
 [ext_resource type="AudioStream" uid="uid://cus3gcc50w063" path="res://assets/audio/music/Survive Victory.ogg" id="30_victory"]
+[ext_resource type="Script" uid="uid://dor0ijvjid5ef" path="res://scripts/ui/pause_menu.gd" id="31_pausemenu"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_stage_one"]
 sky_top_color = Color(0.13, 0.19, 0.26, 1)
@@ -162,8 +163,11 @@ environment = SubResource("Environment_stage_one")
 
 [node name="Sun" type="DirectionalLight3D" parent="." unique_id=1306829128]
 transform = Transform3D(0.707107, -0.353553, 0.612372, 0, 0.866025, 0.5, -0.707107, -0.353553, 0.612372, 0, 18, 0)
-light_color = Color(1, 0.64, 0.38, 1)
-light_energy = 1.45
+light_color = Color(0.95, 0.6729167, 0.475, 1)
+light_energy = 0.8
+light_indirect_energy = 0.0
+light_angular_distance = 5.0
+light_specular = 3.0
 shadow_enabled = true
 
 [node name="SoftFill" type="OmniLight3D" parent="." unique_id=2075629610]
@@ -180,6 +184,9 @@ script = ExtResource("6_intro_orbit_camera")
 
 [node name="RidersLaunchedHud" type="CanvasLayer" parent="." unique_id=1321340757]
 script = ExtResource("26_scoreboard")
+
+[node name="PauseMenu" type="CanvasLayer" parent="." unique_id=1321340758]
+script = ExtResource("31_pausemenu")
 
 [node name="OperatorControlPanel" parent="." unique_id=932911297 instance=ExtResource("12_control_panel")]
 transform = Transform3D(0.025178477, 0.11085446, 1.0056173, 0.099557444, 1.099595, -0.103074074, -0.95272046, 0.1178352, 0.015805371, 39.743595, 1.7100306, 1.6832534)
@@ -217,17 +224,20 @@ fling_gondola = NodePath("fling_gondola")
 
 [node name="wheel_running" type="AudioStreamPlayer" parent="Audio/ferrisRide" unique_id=673736007]
 stream = ExtResource("4_vmt56")
+bus = &"Ride"
 
 [node name="squeaks" type="AudioStreamPlayer" parent="Audio/ferrisRide" unique_id=1849649579]
 stream = SubResource("AudioStreamRandomizer_nfkyc")
 volume_db = -8.0
 pitch_scale = 1.1
 max_polyphony = 4
+bus = &"Ride"
 
 [node name="fling_gondola" type="AudioStreamPlayer" parent="Audio/ferrisRide" unique_id=302492363]
 stream = SubResource("AudioStreamRandomizer_qcsmn")
 volume_db = -6.0
 pitch_scale = 1.24
+bus = &"Ride"
 
 [node name="controlPanel" type="Node" parent="Audio" unique_id=1986688622 node_paths=PackedStringArray("button", "big_stop", "lever", "governor_in", "governor_out", "mode_switch")]
 script = ExtResource("14_panel")
@@ -286,6 +296,7 @@ crowd_cheer = NodePath("crowd_cheer")
 stream = SubResource("AudioStreamRandomizer_236sx")
 volume_db = -14.0
 pitch_scale = 1.1
+bus = &"Screams"
 
 [node name="crowd_cheer" type="AudioStreamPlayer" parent="Audio/guests" unique_id=1421224961]
 stream = SubResource("AudioStreamRandomizer_7ih6x")
