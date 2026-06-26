@@ -5,6 +5,13 @@ resource_name = "Limiter"
 ceiling_db = -0.5
 threshold_db = -1.0
 
+[sub_resource type="AudioEffectCompressor" id="AudioEffectCompressor_g28q7"]
+resource_name = "Compressor"
+threshold = -6.0
+ratio = 2.0
+gain = 6.0
+mix = 0.8
+
 [sub_resource type="AudioEffectLimiter" id="AudioEffectLimiter_n8wo2"]
 resource_name = "Limiter"
 ceiling_db = -4.0
@@ -29,6 +36,17 @@ resource_name = "StereoEnhance"
 pan_pullout = 1.74
 surround = 0.76
 
+[sub_resource type="AudioEffectLimiter" id="AudioEffectLimiter_cenje"]
+resource_name = "Limiter"
+ceiling_db = -8.0
+threshold_db = -2.0
+
+[sub_resource type="AudioEffectCompressor" id="AudioEffectCompressor_j3pel"]
+resource_name = "Compressor"
+threshold = -6.0
+ratio = 3.0
+gain = 4.0
+
 [sub_resource type="AudioEffectHighPassFilter" id="AudioEffectHighPassFilter_j3pel"]
 resource_name = "HighPassFilter"
 cutoff_hz = 97.0
@@ -52,11 +70,13 @@ wet = 0.2
 [resource]
 bus/0/effect/0/effect = SubResource("AudioEffectLimiter_j3pel")
 bus/0/effect/0/enabled = true
+bus/0/effect/1/effect = SubResource("AudioEffectCompressor_g28q7")
+bus/0/effect/1/enabled = true
 bus/1/name = &"Music"
 bus/1/solo = false
 bus/1/mute = false
 bus/1/bypass_fx = false
-bus/1/volume_db = -4.002995
+bus/1/volume_db = -3.1173582
 bus/1/send = &"Master"
 bus/1/effect/0/effect = SubResource("AudioEffectLimiter_n8wo2")
 bus/1/effect/0/enabled = true
@@ -68,7 +88,7 @@ bus/2/name = &"Ambience"
 bus/2/solo = false
 bus/2/mute = false
 bus/2/bypass_fx = false
-bus/2/volume_db = -8.554921
+bus/2/volume_db = -9.550891
 bus/2/send = &"Master"
 bus/2/effect/0/effect = SubResource("AudioEffectStereoEnhance_g28q7")
 bus/2/effect/0/enabled = true
@@ -76,8 +96,12 @@ bus/3/name = &"SFX"
 bus/3/solo = false
 bus/3/mute = false
 bus/3/bypass_fx = false
-bus/3/volume_db = -5.2715483
+bus/3/volume_db = -4.002995
 bus/3/send = &"Master"
+bus/3/effect/0/effect = SubResource("AudioEffectLimiter_cenje")
+bus/3/effect/0/enabled = true
+bus/3/effect/1/effect = SubResource("AudioEffectCompressor_j3pel")
+bus/3/effect/1/enabled = true
 bus/4/name = &"Dan"
 bus/4/solo = false
 bus/4/mute = false
@@ -90,7 +114,7 @@ bus/5/name = &"Ride"
 bus/5/solo = false
 bus/5/mute = false
 bus/5/bypass_fx = false
-bus/5/volume_db = 0.0
+bus/5/volume_db = -1.519247
 bus/5/send = &"Master"
 bus/5/effect/0/effect = SubResource("AudioEffectLimiter_g28q7")
 bus/5/effect/0/enabled = true

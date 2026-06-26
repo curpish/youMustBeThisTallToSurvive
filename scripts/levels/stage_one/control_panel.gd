@@ -211,6 +211,10 @@ func _input(event: InputEvent) -> void:
 	if RideState.controls_locked:
 		return
 
+	if event is InputEventKey:
+		_handle_hotkey(event)
+		return
+
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 		if event.pressed:
 			if _is_pointer_on_big_stop(event.position, big_stop_hit_padding):
@@ -279,6 +283,33 @@ func _input(event: InputEvent) -> void:
 		elif _dragging_mode_dial:
 			_set_mode_from_screen_position(event.position)
 		get_viewport().set_input_as_handled()
+
+
+# Keyboard mirror of the click handlers: q/w/e/r/t/y press a fault button,
+# 1/2/3 pick a mode, space is Big Stop, shift bypasses the governor. Each path
+# reuses the same _press_* / RideState calls a mouse click would, so animation,
+# audio (via Events) and game logic stay identical. is_action_pressed() ignores
+# key repeats by default, so a held key won't retrigger.
+func _handle_hotkey(event: InputEvent) -> void:
+	for action in panel_button_names:
+		if event.is_action_pressed(action):
+			_press_panel_button(action)
+			get_viewport().set_input_as_handled()
+			return
+
+	if event.is_action_pressed("mode_1"):
+		RideState.set_selected_mode(1)
+	elif event.is_action_pressed("mode_2"):
+		RideState.set_selected_mode(2)
+	elif event.is_action_pressed("mode_3"):
+		RideState.set_selected_mode(3)
+	elif event.is_action_pressed("space"):
+		_press_big_stop()
+	elif event.is_action_pressed("governor"):
+		_press_governor_screwdriver()
+	else:
+		return
+	get_viewport().set_input_as_handled()
 
 
 func _setup_speed_handle() -> void:

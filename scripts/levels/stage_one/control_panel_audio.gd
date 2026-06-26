@@ -1,6 +1,5 @@
 extends Node
 
-const FAULT_KEYS: Array[String] = ["q", "w", "e", "r", "t", "y"]
 const SPEED_TARGETS: Array[float] = [0.0, 65.0, 150.0, 280.0, 420.0]
 const SPEED_SETTING_PITCHES: Array[float] = [0.85, 0.98, 1.1, 1.22, 1.36]
 const LEVER_SOUND_MIN_INTERVAL := 0.08
@@ -41,11 +40,8 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
-	for action in FAULT_KEYS:
-		if Input.is_action_just_pressed(action):
-			_play_button()
-			break
-
+	# Button SFX is driven by Events.panel_button_pressed (mouse or keyboard),
+	# so this only watches for speed-band changes to click the lever.
 	if RideState.target_rpm != _last_target_rpm:
 		_last_target_rpm = RideState.target_rpm
 		var speed_setting := _nearest_speed_setting(RideState.target_rpm)

@@ -31,18 +31,20 @@
 [ext_resource type="AudioStream" uid="uid://d2dac4v1tsy1k" path="res://assets/audio/world/guests/scream2.ogg" id="16_jkjsa"]
 [ext_resource type="AudioStream" uid="uid://m1tmhono28wo" path="res://assets/audio/world/guests/scream3.ogg" id="17_2yn73"]
 [ext_resource type="AudioStream" uid="uid://cb5b482yc3od5" path="res://assets/audio/world/guests/crowd_cheer.ogg" id="18_8g4sv"]
-[ext_resource type="PackedScene" path="res://Yam/scenes/environment.tscn" id="18_yam_environment"]
+[ext_resource type="PackedScene" uid="uid://craluej1js5dq" path="res://Yam/scenes/environment.tscn" id="18_yam_environment"]
 [ext_resource type="AudioStream" uid="uid://xrh0aqr0diub" path="res://assets/audio/world/controls/button1.ogg" id="19_5yy43"]
 [ext_resource type="AudioStream" uid="uid://b2nt56u477tn4" path="res://assets/audio/world/controls/big_stop.ogg" id="20_x6xw4"]
 [ext_resource type="AudioStream" uid="uid://bkqa22e11x0pc" path="res://assets/audio/world/controls/governor_in.ogg" id="23_r3g8u"]
 [ext_resource type="AudioStream" uid="uid://b1ybujwexyg10" path="res://assets/audio/world/controls/governor_out.ogg" id="24_flnjp"]
-[ext_resource type="Script" path="res://scripts/levels/stage_one/riders_launched_hud.gd" id="26_scoreboard"]
+[ext_resource type="Script" uid="uid://pdvvg4fx5xpv" path="res://scripts/levels/stage_one/riders_launched_hud.gd" id="26_scoreboard"]
+[ext_resource type="AudioStream" uid="uid://btn3u1ov6urs5" path="res://assets/audio/world/controls/mode_select.ogg" id="28_d2lwq"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_stage_one"]
 sky_top_color = Color(0.13, 0.19, 0.26, 1)
 sky_horizon_color = Color(0.68, 0.42, 0.2, 1)
 ground_bottom_color = Color(0.065, 0.052, 0.038, 1)
 ground_horizon_color = Color(0.34, 0.22, 0.12, 1)
+ground_energy_multiplier = 8.0
 sun_angle_max = 5.0
 sun_curve = 0.04
 
@@ -121,6 +123,12 @@ random_volume_offset_db = 2.0
 streams_count = 1
 stream_0/stream = ExtResource("24_flnjp")
 
+[sub_resource type="AudioStreamRandomizer" id="AudioStreamRandomizer_rq76i"]
+random_pitch = 1.0594631
+random_volume_offset_db = 2.0
+streams_count = 1
+stream_0/stream = ExtResource("28_d2lwq")
+
 [sub_resource type="AudioStreamRandomizer" id="AudioStreamRandomizer_236sx"]
 streams_count = 3
 stream_0/stream = ExtResource("15_5e18x")
@@ -142,7 +150,8 @@ script = ExtResource("2_stage_one_controller")
 [node name="FerrisScene" parent="." unique_id=2007477521 instance=ExtResource("1_ferris_scene")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3661175, 0)
 
-[node name="YamEnvironment" parent="." instance=ExtResource("18_yam_environment")]
+[node name="YamEnvironment" parent="." unique_id=1060048116 instance=ExtResource("18_yam_environment")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -4.255, 2.5, 4.037)
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=441656920]
 environment = SubResource("Environment_stage_one")
@@ -227,27 +236,39 @@ stream = SubResource("AudioStreamRandomizer_g4hkh")
 volume_db = -12.0
 pitch_scale = 1.2
 max_polyphony = 2
+bus = &"SFX"
 
 [node name="big_stop" type="AudioStreamPlayer" parent="Audio/controlPanel" unique_id=390231769]
 stream = SubResource("AudioStreamRandomizer_5ljub")
 volume_db = -8.0
 pitch_scale = 1.1
+bus = &"SFX"
 
 [node name="lever" type="AudioStreamPlayer" parent="Audio/controlPanel" unique_id=532810755]
 stream = SubResource("AudioStreamRandomizer_rjf6a")
 volume_db = -8.0
 pitch_scale = 1.2
 max_polyphony = 2
+bus = &"SFX"
 
 [node name="governor_in" type="AudioStreamPlayer" parent="Audio/controlPanel" unique_id=375415327]
 stream = SubResource("AudioStreamRandomizer_r3g8u")
 volume_db = -8.0
 pitch_scale = 1.1
+bus = &"SFX"
 
 [node name="governor_out" type="AudioStreamPlayer" parent="Audio/controlPanel" unique_id=1711289189]
 stream = SubResource("AudioStreamRandomizer_flnjp")
 volume_db = -8.0
 pitch_scale = 1.1
+bus = &"SFX"
+
+[node name="mode_switch" type="AudioStreamPlayer" parent="Audio/controlPanel" unique_id=1258277144]
+stream = SubResource("AudioStreamRandomizer_rq76i")
+volume_db = -6.0
+pitch_scale = 1.05
+max_polyphony = 2
+bus = &"SFX"
 
 [node name="guests" type="Node" parent="Audio" unique_id=1859688818 node_paths=PackedStringArray("scream_fling", "crowd_cheer")]
 script = ExtResource("13_guests")
