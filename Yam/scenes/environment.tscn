@@ -14,6 +14,7 @@
 [ext_resource type="ArrayMesh" uid="uid://yns5g8ar71ki" path="res://Yam/geometry/iceCreamCart.obj" id="12_ihlf5"]
 [ext_resource type="Material" uid="uid://be2gtg5mxiap6" path="res://Yam/materials/iceCreamCart_mat.tres" id="13_k0l8m"]
 [ext_resource type="ArrayMesh" uid="uid://too6lqbms00b" path="res://Yam/geometry/background.obj" id="14_cdlex"]
+[ext_resource type="Script" uid="uid://hl5pxlxll0u" path="res://scripts/environment/carousel_spin.gd" id="15_carousel"]
 
 [node name="Background" type="Node3D" unique_id=354290053]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -4.255, 2.838, 4.037)
@@ -25,9 +26,32 @@ mesh = ExtResource("1_f1reh")
 surface_material_override/0 = ExtResource("2_cdlex")
 
 [node name="carousel" type="MeshInstance3D" parent="Environment" unique_id=68761689]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -42.9311, 0.41933703, -36.619576)
+transform = Transform3D(-0.89179754, 0, -0.4524347, 0, 1, 0, 0.4524347, 0, -0.89179754, -42.92747, 0.45583987, -36.616585)
 mesh = ExtResource("3_0qh4o")
 surface_material_override/0 = ExtResource("4_b87xd")
+script = ExtResource("15_carousel")
+
+[node name="OmniLight3D" type="OmniLight3D" parent="Environment/carousel" unique_id=1973924052]
+transform = Transform3D(-0.50000006, 0, 0.8660253, 0, 1, 0, -0.8660253, 0, -0.50000006, -3.8146973e-06, 8.476233, 8.02737)
+light_color = Color(0.38, 0.64866674, 1, 1)
+light_energy = 6.0
+light_indirect_energy = 0.0
+light_volumetric_fog_energy = 0.0
+light_specular = 4.594
+light_bake_mode = 1
+omni_range = 4.0
+omni_attenuation = 0.5
+
+[node name="OmniLight3D2" type="OmniLight3D" parent="Environment/carousel" unique_id=806114005]
+transform = Transform3D(0.9764036, 0, -0.21595387, 0, 1, 0, 0.21595387, 0, 0.9764036, 0.050649643, 8.526892, -7.854824)
+light_color = Color(0.8426489, 0.475847, 1.92523e-07, 1)
+light_energy = 6.0
+light_indirect_energy = 0.0
+light_volumetric_fog_energy = 0.0
+light_specular = 4.594
+light_bake_mode = 1
+omni_range = 4.0
+omni_attenuation = 0.5
 
 [node name="midway" type="MeshInstance3D" parent="Environment" unique_id=1152847941]
 transform = Transform3D(0.51912576, 0, -0.8546979, 0, 1, 0, 0.8546979, 0, 0.51912576, 44.6951, 6.4164915, -21.208715)
