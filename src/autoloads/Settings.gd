@@ -13,8 +13,8 @@ const MUTE_LINEAR := 0.0005
 const MUTE_DB := -80.0
 
 var master_linear := 0.5
-var music_linear := 1.0
-var sfx_linear := 1.0
+var music_linear := 0.5
+var sfx_linear := 0.5
 var fullscreen := false
 
 var _design_db: Dictionary = {}
