@@ -12,6 +12,8 @@ const WHITE_DISCARD_SHADER := preload("res://scripts/levels/stage_one/player_han
 @export var frames_per_second := 10.0
 @export var rise_duration := 1.6
 @export var settle_delay := 0.15
+@export var duck_duration := 0.3  # fast drop out of frame when the fling cinematic starts
+@export var return_duration := 1.2  # rise back after the cinematic (quicker than the intro)
 @export var target_anchor := Vector2(0.82, 0.75)
 @export var start_offset := 240.0
 @export var hand_scale := 2.7
@@ -36,6 +38,8 @@ var _follow_position := Vector2.ZERO
 var _follow_target := Vector2.ZERO
 var _has_follow_target := false
 var _active_touch_index := -1
+var _duck := 0.0  # 0 = hands present, 1 = dropped fully out of frame
+var _duck_tween: Tween
 
 func _ready() -> void:
 	_hands.texture = hand_sheet
@@ -53,6 +57,11 @@ func _ready() -> void:
 		intro_camera.intro_finished.connect(_show_hands)
 	else:
 		_show_hands()
+
+	# Duck out for the fling cinematic, then rise back when the camera is done.
+	if intro_camera != null and intro_camera.has_signal("fling_watch_finished"):
+		intro_camera.fling_watch_finished.connect(_on_fling_watch_finished)
+	Events.fling.connect(_on_fling_started)
 
 func _process(delta: float) -> void:
 	if not _active:
@@ -92,16 +101,44 @@ func _place_hands(progress: float) -> void:
 	var start := Vector2(target.x, minf(target.y + start_offset, lowest_start_y))
 	var intro_position := start.lerp(target, progress)
 
+	# Duck offset is layered on at the end so it composes with both the intro
+	# rise and the cursor-follow without corrupting their tracked positions.
+	var drop := Vector2(0.0, _duck_drop(viewport_size) * _duck)
+
 	if not follow_enabled or not _ready_to_play:
-		_hands.position = intro_position
 		_follow_position = intro_position
 		_follow_target = intro_position
+		_hands.position = intro_position + drop
 		return
 
 	_update_follow_target(viewport_size)
 	var desired := _follow_target if _has_follow_target else intro_position
 	_follow_position = _follow_position.lerp(desired, 1.0 - exp(-follow_speed * get_process_delta_time()))
-	_hands.position = _constrain_hand_position(_follow_position, viewport_size)
+	_hands.position = _constrain_hand_position(_follow_position, viewport_size) + drop
+
+
+# Distance to push the hands fully below the screen when ducked.
+func _duck_drop(viewport_size: Vector2) -> float:
+	return viewport_size.y + frame_size.y * hand_scale
+
+
+func _on_fling_started() -> void:
+	if not _active:
+		return
+	_animate_duck(1.0, duck_duration, Tween.EASE_IN)
+
+
+func _on_fling_watch_finished() -> void:
+	if not _active:
+		return
+	_animate_duck(0.0, return_duration, Tween.EASE_OUT)
+
+
+func _animate_duck(target: float, duration: float, ease: Tween.EaseType) -> void:
+	if _duck_tween != null and _duck_tween.is_valid():
+		_duck_tween.kill()
+	_duck_tween = create_tween()
+	_duck_tween.tween_property(self, "_duck", target, duration).set_trans(Tween.TRANS_QUAD).set_ease(ease)
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventScreenTouch:

@@ -172,6 +172,16 @@ script = ExtResource("2_stage_one_controller")
 [node name="FerrisScene" parent="." unique_id=2007477521 instance=ExtResource("1_ferris_scene")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3661175, 0)
 
+[node name="WheelSpotLight3D" type="SpotLight3D" parent="." unique_id=1326981786]
+transform = Transform3D(0.55418926, 0.65539265, 0.5131616, -0.21445823, 0.7081, -0.6727571, -0.80428976, 0.26278302, 0.5329758, 4.396722, 3.9947352, 11.71477)
+light_color = Color(0.92, 0.8341334, 0.598, 1)
+light_energy = 10.0
+light_specular = 0.529
+spot_range = 146.365
+spot_attenuation = 0.7
+spot_angle = 25.68
+spot_angle_attenuation = 1.0717736
+
 [node name="YamEnvironment" parent="." unique_id=1060048116 instance=ExtResource("18_yam_environment")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -4.255, 2.5, 4.037)
 
@@ -203,6 +213,18 @@ script = ExtResource("26_scoreboard")
 
 [node name="PauseMenu" type="CanvasLayer" parent="." unique_id=1321340758]
 script = ExtResource("31_pausemenu")
+
+[node name="ControlsSpotLight3D" type="SpotLight3D" parent="." unique_id=1103032037]
+transform = Transform3D(0.6396047, -0.40383708, 0.6540806, 0.40227675, 0.9009158, 0.16286236, -0.65504146, 0.1589539, 0.73868424, 42.156822, 3.9901524, 5.193099)
+light_color = Color(0.92, 0.5612, 0.44160002, 1)
+light_energy = 15.0
+light_volumetric_fog_energy = 0.0
+light_specular = 3.2
+light_bake_mode = 1
+spot_range = 9.411
+spot_attenuation = 2.5
+spot_angle = 18.0
+spot_angle_attenuation = 0.73204195
 
 [node name="OperatorControlPanel" parent="." unique_id=932911297 instance=ExtResource("12_control_panel")]
 transform = Transform3D(0.025178477, 0.11085446, 1.0056173, 0.099557444, 1.099595, -0.103074074, -0.95272046, 0.1178352, 0.015805371, 39.743595, 1.7100306, 1.6832534)
