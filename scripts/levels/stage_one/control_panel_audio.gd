@@ -9,6 +9,7 @@ const LEVER_SOUND_MIN_INTERVAL := 0.08
 @export var lever: AudioStreamPlayer
 @export var governor_in: AudioStreamPlayer
 @export var governor_out: AudioStreamPlayer
+@export var mode_switch: AudioStreamPlayer
 
 var _last_target_rpm := 0.0
 var _last_speed_setting := 0
@@ -26,6 +27,8 @@ func _ready() -> void:
 		governor_in = get_node_or_null("governor_in")
 	if governor_out == null:
 		governor_out = get_node_or_null("governor_out")
+	if mode_switch == null:
+		mode_switch = get_node_or_null("mode_switch")
 
 	_last_target_rpm = RideState.target_rpm
 	_last_speed_setting = _nearest_speed_setting(RideState.target_rpm)
@@ -37,6 +40,7 @@ func _ready() -> void:
 	Events.governor_priming.connect(_on_governor_priming)
 	Events.governor_overridden.connect(_on_governor_overridden)
 	Events.panel_button_pressed.connect(_on_panel_button_pressed)
+	Events.mode_switched.connect(_on_mode_switched)
 
 
 func _process(_delta: float) -> void:
@@ -57,6 +61,11 @@ func _on_big_stop() -> void:
 
 func _on_panel_button_pressed(_action: String) -> void:
 	_play_button()
+
+
+func _on_mode_switched(_mode: int) -> void:
+	if mode_switch != null:
+		mode_switch.play()
 
 
 func _play_button() -> void:

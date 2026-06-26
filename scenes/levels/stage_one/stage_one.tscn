@@ -223,13 +223,14 @@ stream = SubResource("AudioStreamRandomizer_qcsmn")
 volume_db = -6.0
 pitch_scale = 1.24
 
-[node name="controlPanel" type="Node" parent="Audio" unique_id=1986688622 node_paths=PackedStringArray("button", "big_stop", "lever", "governor_in", "governor_out")]
+[node name="controlPanel" type="Node" parent="Audio" unique_id=1986688622 node_paths=PackedStringArray("button", "big_stop", "lever", "governor_in", "governor_out", "mode_switch")]
 script = ExtResource("14_panel")
 button = NodePath("button")
 big_stop = NodePath("big_stop")
 lever = NodePath("lever")
 governor_in = NodePath("governor_in")
 governor_out = NodePath("governor_out")
+mode_switch = NodePath("mode_switch")
 
 [node name="button" type="AudioStreamPlayer" parent="Audio/controlPanel" unique_id=721701771]
 stream = SubResource("AudioStreamRandomizer_g4hkh")
@@ -248,7 +249,7 @@ bus = &"SFX"
 stream = SubResource("AudioStreamRandomizer_rjf6a")
 volume_db = -8.0
 pitch_scale = 1.2
-max_polyphony = 2
+max_polyphony = 3
 bus = &"SFX"
 
 [node name="governor_in" type="AudioStreamPlayer" parent="Audio/controlPanel" unique_id=375415327]

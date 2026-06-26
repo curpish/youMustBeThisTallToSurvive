@@ -39,7 +39,7 @@ project/assembly_name="You Must Be This Tall to Survive"
 [file_customization]
 
 folder_colors={
-"res://assets/": "blue",
+"res://assets/": "red",
 "res://docs/": "yellow",
 "res://private/": "gray",
 "res://reference/": "orange",

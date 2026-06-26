@@ -260,6 +260,7 @@ func set_selected_mode(mode: int) -> void:
 		return
 	selected_mode = mode
 	selected_mode_changed.emit(selected_mode)
+	Events.mode_switched.emit(selected_mode)
 
 
 func set_difficulty(new_difficulty: Difficulty) -> void:
