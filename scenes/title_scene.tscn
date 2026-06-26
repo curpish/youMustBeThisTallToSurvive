@@ -30,6 +30,10 @@ albedo_color = Color(0.96, 0.46, 0.14, 0.22)
 
 [node name="title_scene" type="Node3D" unique_id=766207807]
 script = ExtResource("1_title_script")
+concept_fade_in = 1.8
+concept_hold = 5.0
+concept_fade_out = 2.2
+concept_base_fraction = 0.5
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=508555223]
 environment = SubResource("Environment_title")

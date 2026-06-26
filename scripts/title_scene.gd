@@ -1,16 +1,43 @@
 extends Node3D
 
 const CREDITS := [
-	["Trine", "Music, mixing, audio engineering"],
-	["Dan", "Foley / voice, writing"],
-	["Pmayer", "QA, testing, documentation (ride-operator domain knowledge)"],
-	["Eggs", "Modeling, programming, general"],
-	["pcpuppet", "Programming, design, general (modular models; movement math)"],
-	["Yam", "Artist, 2D/3D, world art"],
-	["Coopy", "Programming, design, ui, audio engineering, general (state machine + variables)"],
+	["NetherYam", "Art Lead & Concept Artist"],
+	["Eggsnbaconbits", "3D Modeling"],
+	["Officer Dan", "Hand-model, Sound & Voice Over"],
+	["PmayerW", "Document Designer"],
+	["PcPuppet", "Programming Lead, 3D Modeling"],
+	["CoopyCopa", "Jam Lead, Sound Engineer, Programmer"],
+	["The Adam Butler", "Music"],
 ]
 const WEB_FOG_AMOUNT := 3
 const TITLE_BGM := preload("res://assets/audio/music/Survive Main Menu.ogg") # is at 120 bpm
+const CREDITS_BACKDROP_SHADER := preload("res://scripts/ui/credits_backdrop.gdshader")
+
+# Sentimental concept-art slideshow shown while the credits roll. Each image
+# fades in at a different spot, lingers, then fades away; the next begins its
+# fade-in as the current fades out for a gentle crossfade.
+const CONCEPT_IMAGES := [
+	preload("res://reference/image.png"),
+	preload("res://reference/IMG_0342.png"),
+	preload("res://reference/image0.jpg"),
+	preload("res://reference/IMG_0343.png"),
+	preload("res://reference/marry.png"),
+	preload("res://reference/IMG_0344.png"),
+]
+# Scattered placements (screen-fraction center, tilt, relative size). Tuned to
+# stay clear of the title and read as a casual photo wall behind the names.
+const CONCEPT_PLACEMENTS := [
+	{"pos": Vector2(0.26, 0.42), "rot": -5.0, "scale": 0.95},
+	{"pos": Vector2(0.74, 0.58), "rot": 4.0, "scale": 1.05},
+	{"pos": Vector2(0.30, 0.70), "rot": 3.0, "scale": 0.85},
+	{"pos": Vector2(0.72, 0.34), "rot": -4.0, "scale": 0.9},
+	{"pos": Vector2(0.22, 0.55), "rot": 6.0, "scale": 1.0},
+	{"pos": Vector2(0.78, 0.74), "rot": -3.0, "scale": 0.8},
+]
+@export var concept_fade_in := 1.6
+@export var concept_hold := 4.5
+@export var concept_fade_out := 1.8
+@export var concept_base_fraction := 0.42  # image size vs. the screen's short edge
 
 @export var wheel_spin_speed := 0.18
 @export var credits_roll_speed := 45.0
@@ -35,9 +62,12 @@ var _socket_local_positions: Array[Vector3] = []
 var _main_menu: VBoxContainer
 var _difficulty_menu: VBoxContainer
 var _credits_layer: Control
+var _concept_layer: Control
+var _concept_index := 0
 var _credits_label: Label
 var _return_button: Button
 var _credits_rolling := false
+var _credits_finishing := false
 var _title_music: AudioStreamPlayer
 var _ui_root: Control
 var _options: OptionsPanel
@@ -314,6 +344,25 @@ func _build_ui() -> void:
 	_credits_layer.set_anchors_preset(Control.PRESET_FULL_RECT)
 	root.add_child(_credits_layer)
 
+	# Darkened + slightly blurred backdrop behind the rolling credits. First child
+	# so it sits under the text; swallows clicks meant for the menu behind it.
+	var backdrop := ColorRect.new()
+	backdrop.name = "CreditsBackdrop"
+	backdrop.set_anchors_preset(Control.PRESET_FULL_RECT)
+	backdrop.mouse_filter = Control.MOUSE_FILTER_STOP
+	var backdrop_material := ShaderMaterial.new()
+	backdrop_material.shader = CREDITS_BACKDROP_SHADER
+	backdrop.material = backdrop_material
+	_credits_layer.add_child(backdrop)
+
+	# Concept-art slideshow sits above the blur but below the rolling text so the
+	# names stay legible over the photos.
+	_concept_layer = Control.new()
+	_concept_layer.name = "ConceptArt"
+	_concept_layer.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_concept_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_credits_layer.add_child(_concept_layer)
+
 	_credits_label = Label.new()
 	_credits_label.text = _format_credits()
 	_credits_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -392,13 +441,96 @@ func _on_credits_pressed() -> void:
 	_credits_layer.visible = true
 	_credits_rolling = true
 	_reset_credits_position()
+	_start_concept_images()
+
+
+func _finish_credits() -> void:
+	if _credits_finishing or not _credits_rolling:
+		return
+	_credits_finishing = true
+	# Stop rolling the names, then fade the whole credits layer out and return.
+	_credits_rolling = false
+	var fade := create_tween()
+	fade.tween_property(_credits_layer, "modulate:a", 0.0, 1.2)
+	fade.tween_callback(_show_main_menu)
 
 
 func _show_main_menu() -> void:
 	_credits_rolling = false
+	_credits_finishing = false
+	_stop_concept_images()
 	_main_menu.visible = true
 	_difficulty_menu.visible = false
 	_credits_layer.visible = false
+	_credits_layer.modulate.a = 1.0  # reset after any fade-out
+
+
+func _start_concept_images() -> void:
+	_stop_concept_images()
+	_concept_index = 0
+	_show_next_concept_image()
+
+
+func _stop_concept_images() -> void:
+	if not is_instance_valid(_concept_layer):
+		return
+	for child in _concept_layer.get_children():
+		child.queue_free()
+
+
+func _show_next_concept_image() -> void:
+	if not _credits_rolling or not is_instance_valid(_concept_layer):
+		return
+	if _concept_index >= CONCEPT_IMAGES.size():
+		return  # one-shot: play through the set once, then stop
+
+	var texture: Texture2D = CONCEPT_IMAGES[_concept_index]
+	var place: Dictionary = CONCEPT_PLACEMENTS[_concept_index % CONCEPT_PLACEMENTS.size()]
+	_concept_index += 1
+	var is_last := _concept_index >= CONCEPT_IMAGES.size()
+	_spawn_concept_image(texture, place, is_last)
+
+	if is_last:
+		return  # last image's fade-out drives the return to the menu
+
+	# Hand off to the next image as this one starts fading out (crossfade).
+	var next_delay := concept_fade_in + concept_hold
+	get_tree().create_timer(next_delay).timeout.connect(_show_next_concept_image)
+
+
+func _spawn_concept_image(texture: Texture2D, place: Dictionary, is_last := false) -> void:
+	var viewport_size := get_viewport().get_visible_rect().size
+	var base := minf(viewport_size.x, viewport_size.y) * concept_base_fraction * float(place["scale"])
+
+	var rect := TextureRect.new()
+	rect.texture = texture
+	rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	rect.size = Vector2(base, base)
+	rect.pivot_offset = rect.size * 0.5
+	var center: Vector2 = Vector2(viewport_size.x * place["pos"].x, viewport_size.y * place["pos"].y)
+	rect.position = center - rect.size * 0.5
+	rect.rotation_degrees = float(place["rot"])
+	rect.modulate = Color(1.0, 1.0, 1.0, 0.0)
+	_concept_layer.add_child(rect)
+
+	var life := concept_fade_in + concept_hold + concept_fade_out
+
+	# Fade in, hold, fade out, then free.
+	var fade := create_tween()
+	fade.tween_property(rect, "modulate:a", 1.0, concept_fade_in)
+	fade.tween_interval(concept_hold)
+	fade.tween_property(rect, "modulate:a", 0.0, concept_fade_out)
+	fade.tween_callback(rect.queue_free)
+	if is_last:
+		# When the final image has fully faded out, fade the whole credits scene
+		# away and drop back to the main menu.
+		fade.tween_callback(_finish_credits)
+
+	# Slow Ken Burns drift for a sentimental, hand-held feel.
+	var drift := create_tween()
+	drift.tween_property(rect, "scale", Vector2.ONE * 1.06, life)
 
 
 func _reset_credits_position() -> void:
@@ -410,5 +542,7 @@ func _reset_credits_position() -> void:
 
 func _update_credits(delta: float) -> void:
 	_credits_label.position.y -= credits_roll_speed * delta
+	# Loop the text back around; the concept-art slideshow drives the actual end
+	# of the credits (see _finish_credits), so the names keep rolling until then.
 	if _credits_label.position.y + _credits_label.get_minimum_size().y < -60.0:
-		_show_main_menu()
+		_reset_credits_position()
