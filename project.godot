@@ -13,7 +13,7 @@ config_version=5
 config/name="You Must Be This Tall to Survive"
 run/main_scene="res://scenes/title_scene.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
-config/icon="res://icon.svg"
+config/icon="uid://das5l86xfxba4"
 
 [audio]
 
