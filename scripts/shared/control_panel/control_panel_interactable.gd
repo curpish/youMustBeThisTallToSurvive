@@ -6,6 +6,7 @@ var meshes: Array[MeshInstance3D] = []
 var rest_position := Vector3.ZERO
 var rest_basis := Basis.IDENTITY
 var glow_material: StandardMaterial3D
+var surface_material_template: Material
 var hovered := false
 var tween: Tween
 
@@ -33,12 +34,20 @@ func set_glow(enabled: bool) -> void:
 		mesh.material_overlay = glow_material if enabled else null
 
 
-# For indicator lights that are always lit with one of several colors
-# (e.g. green/safe vs red/danger) rather than a simple on/off hover glow.
+# Applies a steady indicator state, either through a tintable surface material
+# or through the default overlay glow.
 func set_glow_color(glow_color: Color, glow_energy: float) -> void:
+	if surface_material_template != null:
+		_set_surface_material_color(glow_color, glow_energy)
+		return
+
 	glow_material = _make_glow_material(glow_color, glow_energy)
 	for mesh in meshes:
 		mesh.material_overlay = glow_material
+
+
+func set_surface_material_template(material: Material) -> void:
+	surface_material_template = material
 
 
 func set_hovered(value: bool) -> bool:
@@ -121,3 +130,21 @@ func _make_glow_material(glow_color: Color, glow_energy: float) -> StandardMater
 	material.emission = Color(glow_color.r, glow_color.g, glow_color.b)
 	material.emission_energy_multiplier = glow_energy
 	return material
+
+
+func _set_surface_material_color(glow_color: Color, glow_energy: float) -> void:
+	var color := Color(glow_color.r, glow_color.g, glow_color.b, 1.0)
+	for mesh in meshes:
+		var material := surface_material_template.duplicate(true) as Material
+		if material is ShaderMaterial:
+			var shader_material := material as ShaderMaterial
+			shader_material.set_shader_parameter("illuminationColor", color)
+			shader_material.set_shader_parameter("illuminationBrightness", glow_energy)
+		elif material is StandardMaterial3D:
+			var standard_material := material as StandardMaterial3D
+			standard_material.albedo_color = color
+			standard_material.emission_enabled = true
+			standard_material.emission = color
+			standard_material.emission_energy_multiplier = glow_energy
+		mesh.material_overlay = null
+		mesh.material_override = material
