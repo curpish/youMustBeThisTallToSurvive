@@ -2,6 +2,8 @@ extends AudioStreamPlayer
 
 const MAX_TIERS := 6
 @export var intensity_tracks: Array[AudioStream] = []
+@export var victory_music: AudioStream
+@export var game_over_music: AudioStream
 
 const ENGAGE_FRAC := 0.03
 const DISENGAGE_FRAC := 0.005
@@ -28,6 +30,7 @@ var _reverb: AudioEffectReverb
 var _engaged := false
 var _flung := 0
 var _current_tier := -1
+var _ended := false
 
 
 func _ready() -> void:
@@ -41,6 +44,8 @@ func _ready() -> void:
 		_reverb.wet = WET_REST
 
 	Events.fling.connect(_on_fling)
+	RideState.victory_triggered.connect(_on_victory)
+	RideState.axle_failure_triggered.connect(_on_failure)
 	_apply_tier(0)
 
 	volume_db = MUSIC_SILENT_DB
@@ -49,6 +54,8 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
+	if _ended:
+		return
 	var speed_frac := clampf(RideState.angular_velocity / RideState.rpm_max, 0.0, 1.0)
 	_update_engagement(speed_frac)
 
@@ -90,8 +97,42 @@ func _update_engagement(speed_frac: float) -> void:
 
 
 func _on_fling() -> void:
+	if _ended:
+		return
 	_flung += 1
 	_apply_tier(mini(_flung, MAX_TIERS - 1))
+
+
+func _on_victory() -> void:
+	_play_end_music(victory_music, "victory")
+
+
+func _on_failure() -> void:
+	_play_end_music(game_over_music, "game over")
+
+
+# Terminal hand-off: latch out of the dynamic score and play a fixed end track.
+# _ended freezes _process and _on_fling, so no speed/pitch/reverb modulation or
+# tier swaps can fight the stinger. Reverb is snapped clean (full dry, no wet)
+# so the track reads present instead of muffled.
+func _play_end_music(track: AudioStream, label: String) -> void:
+	if _ended:
+		return
+	_ended = true
+	if track == null:
+		push_warning("StageOneMusic: no %s track assigned." % label)
+		stop()
+		return
+
+	stream = track
+	_ensure_loop()
+	pitch_scale = _normal_pitch
+	volume_db = _full_volume_db
+	if _reverb != null:
+		_reverb.dry = DRY_FULL
+		_reverb.wet = WET_FULL
+	stream_paused = false
+	play()
 
 
 func _apply_tier(tier: int) -> void:

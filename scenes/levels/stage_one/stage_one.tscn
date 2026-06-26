@@ -18,10 +18,12 @@
 [ext_resource type="AudioStream" uid="uid://cu7ejup5lhivq" path="res://assets/audio/world/ferris/fling2.ogg" id="9_jkjsa"]
 [ext_resource type="Script" uid="uid://d3v86e1d82phq" path="res://scripts/levels/stage_one/debug_ride_controls.gd" id="10_dbgride"]
 [ext_resource type="Theme" uid="uid://2mg680wmdyr" path="res://src/resources/debug_default_theme.tres" id="11_if3gm"]
+[ext_resource type="AudioStream" uid="uid://lrwoc4uvt315" path="res://assets/audio/music/Survive Prog. 3.ogg" id="12_44vwv"]
 [ext_resource type="PackedScene" uid="uid://cpdc4023jkju7" path="res://assets/blender_imports/control_panel/control_panel.glb" id="12_control_panel"]
 [ext_resource type="Script" uid="uid://dxysj2432ongm" path="res://scripts/levels/stage_one/ferris_ride_audio.gd" id="12_fraud"]
 [ext_resource type="Script" uid="uid://bvp6okschg5r4" path="res://scripts/levels/stage_one/guests_audio.gd" id="13_guests"]
 [ext_resource type="Texture2D" uid="uid://b3e627ewqk3yc" path="res://assets/ui/hand_idle/hand_idle_sheet.png" id="13_hand_sheet"]
+[ext_resource type="AudioStream" uid="uid://dwh6mt0ofntb5" path="res://assets/audio/music/Survive Prog. 4.ogg" id="13_sciu7"]
 [ext_resource type="Script" uid="uid://be867h7s6ytgu" path="res://scripts/levels/stage_one/player_hands_overlay.gd" id="14_hands_overlay"]
 [ext_resource type="Script" uid="uid://s51djswnymry" path="res://scripts/levels/stage_one/control_panel_audio.gd" id="14_panel"]
 [ext_resource type="AudioStream" uid="uid://bdxknp5x1a5c7" path="res://assets/audio/world/guests/scream1.ogg" id="15_5e18x"]
@@ -38,6 +40,8 @@
 [ext_resource type="AudioStream" uid="uid://b1ybujwexyg10" path="res://assets/audio/world/controls/governor_out.ogg" id="24_flnjp"]
 [ext_resource type="Script" uid="uid://pdvvg4fx5xpv" path="res://scripts/levels/stage_one/riders_launched_hud.gd" id="26_scoreboard"]
 [ext_resource type="AudioStream" uid="uid://btn3u1ov6urs5" path="res://assets/audio/world/controls/mode_select.ogg" id="28_d2lwq"]
+[ext_resource type="AudioStream" uid="uid://b383ychoc1226" path="res://assets/audio/music/Survive Game Over.ogg" id="29_gameover"]
+[ext_resource type="AudioStream" uid="uid://cus3gcc50w063" path="res://assets/audio/music/Survive Victory.ogg" id="30_victory"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_stage_one"]
 sky_top_color = Color(0.13, 0.19, 0.26, 1)
@@ -191,7 +195,9 @@ autoplay = true
 bus = &"Music"
 parameters/looping = true
 script = ExtResource("3_stage_one_music")
-intensity_tracks = Array[AudioStream]([ExtResource("7_5ljub"), ExtResource("8_x6xw4")])
+intensity_tracks = Array[AudioStream]([ExtResource("7_5ljub"), ExtResource("8_x6xw4"), ExtResource("12_44vwv"), ExtResource("8_x6xw4"), ExtResource("12_44vwv"), ExtResource("7_5ljub"), ExtResource("13_sciu7")])
+victory_music = ExtResource("30_victory")
+game_over_music = ExtResource("29_gameover")
 
 [node name="AudioAmbience" type="AudioStreamPlayer" parent="Audio" unique_id=2110924645]
 stream = ExtResource("7_83ouw")

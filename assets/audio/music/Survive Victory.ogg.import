@@ -1,0 +1,19 @@
+[remap]
+
+importer="oggvorbisstr"
+type="AudioStreamOggVorbis"
+uid="uid://cus3gcc50w063"
+path="res://.godot/imported/Survive Victory.ogg-ddac3fadb00a00484d4a404beed5711d.oggvorbisstr"
+
+[deps]
+
+source_file="res://assets/audio/music/Survive Victory.ogg"
+dest_files=["res://.godot/imported/Survive Victory.ogg-ddac3fadb00a00484d4a404beed5711d.oggvorbisstr"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

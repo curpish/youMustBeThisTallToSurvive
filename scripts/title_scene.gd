@@ -9,12 +9,12 @@ const CREDITS := [
 	["Yam", "Artist, 2D/3D, world art"],
 	["Coopy", "Programming, design, ui, audio engineering, general (state machine + variables)"],
 ]
-const WEB_FOG_AMOUNT := 32
-const TITLE_BGM := preload("res://assets/audio/music/Survive Prog. 1.ogg")
+const WEB_FOG_AMOUNT := 3
+const TITLE_BGM := preload("res://assets/audio/music/Survive Main Menu.ogg") # is at 120 bpm
 
 @export var wheel_spin_speed := 0.18
 @export var credits_roll_speed := 45.0
-@export var title_music_volume_db := -10.0
+@export var title_music_volume_db := -6.0
 @export var spin_direction := -1.0
 @export var gondola_orbit_radius := 7.2
 @export var gondola_hang_offset := 2.6
@@ -66,7 +66,7 @@ func _setup_title_music() -> void:
 
 	_title_music = AudioStreamPlayer.new()
 	_title_music.name = "TitleMusic"
-	_title_music.bus = "Music"
+	_title_music.bus = "Master"
 	_title_music.stream = TITLE_BGM
 	_title_music.volume_db = title_music_volume_db
 	add_child(_title_music)

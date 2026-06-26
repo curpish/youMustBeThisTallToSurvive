@@ -1,0 +1,19 @@
+[remap]
+
+importer="oggvorbisstr"
+type="AudioStreamOggVorbis"
+uid="uid://b383ychoc1226"
+path="res://.godot/imported/Survive Game Over.ogg-098bb54e249519ea9f667b69b5dfbc83.oggvorbisstr"
+
+[deps]
+
+source_file="res://assets/audio/music/Survive Game Over.ogg"
+dest_files=["res://.godot/imported/Survive Game Over.ogg-098bb54e249519ea9f667b69b5dfbc83.oggvorbisstr"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

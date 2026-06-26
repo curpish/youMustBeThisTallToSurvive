@@ -1,0 +1,19 @@
+[remap]
+
+importer="oggvorbisstr"
+type="AudioStreamOggVorbis"
+uid="uid://lrwoc4uvt315"
+path="res://.godot/imported/Survive Prog. 3.ogg-33390a013b77a825b2afedccff99ae4b.oggvorbisstr"
+
+[deps]
+
+source_file="res://assets/audio/music/Survive Prog. 3.ogg"
+dest_files=["res://.godot/imported/Survive Prog. 3.ogg-33390a013b77a825b2afedccff99ae4b.oggvorbisstr"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

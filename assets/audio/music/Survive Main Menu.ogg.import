@@ -1,0 +1,19 @@
+[remap]
+
+importer="oggvorbisstr"
+type="AudioStreamOggVorbis"
+uid="uid://dvrwfmd1hgew7"
+path="res://.godot/imported/Survive Main Menu.ogg-9470015001e80722f4b12b9a1ee094a2.oggvorbisstr"
+
+[deps]
+
+source_file="res://assets/audio/music/Survive Main Menu.ogg"
+dest_files=["res://.godot/imported/Survive Main Menu.ogg-9470015001e80722f4b12b9a1ee094a2.oggvorbisstr"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4
