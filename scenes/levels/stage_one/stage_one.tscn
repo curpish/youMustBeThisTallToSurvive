@@ -148,6 +148,7 @@ stream_0/stream = ExtResource("18_8g4sv")
 
 [node name="StageOne" type="Node3D" unique_id=111061666]
 script = ExtResource("1_stage_one_script")
+spin_direction = -0.2
 
 [node name="StageOneController" type="Node" parent="." unique_id=1642399366]
 script = ExtResource("2_stage_one_controller")
