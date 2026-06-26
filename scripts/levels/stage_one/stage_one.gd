@@ -27,6 +27,7 @@ extends Node3D
 @export var rider_collision_bounciness := 0.56
 @export var fling_collision_friction := 0.68
 @export var fling_rest_speed := 0.8
+@export var fling_floor_normal_dot := 0.5
 @export var web_fling_wall_z := 18.0
 @export var failure_drop_distance := 3.0
 @export var failure_roll_distance := 46.0
@@ -1098,7 +1099,12 @@ func _move_fling_body(body: Node3D, velocity: Vector3, delta: float, bounce_coun
 		body.global_position = hit_position + normal * fling_collision_skin
 		bounce_count += 1
 
-		if bounce_count > fling_collision_bounce_limit:
+		# Floor-like surfaces bounce (an upright normal means the body landed
+		# on top of something); anything closer to vertical - a tree trunk,
+		# the backdrop, a wall - is a glancing hit, so it slides along the
+		# surface instead of reflecting the body back the way it came.
+		var is_floor_like := normal.dot(Vector3.UP) >= fling_floor_normal_dot
+		if bounce_count > fling_collision_bounce_limit or not is_floor_like:
 			current_velocity = _slide_and_dampen(current_velocity, normal)
 		else:
 			current_velocity = current_velocity.bounce(normal) * bounciness
