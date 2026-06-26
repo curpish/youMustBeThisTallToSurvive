@@ -46,7 +46,7 @@ func _ready() -> void:
 	Events.fling.connect(_on_fling)
 	RideState.victory_triggered.connect(_on_victory)
 	RideState.axle_failure_triggered.connect(_on_failure)
-	_apply_tier(0)
+	_current_tier = 0  # the initially loaded stream is tier 0
 
 	volume_db = MUSIC_SILENT_DB
 	play()
@@ -65,6 +65,9 @@ func _process(delta: float) -> void:
 	volume_db = move_toward(volume_db, target_db, VOLUME_RATE * delta)
 	if not _engaged and volume_db <= MUSIC_SILENT_DB + 0.5:
 		stream_paused = true
+		# Music has fully wound down: now safe to swap in a pending intensity
+		# track so it starts clean instead of cutting in mid-cinematic.
+		_apply_pending_tier()
 
 	pitch_scale = move_toward(pitch_scale, _pitch_target(av), PITCH_RATE * delta)
 
@@ -99,8 +102,10 @@ func _update_engagement(speed_frac: float) -> void:
 func _on_fling() -> void:
 	if _ended:
 		return
+	# Don't swap tracks now: let the current track keep playing and wind down via
+	# the normal volume logic during the cinematic. _apply_pending_tier loads the
+	# new track once we've reached silence.
 	_flung += 1
-	_apply_tier(mini(_flung, MAX_TIERS - 1))
 
 
 func _on_victory() -> void:
@@ -135,21 +140,26 @@ func _play_end_music(track: AudioStream, label: String) -> void:
 	play()
 
 
-func _apply_tier(tier: int) -> void:
-	if tier == _current_tier:
+# Called only once the track has wound down to silence. Loads the latest tier
+# implied by the fling count and leaves it played-but-paused, so re-engaging the
+# wheel resumes the new track cleanly from its start.
+func _apply_pending_tier() -> void:
+	var desired := mini(_flung, MAX_TIERS - 1)
+	if desired == _current_tier:
 		return
-	_current_tier = tier
-	if tier == 0:
+	_current_tier = desired
+	if desired == 0:
 		return
 
-	var index := tier - 1
-	if index < intensity_tracks.size() and intensity_tracks[index] != null:
-		stream = intensity_tracks[index]
-		_ensure_loop()
-		if not stream_paused:
-			play()
-	else:
-		push_warning("StageOneMusic: no track assigned for tier %d." % tier)
+	var index := desired - 1
+	if index >= intensity_tracks.size() or intensity_tracks[index] == null:
+		push_warning("StageOneMusic: no track assigned for tier %d." % desired)
+		return
+
+	stream = intensity_tracks[index]
+	_ensure_loop()
+	play()
+	stream_paused = true
 
 
 func _resolve_reverb() -> void:
