@@ -160,6 +160,11 @@ stream_0/stream = ExtResource("18_8g4sv")
 [node name="StageOne" type="Node3D" unique_id=111061666]
 script = ExtResource("1_stage_one_script")
 spin_direction = -0.2
+progress_flicker_strength = 0.8
+show_chase_speed = 20.0
+show_hue_speed = 2.0
+progress_bulb_radius = 0.02
+progress_bulb_axle_offset = 0.0
 
 [node name="StageOneController" type="Node" parent="." unique_id=1642399366]
 script = ExtResource("2_stage_one_controller")

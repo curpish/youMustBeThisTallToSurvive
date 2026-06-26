@@ -19,6 +19,19 @@ extends Node3D
 @export var spark_start_speed: float = 84.0
 @export var spark_full_speed: float = 420.0
 @export var spark_color := Color(1.0, 0.58, 0.1, 1.0)
+@export var progress_palette: Gradient  # color per rung; cool start -> hot finale
+@export var progress_flicker_strength := 0.7  # peak brightness swing at the sweet spot
+@export var progress_window_lead_speed := 90.0  # speed below the window where flicker begins
+@export var show_chase_speed := 2.2  # idle shimmer chase speed around the ring
+@export var show_chase_depth := 0.35  # idle brightness wave depth
+@export var show_hue_speed := 0.5  # idle hue-breathing speed
+@export var show_hue_drift := 0.1  # idle hue-breathing amount (0..1 of the color wheel)
+@export var progress_bulb_radius := 0.13
+@export var progress_bulb_axle_offset := 0.12  # nudge onto the front rim face
+@export var progress_light_range := 1.3
+@export var progress_light_energy := 2.5
+@export var progress_flash_energy := 6.5
+@export var progress_pulse_time := 0.55
 @export var fling_ground_y: float = 0.25
 @export var fling_collision_radius: float = 0.42
 @export var fling_collision_skin: float = 0.05
@@ -65,6 +78,27 @@ const ROPE_NODE_NAMES := [
 ]
 const WEB_EFFECT_REFRESH_INTERVAL := 1.0 / 30.0
 const WEB_AXLE_SPARK_AMOUNT := 36
+const PROGRESS_EMISSION_STEADY := 3.0
+const PROGRESS_EMISSION_FLASH := 9.0
+const PROGRESS_OFF_COLOR := Color(0.05, 0.05, 0.06)  # dark glass for an unlit bulb
+const PROGRESS_FLICKER_SLOW_INTERVAL := 0.14  # re-roll cadence far from the window
+const PROGRESS_FLICKER_FAST_INTERVAL := 0.01  # re-roll cadence at the sweet spot
+const PROGRESS_CHASE_WAVES := 2.0  # crests of the idle brightness wave around the ring
+const PROGRESS_STROBE_COLORS: Array[Color] = [
+	Color(1.0, 1.0, 1.0),
+	Color(1.0, 0.12, 0.12),
+	Color(0.15, 0.6, 1.0),
+	Color(1.0, 0.85, 0.1),
+	Color(1.0, 0.12, 0.7),
+]
+const PROGRESS_DEFAULT_COLORS: Array[Color] = [
+	Color(0.55, 0.85, 1.0),
+	Color(0.6, 1.0, 0.7),
+	Color(1.0, 0.95, 0.55),
+	Color(1.0, 0.72, 0.3),
+	Color(1.0, 0.45, 0.3),
+	Color(1.0, 0.3, 0.5),
+]
 
 var _wheel: Node3D
 var _ferris_scene_root: Node3D
@@ -77,6 +111,19 @@ var _rider_offset_from_basket := Vector3.ZERO
 var _baskets: Array[Node3D] = []
 var _riders: Array[Node3D] = []
 var _socket_local_positions: Array[Vector3] = []
+var _progress_bulbs: Array[MeshInstance3D] = []
+var _progress_lights: Array[OmniLight3D] = []
+var _progress_bulb_materials: Array[StandardMaterial3D] = []
+var _progress_bulb_pulse: Array[float] = []  # transient flash boost per lit bulb, decays to 0
+var _progress_bulb_flicker: Array[float] = []  # held brightness multiplier at the sweet spot
+var _progress_bulb_on: Array[bool] = []
+var _progress_bulb_base_color: Array[Color] = []  # the bulb's identity color (by progress step)
+var _progress_bulb_strobe: Array[Color] = []  # held bold strobe color at the sweet spot
+var _progress_bulb_angle: Array[float] = []  # rim angle, for the chase wave
+var _progress_order: Array[int] = []  # activation order: opposite ends first, balanced
+var _progress_flicker_timer := 0.0
+var _progress_show_phase := 0.0
+var _progress_lit := 0
 var _left_hanger_bars: Array[MeshInstance3D] = []
 var _right_hanger_bars: Array[MeshInstance3D] = []
 var _gondola_flying: Array[bool] = []
@@ -117,6 +164,7 @@ func _ready() -> void:
 	Events.big_stop.connect(_on_big_stop)
 	RideState.axle_failure_triggered.connect(_on_axle_failure_triggered)
 	RideState.victory_triggered.connect(_on_victory_triggered)
+	RideState.riders_launched_changed.connect(_on_riders_launched_changed)
 
 func _process(_delta: float) -> void:
 	if _failure_sequence_active:
@@ -144,14 +192,17 @@ func _update_visual_effects(delta: float) -> void:
 	if not _web_render_budget_enabled:
 		_update_hot_glow()
 		_update_sparks()
+		_update_progress_lights(delta)
 		return
 
 	_effect_refresh_elapsed += delta
 	if _effect_refresh_elapsed < WEB_EFFECT_REFRESH_INTERVAL:
 		return
+	var elapsed := _effect_refresh_elapsed
 	_effect_refresh_elapsed = 0.0
 	_update_hot_glow()
 	_update_sparks()
+	_update_progress_lights(elapsed)
 
 func _apply_web_render_budget() -> void:
 	if not _web_render_budget_enabled:
@@ -191,6 +242,7 @@ func _setup_ferris_wheel() -> void:
 	_create_hanger_bars()
 	_setup_hot_glow()
 	_setup_sparks()
+	_setup_progress_lights()
 	_update_gondolas()
 
 func _create_gondolas() -> void:
@@ -327,6 +379,228 @@ func _setup_hot_glow() -> void:
 	_hot_glow_light.visible = not _web_render_budget_enabled
 	add_child(_hot_glow_light)
 	_hot_glow_light.global_position = _axle_glow_position()
+
+# Progress ring: one bulb per spoke tip on the rotating wheel frame. They orbit
+# with the wheel and light up one-by-one as riders are launched - a classic
+# carnival marquee that doubles as the player's score readout.
+func _setup_progress_lights() -> void:
+	_progress_bulbs.clear()
+	_progress_lights.clear()
+	_progress_bulb_materials.clear()
+	_progress_bulb_pulse.clear()
+	_progress_bulb_flicker.clear()
+	_progress_bulb_on.clear()
+	_progress_bulb_base_color.clear()
+	_progress_bulb_strobe.clear()
+	_progress_bulb_angle.clear()
+	_progress_show_phase = 0.0
+	_progress_lit = 0
+	if _wheel == null:
+		return
+
+	var count := mini(_socket_local_positions.size(), RideState.riders_required_to_win)
+	for i in count:
+		# Sit on the rim where the spoke meets it; the gondola hangs below in
+		# world space, so this stays on the frame, not the car.
+		var local_pos: Vector3 = _socket_local_positions[i] + Vector3(progress_bulb_axle_offset, 0.0, 0.0)
+
+		# Starts as dark glass (unlit). Unshaded so a lit bulb glows flat and
+		# bright; emission is ramped on only once this rung lights.
+		var material := StandardMaterial3D.new()
+		material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		material.albedo_color = PROGRESS_OFF_COLOR
+		material.emission_enabled = true
+		material.emission = PROGRESS_OFF_COLOR
+		material.emission_energy_multiplier = 0.0
+
+		var bulb_mesh := SphereMesh.new()
+		bulb_mesh.radius = progress_bulb_radius
+		bulb_mesh.height = progress_bulb_radius * 2.0
+		bulb_mesh.radial_segments = 8
+		bulb_mesh.rings = 4
+
+		var bulb := MeshInstance3D.new()
+		bulb.name = "ProgressBulb_%02d" % [i + 1]
+		bulb.mesh = bulb_mesh
+		bulb.material_override = material
+		bulb.position = local_pos
+		_wheel.add_child(bulb)
+
+		var light := OmniLight3D.new()
+		light.name = "ProgressLight_%02d" % [i + 1]
+		light.light_color = PROGRESS_OFF_COLOR
+		light.light_energy = 0.0
+		light.shadow_enabled = false
+		light.omni_range = progress_light_range
+		light.omni_attenuation = 1.0
+		light.visible = false  # only enabled (desktop) once this rung lights
+		light.position = local_pos
+		_wheel.add_child(light)
+
+		_progress_bulbs.append(bulb)
+		_progress_bulb_materials.append(material)
+		_progress_lights.append(light)
+		_progress_bulb_pulse.append(0.0)
+		_progress_bulb_flicker.append(1.0)
+		_progress_bulb_on.append(false)
+		_progress_bulb_base_color.append(PROGRESS_OFF_COLOR)
+		_progress_bulb_strobe.append(PROGRESS_OFF_COLOR)
+		_progress_bulb_angle.append(TAU * float(i) / float(count))
+
+	_progress_order = _build_progress_order(count)
+	# Reflect any progress already on the books (normally 0 at level start).
+	_on_riders_launched_changed(RideState.riders_launched_count)
+
+
+# Activation order that fills opposite ends first and stays balanced: for 6 that
+# is [0, 3, 1, 4, 2, 5] - each new bulb lands ~across the wheel from the last.
+func _build_progress_order(n: int) -> Array[int]:
+	var order: Array[int] = []
+	var half := n / 2
+	for i in range(half):
+		order.append(i)
+		order.append(i + half)
+	if n % 2 == 1:
+		order.append(n - 1)
+	return order
+
+
+# Maps the progress count onto physical bulbs via _progress_order, so launches
+# light bulbs at opposite ends of the wheel rather than sweeping one side. The
+# color advances with the progress step (k), not the physical position.
+func _on_riders_launched_changed(count: int) -> void:
+	count = clampi(count, 0, _progress_lights.size())
+	for k in range(_progress_order.size()):
+		var idx: int = _progress_order[k]
+		var should_be_on := k < count
+		if should_be_on and not _progress_bulb_on[idx]:
+			_activate_rung(idx, _progress_color(k))
+		elif not should_be_on and _progress_bulb_on[idx]:
+			_deactivate_rung(idx)
+	_progress_lit = count
+
+
+# Turn a bulb on with a launch flash (decays to steady in _update_progress_lights).
+func _activate_rung(idx: int, color: Color) -> void:
+	_progress_bulb_on[idx] = true
+	_progress_bulb_base_color[idx] = color
+	_progress_bulb_strobe[idx] = color
+	_progress_bulb_pulse[idx] = 1.0
+	_progress_bulb_flicker[idx] = 1.0
+
+	var material := _progress_bulb_materials[idx]
+	material.albedo_color = color
+	material.emission = color
+	material.emission_energy_multiplier = PROGRESS_EMISSION_FLASH
+
+	var light := _progress_lights[idx]
+	light.light_color = color
+	# Desktop gets a real halo light; web rides on the emissive bulb + glow only.
+	light.visible = not _web_render_budget_enabled
+	if light.visible:
+		light.light_energy = progress_flash_energy
+
+
+func _deactivate_rung(idx: int) -> void:
+	_progress_bulb_on[idx] = false
+	_progress_bulb_pulse[idx] = 0.0
+
+	var material := _progress_bulb_materials[idx]
+	material.albedo_color = PROGRESS_OFF_COLOR
+	material.emission = PROGRESS_OFF_COLOR
+	material.emission_energy_multiplier = 0.0
+
+	var light := _progress_lights[idx]
+	light.light_energy = 0.0
+	light.visible = false
+
+
+func _progress_color(index: int) -> Color:
+	if progress_palette != null and progress_palette.get_point_count() > 0:
+		var n := maxi(_progress_lights.size() - 1, 1)
+		return progress_palette.sample(clampf(float(index) / float(n), 0.0, 1.0))
+	return PROGRESS_DEFAULT_COLORS[clampi(index, 0, PROGRESS_DEFAULT_COLORS.size() - 1)]
+
+
+# 0 far from the Big Stop sweet-spot window, ramping to 1 across the lead-in
+# band and pinned at 1 while inside it - the tell the bulbs flicker against.
+func _big_stop_window_proximity() -> float:
+	if RideState.is_emergency_stopping:
+		return 0.0  # the moment has passed; don't re-flicker on the way down
+	var lo := RideState.big_stop_current_min_speed
+	var hi := RideState.big_stop_current_max_speed
+	if lo <= 0.0:
+		return 0.0
+	var av := absf(RideState.angular_velocity)
+	if av >= lo and av <= hi:
+		return 1.0
+	if av < lo:
+		return clampf((av - (lo - progress_window_lead_speed)) / maxf(progress_window_lead_speed, 0.01), 0.0, 1.0)
+	# Overshot the window - fall off quickly past the top edge.
+	return clampf(1.0 - (av - hi) / maxf(progress_window_lead_speed, 0.01), 0.0, 1.0)
+
+
+func _shift_hue(color: Color, amount: float) -> Color:
+	return Color.from_hsv(fposmod(color.h + amount, 1.0), color.s, color.v, color.a)
+
+
+# Per-frame light show for lit bulbs. Far from the window: a decadent traveling
+# chase with gentle hue-breathing - alive and celebratory. As the Big Stop sweet
+# spot nears: the cadence tightens and BOTH color and brightness strobe, bold
+# bursts of contrasting hues, peaking in a violent flash right at the window.
+func _update_progress_lights(delta: float) -> void:
+	if _progress_lit <= 0:
+		return
+	var proximity := _big_stop_window_proximity()
+	_progress_show_phase = fposmod(_progress_show_phase + delta, 3600.0)
+
+	# Re-roll cadence shrinks toward the window: slow shimmer far out, frantic
+	# color/brightness strobe at the sweet spot.
+	_progress_flicker_timer += delta
+	var reroll := false
+	if _progress_flicker_timer >= lerpf(PROGRESS_FLICKER_SLOW_INTERVAL, PROGRESS_FLICKER_FAST_INTERVAL, proximity):
+		_progress_flicker_timer = 0.0
+		reroll = true
+	var amp := proximity * progress_flicker_strength
+
+	for idx in range(_progress_bulbs.size()):
+		if not _progress_bulb_on[idx]:
+			continue
+
+		if _progress_bulb_pulse[idx] > 0.0:
+			_progress_bulb_pulse[idx] = move_toward(_progress_bulb_pulse[idx], 0.0, delta / maxf(progress_pulse_time, 0.01))
+		var pulse: float = _progress_bulb_pulse[idx]
+		var angle: float = _progress_bulb_angle[idx]
+
+		# Idle show: a brightness wave that travels around the ring plus a slow
+		# hue breathe, so the lit ring shimmers like a real marquee.
+		var wave := 1.0 + show_chase_depth * sin(_progress_show_phase * show_chase_speed - angle * PROGRESS_CHASE_WAVES)
+		var hue_breathe := show_hue_drift * sin(_progress_show_phase * show_hue_speed + angle)
+		var shimmer_color := _shift_hue(_progress_bulb_base_color[idx], hue_breathe)
+
+		# Sweet-spot strobe: re-roll a bold contrasting color + brightness kick,
+		# then blend toward it by proximity so it takes over near the window.
+		if reroll and proximity > 0.0:
+			_progress_bulb_strobe[idx] = PROGRESS_STROBE_COLORS[randi() % PROGRESS_STROBE_COLORS.size()]
+			_progress_bulb_flicker[idx] = maxf(1.0 + amp * (randf() * 2.0 - 1.0), 0.0)
+		elif proximity <= 0.0:
+			_progress_bulb_flicker[idx] = 1.0
+
+		var color := shimmer_color.lerp(_progress_bulb_strobe[idx], proximity)
+		var brightness := lerpf(wave, _progress_bulb_flicker[idx], proximity)
+		var pulse_emit := pulse * (PROGRESS_EMISSION_FLASH - PROGRESS_EMISSION_STEADY)
+		var pulse_light := pulse * (progress_flash_energy - progress_light_energy)
+
+		var material := _progress_bulb_materials[idx]
+		material.albedo_color = color
+		material.emission = color
+		material.emission_energy_multiplier = (PROGRESS_EMISSION_STEADY + pulse_emit) * brightness
+
+		var light := _progress_lights[idx]
+		if light.visible:
+			light.light_color = color
+			light.light_energy = (progress_light_energy + pulse_light) * brightness
+
 
 func _setup_sparks() -> void:
 	var spark_mesh := QuadMesh.new()
