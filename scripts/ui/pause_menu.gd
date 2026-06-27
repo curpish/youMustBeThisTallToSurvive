@@ -10,6 +10,7 @@ var _menu_root: Control
 var _buttons: VBoxContainer
 var _pause_tab: Button
 var _options: OptionsPanel
+var _manual: DocumentOverlay
 
 
 func _ready() -> void:
@@ -64,6 +65,7 @@ func _build() -> void:
 	_buttons.add_child(MenuStyle.button("Resume", _resume))
 	_buttons.add_child(MenuStyle.button("Restart", _restart))
 	_buttons.add_child(MenuStyle.button("Options", _open_options))
+	_buttons.add_child(MenuStyle.button("Operation Manual", _open_manual))
 	_buttons.add_child(MenuStyle.button("Gameplay Feedback Survey", GameOrchestrator.open_feedback_survey))
 	_buttons.add_child(MenuStyle.button("Quit To Menu", _quit_to_menu))
 
@@ -82,9 +84,26 @@ func _set_open(open: bool) -> void:
 	get_tree().paused = open
 	_menu_root.visible = open
 	_pause_tab.visible = not open
+	var music := _pause_music()
+	if open:
+		if music != null:
+			music.request(self)  # fill the silence while paused
 	if not open and _options != null:
 		_options.queue_free()
 		_options = null
+	if not open and _manual != null:
+		if music != null:
+			music.release(_manual)  # manual freed directly here, never via _dismiss
+		_manual.queue_free()
+		_manual = null
+	if not open:
+		if music != null:
+			music.release(self)
+		_buttons.visible = true
+
+
+func _pause_music() -> PauseMusicPlayer:
+	return get_tree().get_first_node_in_group("pause_music") as PauseMusicPlayer
 
 
 func _resume() -> void:
@@ -110,4 +129,18 @@ func _open_options() -> void:
 
 func _on_options_closed() -> void:
 	_options = null
+	_buttons.visible = true
+
+
+func _open_manual() -> void:
+	_buttons.visible = false
+	_manual = DocumentOverlay.new()
+	_manual.allow_early_close = true
+	_manual.confirm_label = "Close"
+	_manual.closed.connect(_on_manual_closed)
+	add_child(_manual)
+
+
+func _on_manual_closed() -> void:
+	_manual = null
 	_buttons.visible = true

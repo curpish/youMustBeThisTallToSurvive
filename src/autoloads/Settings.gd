@@ -17,6 +17,10 @@ var music_linear := 0.5
 var sfx_linear := 0.5
 var fullscreen := false
 
+# Whether the Operation Manual has been shown this session. Deliberately NOT
+# persisted: it shows once per launch (first shift), then restarts skip it.
+var manual_seen := false
+
 var _design_db: Dictionary = {}
 
 

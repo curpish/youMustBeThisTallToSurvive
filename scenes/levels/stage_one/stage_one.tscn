@@ -43,6 +43,8 @@
 [ext_resource type="AudioStream" uid="uid://b383ychoc1226" path="res://assets/audio/music/Survive Game Over.ogg" id="29_gameover"]
 [ext_resource type="AudioStream" uid="uid://cus3gcc50w063" path="res://assets/audio/music/Survive Victory.ogg" id="30_victory"]
 [ext_resource type="Script" uid="uid://dor0ijvjid5ef" path="res://scripts/ui/pause_menu.gd" id="31_pausemenu"]
+[ext_resource type="Script" uid="uid://c8w3d8hib1vwq" path="res://scripts/levels/stage_one/pause_music.gd" id="32_pausemusic"]
+[ext_resource type="AudioStream" uid="uid://cdu5hyyf0d7th" path="res://assets/audio/music/Survive Pause Menu.ogg" id="33_pausemusicogg"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_stage_one"]
 sky_top_color = Color(0.13, 0.19, 0.26, 1)
@@ -240,6 +242,12 @@ parameters/looping = true
 [node name="AudioDanTheOperator" type="AudioStreamPlayer" parent="Audio" unique_id=290325199]
 bus = &"Dan"
 script = ExtResource("8_xdgbt")
+
+[node name="PauseMusic" type="AudioStreamPlayer" parent="Audio" unique_id=821929303]
+stream = ExtResource("33_pausemusicogg")
+parameters/looping = true
+script = ExtResource("32_pausemusic")
+fade_in_time = 1.0
 
 [node name="ferrisRide" type="Node" parent="Audio" unique_id=1303203542 node_paths=PackedStringArray("wheel_running", "squeaks", "fling_gondola")]
 script = ExtResource("12_fraud")

@@ -165,6 +165,20 @@ func _ready() -> void:
 	RideState.axle_failure_triggered.connect(_on_axle_failure_triggered)
 	RideState.victory_triggered.connect(_on_victory_triggered)
 	RideState.riders_launched_changed.connect(_on_riders_launched_changed)
+	_maybe_show_manual()
+
+
+# Present the Operation Manual on the first shift of the session, freezing the
+# sim until the operator signs off. The intro orbit + hands wait behind it
+# (their _process is paused), then play once the manual is dismissed.
+func _maybe_show_manual() -> void:
+	if Settings.manual_seen or DisplayServer.get_name() == "headless":
+		return
+	Settings.manual_seen = true
+	get_tree().paused = true
+	var manual := DocumentOverlay.new()
+	manual.closed.connect(func() -> void: get_tree().paused = false)
+	add_child(manual)
 
 func _process(_delta: float) -> void:
 	if _failure_sequence_active:

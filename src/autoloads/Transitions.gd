@@ -6,6 +6,10 @@ var _curtain: ColorRect
 
 
 func _ready() -> void:
+	# Always animate, even when the tree is paused (e.g. the Operation Manual
+	# freezes the sim the moment the stage loads, before this fade-in finishes).
+	process_mode = Node.PROCESS_MODE_ALWAYS
+
 	var layer := CanvasLayer.new()
 	layer.layer = 128
 	add_child(layer)
