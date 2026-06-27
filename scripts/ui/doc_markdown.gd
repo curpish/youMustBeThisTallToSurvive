@@ -21,6 +21,10 @@ static var _re_number: RegEx = _compile("^([0-9]+)\\.\\s+(.*)$")
 static var _re_ord: RegEx = _compile("\\$([0-9]+)\\^\\{\\\\text\\{([A-Za-z]+)\\}\\}\\$")
 static var _re_bold: RegEx = _compile("\\*\\*(.+?)\\*\\*")
 static var _re_italic: RegEx = _compile("\\*(.+?)\\*")
+# Liner notes: the Document Designer marks gameplay hints as "(Liner Note: ...)".
+# We pull them off the page body and render them as the previous-operator's
+# handwritten margin scribble instead.
+static var _re_liner: RegEx = _compile("\\*?\\(\\s*Liner Note:\\s*(.*?)\\)\\*?")
 
 
 static func _compile(pattern: String) -> RegEx:
@@ -29,7 +33,7 @@ static func _compile(pattern: String) -> RegEx:
 	return re
 
 
-# Returns an Array of { "title": String, "bbcode": String, "raw": String }.
+# Returns an Array of { "title", "bbcode", "raw", "note": String }.
 static func load_pages(path: String) -> Array:
 	var pages: Array = []
 	if not FileAccess.file_exists(path):
@@ -43,8 +47,19 @@ static func load_pages(path: String) -> Array:
 			"title": _first_header(stripped),
 			"bbcode": to_bbcode(stripped),
 			"raw": stripped,
+			"note": _collect_notes(stripped),
 		})
 	return pages
+
+
+# Pull every "(Liner Note: ...)" out of a page and join them into one scribble.
+static func _collect_notes(chunk: String) -> String:
+	var notes: PackedStringArray = []
+	for m in _re_liner.search_all(chunk):
+		var n := m.get_string(1).strip_edges()
+		if not n.is_empty():
+			notes.append(n)
+	return "\n\n".join(notes)
 
 
 static func _split_pages(text: String) -> Array:
@@ -62,7 +77,7 @@ static func _split_pages(text: String) -> Array:
 
 static func _first_header(chunk: String) -> String:
 	for line in chunk.split("\n"):
-		var t := line.strip_edges()
+		var t := _re_liner.sub(line, "", true).strip_edges()
 		if t.begins_with("#"):
 			return t.lstrip("#").strip_edges()
 	return "Operation Manual"
@@ -76,7 +91,8 @@ static func to_bbcode(chunk: String, scale: float = 1.0) -> String:
 
 
 static func _line_to_bbcode(line: String, scale: float) -> String:
-	var raw := line.rstrip(" \t")
+	# Liner notes live in the margin, not the body — pull them out first.
+	var raw := _re_liner.sub(line, "", true).rstrip(" \t")
 	var t := raw.strip_edges()
 	if t.is_empty():
 		return ""

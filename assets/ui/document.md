@@ -1,120 +1,103 @@
-# Operation Manual
-## Preoperative Checklist
+# Big Wheel Operator - Ministry of Entertainment
 
-It is imperative that this checklist be completed everyday **BEFORE** operating the machine. Failure to complete any of these items will result in immediate termination and potential prosecution for Criminal negligence while operating machinery.
+Welcome to the team, everyone at the Ministry of Entertainment is honored to have you join us as a Big Wheel Operator!
 
-If **ANY** of these items is not completed correctly you **MUST** reach out to your supervisor and **CANNOT OPERATE THE MACHINE**.
+Please make sure to read, understand, adhere to, venerate, and cherish this document in your day to day operations.
 
-1. **Ensure the last maintenance date is less than 24 hours old.**
-   - If the machine has not been inspected by the maintenance team you **CANNOT OPERATE THE MACHINE** until the team has finished daily inspections.
+The Ministry of Entertainment is a historic and respected landmark in this community and we ask you understand the company policy and vision as we navigate these trying times together.
+
+Each member of our team is treated like family, and like all families there are rules that must be followed to keep things flowing smoothly in these troubling circumstances we all find ourselves in. The Ministry of Entertainment is committed to keep our thriving populace safe and entertained as a respite from the unfortunate realities of day to day living in these unprecedented times.
+
+The Big Wheel is the Ministries optimal safety and recreational experience in the area and we hope you understand the honor of operating this historic landmark.
+
+Ensure you fully understand everything in this document before attempting to operate the Big Wheel and at any time you are confused please refer back here for guidance.
+
+---
+
+## Preoperative checklist
+
+It is imperative that this checklist be completed everyday BEFORE operating the machine.
+
+Failure to complete any of these items will result in immediate termination and potential prosecution for Criminal negligence while operating machinery.
+
+If ANY of these items are not completed correctly you MUST reach out to your supervisor and CANNOT OPERATE THE MACHINE.
+
+1. Ensure the last maintenance date is less than 24 hours old.
+   - If the machine has not been inspected by the maintenance team you CANNOT OPERATE THE MACHINE until the team has finished daily inspections.
    - You will find the label with the last inspection date on the front of the control panel.
-   - If the label has been torn off or is missing you **CANNOT OPERATE THE MACHINE**.
+   - If the label has been torn off or is missing you CANNOT OPERATE THE MACHINE.
+2. Ensure there is a fire extinguisher present and in operating conditions.
+   - If there is no fire extinguisher present or the fire extinguisher has not correctly been maintained you CANNOT OPERATE THE MACHINE.
+3. Ensure the Control Panel is turned on and that no foreign objects have been jammed into the control panel.
+   - If the control panel has been tampered with in any way you must reach our to your supervisor and you CANNOT OPERATE THE MACHINE.
+4. After the recent events of the local cataclysmic neon resonance collapse, Corporate asks that you ensure all riders are healthy and fully human before operating the machine.
+5. Due to the continued atmospheric degradation that has occurred in the most recent months, Corporate requires the Big Wheel only be operated during bright midday daylight.
+   - If it is not a clear sky outside you CANNOT OPERATE THE MACHINE.
 
-2. **Ensure there is a fire extinguisher present and in operating conditions.**
-   - If there is no fire extinguisher present or the fire extinguisher has not correctly been maintained you **CANNOT OPERATE THE MACHINE**.
+It is critical that you follow the above checklist. Corporate asks you to reread the following paragraph a minimum of three times to make sure that you fully understand the document fully and completely.
 
-3. **Ensure the Safety Switch is Engaged.**
-   - If the Safety Switch has been Disengaged you **CANNOT OPERATE THE MACHINE**.
-   - Tampering with or jamming the Safety Switch will result in immediate termination.
+If you have any questions you must reach out to your supervisor before you continue on in this document.
+
+(Liner Note: Understanding The Governor Press Shift or grab it and break the control panel!)
 
 ---
 
 ## Understanding the Throttle Lever
 
-The Throttle Lever is located to the right of the control panel inside the operating area. Please be aware of the several speeds zones that are located on the Throttle Lever.
+The Throttle Lever is located to the right of the control panel inside the operating area.
 
-1. **Full Stop**
-   - The $1^{\text{st}}$ value of the Throttle Lever.
-   - This is the position the Throttle Lever must be in to start the operation of the machine.
-   - Guests are allowed to board at this speed unattended.
-   - **WARNING:** NEVER INITIATE AN EMERGENCY STOP FROM ANY SPEED OTHER THAN SLOW. GUEST INJURY IS LIKELY AND OCCUPANTS CAN BE THROWN FROM THE MACHINE.
+Please be aware of the several speeds zones that are located on the Throttle Lever.
 
-2. **Slow**
-   - The $2^{\text{nd}}$ value of the Throttle Lever.
-   - This is the optimal position of the Throttle Lever for day to day usage of the machinery. Slow and Safe.
+The higher the speed zone the higher the wear and tear on the machine as well as the heat generated by the equipment.
 
-3. **Half**
-   - The $3^{\text{rd}}$ value of the Throttle Lever.
-   - When approved, the operator is allowed to move the Throttle Lever to Half Speed for short periods of time.
-   - **WARNING:** Keeping the Throttle Lever at Half Speed for extended periods of time will build up Heat and wear on the machinery.
+*Note: Corporate asks that you never refers to the Throttle Lever as the Choke Lever or refer to the Throttle Lever with any language that would imply the Throttle Lever is your paternal parent.*
 
-4. **Full**
-   - The $4^{\text{th}}$ value of the Throttle Lever.
-   - Under special circumstances, when approved, the operator is allowed to move the Throttle Lever to Full Speed for brief moments of time.
-   - **WARNING:** Keeping the Throttle Lever at Full Speed for extended periods of time can and will endanger riders! Use only in approved situations under direct supervision!
-   - **WARNING:** Keeping the Throttle Lever at Full Speed for extended periods of time will cause significant heat and wear on the machinery.
+### Stop
+The first speed zone of the Throttle Lever. In this speed zone the Big Wheel is stopped. Ensure the Engine RPM on the Control Panel is not moving. The most safe speed zone for riders.
 
-5. **Top**
-   - The $5^{\text{th}}$ value of the Throttle Lever.
-   - Under rare special circumstances when the machine has no guests, the Throttle Lever can be moved to Top Speed for very limited brief windows of time.
-   - **WARNING:** MOVING THE THROTTLE LEVER TO TOP SPEED WHILE GUESTS ARE ON THE RIDE IS FORBIDDEN. GUESTS INJURY IS LIKELY AND OCCUPANTS CAN BE THROWN FROM THE MACHINE.
-   - **WARNING:** Keeping the Throttle Lever at Top Speed for extended periods of time will cause catastrophic levels of heat and wear on the machinery.
+### Slow
+The second speed zone of the Throttle Lever. Corporate considers this to be the ideal zone for maximum guest safety and enjoyment.
 
-*Note: Corporate asks that you never refer to the Throttle Lever as the Choke Lever or refer to the Throttle Lever with any language that would imply the Throttle Lever is your paternal parent.*
+### Med
+The third speed zone of the Throttle Lever. In extreme circumstances your supervisor may advise you to put the Big Wheel in this speed zone for a limited time. Be aware that corporate does not recommend keeping the Big Wheel in this speed zone for normal operation.
 
-### Maintenance Addendum:
-Due to the age and condition of the machinery the Throttle Lever needs to be properly lubricated. If at any time the operator finds the Throttle Lever to become difficult to move during operation the Throttle Lever must be re-lubricated.
+### Fast
+The fourth speed zone of the Throttle Lever. This is the maximum safe operation speed of the Big Wheel and is only for testing purposes only. Corporate forbids operators from entering this speed zone as high speeds may launch riders from the ride.
+
+### ???
+While the Throttle Lever was designed to accommodate an even faster fifth speed zone, Corporate has ensured the Control Panel cannot operate in this mode. Operating in this mode would require the Control Panel to have been tampered with which would result in immediate termination of the operator and be a failure to adhere to the Preoperative Checklist.
 
 ---
 
-## Understanding the Control Panel Buttons
+## Understanding the QWERTY buttons
 
-The Control Panel Buttons (Designated Q, W, E, R) are Electron Crawler Lumination Indicators as well as Fault Correction Hydrographic Controllers. This means that the Control Panel Buttons will light up when a fault has been found as well as correct the fault when the corresponding button is pressed.
+The Quantum Web Electronic Resolving Termination of Yottaamperes are a series of buttons that light up when a fault in the machine is detected.
 
-### Example Scenario A:
-While operating the machinery for an extended period of time the operator notices Control Panel Button "Q" lights up using the Electron Crawler Lumination process which indicates a Maximum Flux Value has been exceeded. This error can be cleared by pressing the "Q" Button and letting the Fault Correction Hydrographic Controllers automatically fix the Flux Values back to normal operation conditions.
+Heat buildup on the machine will cause more faults to occur, it is imperative that the operator take appropriate caution when operating the Big Wheel to prevent heat build up.
 
-### Maintenance Addendum:
-Due to the age and condition of the machinery, the Control Panel Buttons, (Specifically the Fault Correction Hydrographic Controllers) are vulnerable to pests dislocating the fragile wires in the control panel. If the wires come loose they are easily able to be fixed by opening the Control Panel maintenance door and plugging them back in. Maintenance assures operators that daily inspections will prevent operators from needing to rewire the control panel themselves.
+*Warning: If all buttons turn red, the Big Wheel shuts down to prevent cataclysmic electrical discharge and the Big Wheel becomes overheated.*
 
----
+### Clearing Faults
+The QWERTY system is designed to automatically resolve and terminate faults with minimal operator involvement.
 
-## Understanding the Ward Drive Tapes
+1. You must first observe the color of the buttons. If the indicator light turns blue or red you must respond to the incident immediately.
+2. Select the correct mode that matches the correct color.
+   - a) Blue Mode 2
+   - b) Red-Mode 3
+3. While in the correct mode, press the button or buttons next to the lit indicator light.
 
-The Control Panel operates its sophisticated machinery using corporate classified technology. The Ward Drive is a system that runs the firmware level systems of the Control Panel. Everyday a new Ward Drive Tape must be inserted into the control panel. Each Ward Drive Tape is filled with classified information that tells the Control Panel how to efficiently operate. As the operator your responsibility is to ensure that a Ward Drive Tape is properly inserted into the Control Panel at all times.
-
-### Maintenance Addendum:
-Due to the poor condition of the Ward Drive and the age of the machine, several tapes have been provided to the operator. If the Control Panel exhibits unusual behavior it may require the operator to open the Ward Drive Tape player and replace the tape with a new one.
-
----
-
-## Understanding the Mode Select
-
-The selection dial has three modes (Labeled 1, 2, and 3). As an operator it is your responsibility to ensure that "Mode 1" is always selected while the machine is in use.
-
-**WARNING:** Operating the machine in the incorrect mode can cause catastrophic wear on the machinery.
-
-### Maintenance Addendum:
-Due to unknown electrical interference, sometimes the Mode Select can seemingly move on its own. Maintenance is aware of this issue and Ticket #60043322 has been created to address this issue with Control Panel Engineering team. Maintenance assures operators that with proper daily maintenance the Control Panel will never automatically nor mysteriously switch modes during operation and operators will never need to manually move the Mode Select back to Mode 1.
+(Liner Note: Spacebar)
 
 ---
 
-## Understanding the Switches
+## Understanding the Emergency Stop
 
-There are three switches on the Control Panel. The operator must ensure that all three switches are set correctly so that the corresponding light is lit green.
+In the event of an Emergency, you can use the Emergency Stop to forcibly stop the Big Wheel.
 
----
+The Emergency Stop button can only be used during an Emergency and every instance of its usage will be recorded and logged requiring the operator to give a full 10 page written report to their Supervisor of the use the Emergency Stop button.
 
-## Understanding the Power Slider
+*WARNING: Using the Emergency Stop button at a Throttle Lever level above Slow is prohibited. FAILURE TO ADHERE TO THIS WARNING WILL CAUSE DAMAGE TO THE MACHINE AND INJURY TO GUESTS, OCCUPANTS CAN BE THROWN FROM THE MACHINE!*
 
-The Control Panel has a Power Slider that indicates how much power the Control Panel has access to. The operator needs to ensure the Power Slider is always moved to the top position which provides the Control Panel full power for proper use.
+*Note: Corporate asks that you do not refer to the Emergency Stop as "Big Stop" as it reflects poorly on the operator, the company, and the community.*
 
-### Maintenance Addendum:
-The Power Slider has seen significant wear over the years and sometimes will disengage and drop causing the Control Panel to go offline. Maintenance assures operators that with proper daily maintenance the Power Slider will never drop during operation of the machine causing the operator to manually need to engage and lift the power slider back to full power.
-
----
-
-## Understanding the Emergency Stop button
-
-The Control Panel features an Emergency Stop button that will cause the Throttle Lever to slam back to Full Stop. The Emergency Stop button can only be used during an Emergency and every instance of button usage will be recorded and logged requiring the operator to give a full 10 page written report to their Supervisor of the use the Emergency Stop button.
-
-**WARNING:** Using the Emergency Stop button at a Throttle Lever level above Slow is prohibited. **FAILURE TO ADHERE TO THIS WARNING WILL CAUSE DAMAGE TO THE MACHINE AND INJURY TO GUESTS, OCCUPANTS CAN BE THROWN FROM THE MACHINE!**
-
----
-
-## Understanding the Control Panel Ignition
-
-The Control Panel is engaged and operated using a corporate classified technology referred to as a Blackout-Fission Matrix Engine. The Control Panel Ignition requires the Ignition Key to be turned to the right to start the Blackout-Fission Matrix Engine. During standard operation the operator needs to ensure that the key is never turned to the left thus powering down the machine until maintenance or supervisors approve.
-
-### Maintenance Addendum:
-Due to the age of the Blackout-Fission Matrix Engine, sometimes the Blackout-Fission Matrix Engine will stall or stop completely requiring one or more turns of the Ignition Key to restart the Control Panel. Maintenance assures operators that with proper daily maintenance that an operator will never need to reengage the Blackout-Fission Matrix Engine during operation of the machine using the Ignition Key.
+(Liner Note: Big Stop during specific RPMs???)

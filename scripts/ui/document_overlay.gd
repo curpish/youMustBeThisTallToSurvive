@@ -24,7 +24,7 @@ const DEFAULT_PAGE_SFX := "res://assets/audio/ui/page_turn.ogg"  # drop a rustle
 # TEMPORARY: until PmayerW delivers the real manual, show a two-page placeholder
 # (cover + a fully redacted page) instead of parsing document.md. Flip this to
 # false (or delete the placeholder branch) once the real content lands.
-const USE_PLACEHOLDER := true
+const USE_PLACEHOLDER := false  # real manual is live; placeholder kept for reference
 
 const A4_RATIO := 0.707               # width / height of A4 portrait
 const PAPER_HEIGHT_FRACTION := 0.92   # sheet height vs. viewport height
@@ -40,18 +40,9 @@ const INK := Color(0.17, 0.15, 0.13)
 const STAMP_RED := Color(0.54, 0.12, 0.07)
 const PEN_BLUE := Color(0.20, 0.24, 0.46)        # previous operator's ballpoint
 
-# Previous-operator margin notes, keyed by a substring of the section they sit
-# beside. The corporate text is the joke; these are the human ghost in the
-# machine. DRAFT — rewrite freely.
-const MARGIN_NOTES := [
-	{"key": "Preoperative Checklist", "text": "Don't bother calling your supervisor.\nPhone's been dead since March. — J."},
-	{"key": "Throttle Lever", "text": "They lie about \"short periods.\"\nWatch the heat, not the clock.\nIt climbs faster every week."},
-	{"key": "Control Panel Buttons", "text": "When they all light at once,\nthat's not a fault. That's the wheel\nasking for someone. Pick fast."},
-	{"key": "Ward Drive Tapes", "text": "Tape 4 screams.\nDon't play tape 4."},
-	{"key": "Mode Select", "text": "It moves on its own because\nsomething is in there with you.\nMode 1. Always. I'm sorry."},
-	{"key": "Emergency Stop", "text": "I pulled it once.\nThe report is why I'm writing this\ninstead of going home."},
-	{"key": "Control Panel Ignition", "text": "If you're reading this, the locker's\nyours. Keep them tall. Keep them alive.\nKeep yourself off the ride. — J."},
-]
+# The previous-operator's handwritten margin scribbles are authored as
+# "(Liner Note: ...)" markers inside document.md and pulled per-page by
+# DocMarkdown into each page's "note" field — see _update_note().
 
 @export var confirm_label := "BEGIN SHIFT"
 @export var allow_early_close := false
@@ -203,7 +194,7 @@ func _build() -> void:
 	row.add_theme_constant_override("separation", int(SIDE_GAP))
 	column.add_child(row)
 
-	_back_btn = _arrow_button("◀", _prev)
+	_back_btn = _arrow_button("<", _prev)
 	row.add_child(_back_btn)
 
 	_holder = Control.new()
@@ -211,7 +202,7 @@ func _build() -> void:
 	_holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_child(_holder)
 
-	_next_btn = _arrow_button("▶", _next)
+	_next_btn = _arrow_button(">", _next)
 	row.add_child(_next_btn)
 
 	_build_sheet()
@@ -233,7 +224,7 @@ func _build() -> void:
 
 	if allow_early_close:
 		var x := Button.new()
-		x.text = "✕"
+		x.text = "X"
 		x.flat = true
 		x.focus_mode = Control.FOCUS_NONE
 		x.add_theme_font_size_override("font_size", 26)
@@ -352,6 +343,11 @@ func _show_page(index: int) -> void:
 func _render_fit(page: Dictionary) -> void:
 	var raw := String(page.get("raw", ""))
 	_body.add_theme_font_size_override("normal_font_size", BASE_BODY)
+	# Pages carry their markdown in "raw"; the synthetic fallback page has none,
+	# so fall back to its prebuilt bbcode instead of rendering an empty sheet.
+	if raw.is_empty():
+		_body.text = String(page.get("bbcode", ""))
+		return
 	_body.text = DocMarkdown.to_bbcode(raw, 1.0)
 	await get_tree().process_frame
 
@@ -366,12 +362,7 @@ func _render_fit(page: Dictionary) -> void:
 
 
 func _update_note(page: Dictionary) -> void:
-	var raw := String(page.get("raw", ""))
-	_note.text = ""
-	for entry in MARGIN_NOTES:
-		if raw.find(String(entry["key"])) != -1:
-			_note.text = String(entry["text"])
-			break
+	_note.text = String(page.get("note", ""))
 	_note.visible = not _note.text.is_empty()
 
 

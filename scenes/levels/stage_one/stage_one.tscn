@@ -247,7 +247,8 @@ script = ExtResource("8_xdgbt")
 stream = ExtResource("33_pausemusicogg")
 parameters/looping = true
 script = ExtResource("32_pausemusic")
-fade_in_time = 1.0
+music_volume_db = -14.0
+fade_in_time = 2.5
 
 [node name="ferrisRide" type="Node" parent="Audio" unique_id=1303203542 node_paths=PackedStringArray("wheel_running", "squeaks", "fling_gondola")]
 script = ExtResource("12_fraud")
