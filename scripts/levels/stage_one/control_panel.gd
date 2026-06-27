@@ -3,21 +3,25 @@ extends Node3D
 const BAND_TARGETS: Array[float] = [0.0, 65.0, 150.0, 280.0, 420.0]
 const HOVER_REFRESH_INTERVAL := 1.0 / 30.0
 const WEB_PARTICLE_SCALE := 0.5
+const FAULT_INDICATOR_MATERIAL := preload("res://Yam/materials/matsForShaders/indicatorLight_mat.tres")
+const MODE_LABEL_BORDER_COLOR := Color(0.0, 0.0, 0.0, 1.0)
+const MODE_LABEL_BORDER_SHADE_COLOR := Color(0.12, 0.12, 0.12, 1.0)
+const MODE_LABEL_BORDER_WIDTH_FRACTION := 0.055
 const MODE_LABELS := {
 	&"label_1_geo": {
 		"text": "1",
-		"background": Color(0.08, 0.66, 0.18, 1.0),
-		"foreground": Color(0.02, 0.03, 0.02, 1.0),
+		"background": Color(0.82, 0.82, 0.78, 1.0),
+		"foreground": Color(0.0, 0.0, 0.0, 1.0),
 	},
 	&"label_2_geo": {
 		"text": "2",
-		"background": Color(0.95, 0.78, 0.08, 1.0),
-		"foreground": Color(0.04, 0.03, 0.0, 1.0),
+		"background": Color(0.10, 0.48, 1.0, 1.0),
+		"foreground": Color(0.96, 0.98, 1.0, 1.0),
 	},
 	&"label_3_geo": {
 		"text": "3",
-		"background": Color(0.82, 0.06, 0.035, 1.0),
-		"foreground": Color(1.0, 0.94, 0.82, 1.0),
+		"background": Color(1.0, 0.12, 0.12, 1.0),
+		"foreground": Color(1.0, 0.96, 0.86, 1.0),
 	},
 }
 
@@ -95,9 +99,10 @@ const MODE_LABELS := {
 	"y": &"indicatorLight_light_Y",
 }
 @export var fault_indicator_color := Color(1.0, 0.06, 0.02, 0.85)
-@export var fault_indicator_warning_color := Color(1.0, 0.78, 0.08, 0.85)
-@export var fault_indicator_safe_color := Color(0.1, 1.0, 0.15, 0.85)
-@export var fault_indicator_energy := 3.2
+@export var fault_indicator_warning_color := Color(0.04, 0.26, 0.78, 0.85)
+@export var fault_indicator_safe_color := Color(0.55, 0.55, 0.55, 1.0)
+@export var fault_indicator_energy := 1.0
+@export var fault_indicator_off_energy := 0.0
 @export var heat_gauge_needle_path: NodePath
 @export var heat_gauge_needle_name := &"analogDial_needle_geo"
 @export var heat_gauge_axis := Vector3.FORWARD
@@ -372,6 +377,7 @@ func _setup_fault_indicators() -> void:
 		if not part.bind(self, fault_indicator_names[action], fault_indicator_safe_color, fault_indicator_energy):
 			continue
 
+		part.set_surface_material_template(FAULT_INDICATOR_MATERIAL)
 		_fault_indicator_parts[action] = part
 		if action == "t" or action == "y":
 			print("PANEL: %s indicator light wired up (node %s)" % [action.to_upper(), part.node.name])
@@ -386,6 +392,7 @@ func _setup_fault_indicators() -> void:
 		for i in mini(actions.size(), ordered_indicators.size()):
 			var part := ControlPanelInteractable.new()
 			part.bind_node(ordered_indicators[i], fault_indicator_safe_color, fault_indicator_energy)
+			part.set_surface_material_template(FAULT_INDICATOR_MATERIAL)
 			_fault_indicator_parts[actions[i]] = part
 			if actions[i] == "t" or actions[i] == "y":
 				print("PANEL: %s indicator light wired up via fallback ordering (node %s)" % [
@@ -436,6 +443,8 @@ func _setup_mode_label_colors() -> void:
 		parent.add_child(replacement)
 		parent.move_child(replacement, source.get_index() + 1)
 
+		_add_mode_label_border(replacement, plate_size)
+
 		var plate := MeshInstance3D.new()
 		plate.name = "background"
 		var plate_mesh := PlaneMesh.new()
@@ -461,6 +470,53 @@ func _setup_mode_label_colors() -> void:
 		replacement.add_child(number)
 
 		source.visible = false
+
+
+func _add_mode_label_border(parent: Node3D, plate_size: Vector2) -> void:
+	var border_width := maxf(minf(plate_size.x, plate_size.y) * MODE_LABEL_BORDER_WIDTH_FRACTION, 0.002)
+	var half_size := plate_size * 0.5
+	var black_material := _make_mode_label_material(MODE_LABEL_BORDER_COLOR)
+	var shade_material := _make_mode_label_material(MODE_LABEL_BORDER_SHADE_COLOR)
+
+	_add_mode_label_border_strip(
+		parent,
+		"border_top",
+		Vector2(plate_size.x + border_width * 2.0, border_width),
+		Vector3(0.0, 0.001, -half_size.y - border_width * 0.5),
+		black_material
+	)
+	_add_mode_label_border_strip(
+		parent,
+		"border_left",
+		Vector2(border_width, plate_size.y),
+		Vector3(-half_size.x - border_width * 0.5, 0.001, 0.0),
+		black_material
+	)
+	_add_mode_label_border_strip(
+		parent,
+		"border_bottom",
+		Vector2(plate_size.x + border_width * 2.0, border_width),
+		Vector3(0.0, 0.001, half_size.y + border_width * 0.5),
+		shade_material
+	)
+	_add_mode_label_border_strip(
+		parent,
+		"border_right",
+		Vector2(border_width, plate_size.y),
+		Vector3(half_size.x + border_width * 0.5, 0.001, 0.0),
+		shade_material
+	)
+
+
+func _add_mode_label_border_strip(parent: Node3D, strip_name: String, strip_size: Vector2, strip_position: Vector3, material: Material) -> void:
+	var strip := MeshInstance3D.new()
+	strip.name = strip_name
+	var strip_mesh := PlaneMesh.new()
+	strip_mesh.size = strip_size
+	strip.mesh = strip_mesh
+	strip.material_override = material
+	strip.position = strip_position
+	parent.add_child(strip)
 
 
 func _make_mode_label_material(color: Color) -> StandardMaterial3D:
@@ -772,11 +828,14 @@ func _refresh_fault_indicators() -> void:
 	for action in fault_indicator_names:
 		var mode := RideState.get_fault_mode(action)
 		var color := fault_indicator_safe_color
+		var energy := fault_indicator_off_energy
 		if mode == 3:
 			color = fault_indicator_color
+			energy = fault_indicator_energy
 		elif mode == 2:
 			color = fault_indicator_warning_color
-		_set_fault_indicator_color(action, color)
+			energy = fault_indicator_energy
+		_set_fault_indicator_color(action, color, energy)
 
 
 func _set_mode_from_screen_position(screen_position: Vector2) -> void:
@@ -891,11 +950,11 @@ func _set_panel_button_glow(action: String, enabled: bool) -> void:
 	part.set_glow(enabled)
 
 
-func _set_fault_indicator_color(action: String, color: Color) -> void:
+func _set_fault_indicator_color(action: String, color: Color, energy: float) -> void:
 	if not _fault_indicator_parts.has(action):
 		return
 	var part := _fault_indicator_parts[action] as ControlPanelInteractable
-	part.set_glow_color(color, fault_indicator_energy)
+	part.set_glow_color(color, energy)
 
 
 func _governor_spark_position() -> Vector3:

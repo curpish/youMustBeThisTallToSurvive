@@ -41,7 +41,7 @@ extends Node3D
 @export var fling_collision_friction := 0.68
 @export var fling_rest_speed := 0.8
 @export var fling_floor_normal_dot := 0.5
-@export var web_fling_wall_z := 18.0
+@export var web_fling_wall_z := 60.0
 @export var failure_drop_distance := 3.0
 @export var failure_roll_distance := 46.0
 @export var failure_drop_duration := 0.6
